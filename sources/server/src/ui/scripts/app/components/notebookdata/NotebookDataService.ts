@@ -1,0 +1,145 @@
+/*
+ * Copyright 2014 Google Inc. All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under the License
+ * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
+
+/**
+ * Directive for creating a single editor cell
+ *
+ * The input region provides and editable text region. The output region appears if there is any
+ * output content, and disappears is the output content is falsey (undefined/null/empty).
+ */
+/// <reference path="../../../../../../../../externs/ts/angularjs/angular.d.ts" />
+import logging = require('app/common/Logging');
+import constants = require('app/common/Constants');
+import app = require('app/App');
+
+
+var log = logging.getLogger(constants.scopes.editorCell); // FIXME: scope name
+
+export class NotebookData {
+
+  notebook: any; // FIXME: define an interface for this
+
+  _eventScope: ng.IRootScopeService; // FIXME: just use the rootscope ref, don't define another ref
+  _rootScope: ng.IRootScopeService;
+  _sce: ng.ISCEService;
+
+  static $inject = ['$rootScope', '$sce'];
+  constructor (rootScope: ng.IRootScopeService, sce: ng.ISCEService) {
+    this._eventScope = rootScope; // FIXME: refactor to just refer to _rootScope throughout
+    this._rootScope = rootScope;
+    this._sce = sce;
+
+    // FIXME: clean this up, possible to simplify the nesting?
+    var callback: Function = this._updateNotebook.bind(this);
+    rootScope.$on('notebook-update', (event: any, nb: any) => {
+      rootScope.$evalAsync(() => {
+        callback(event, nb);
+      });
+    });
+  }
+
+  // FIXME: eventually this will accept (one or more) deltas
+  // but it will be the full notebook for now
+  _updateNotebook (event: any, newNotebook: any) {
+    log.debug('New notebook snapshot received (via websocket)', newNotebook);
+
+    if (!newNotebook) {
+      log.debug('Unable to update notebook with a false-y notebook data model. Ignoring...');
+      return; // FIXME: better handling of this case
+    }
+
+    this._markNotebookOutputsAsTrusted (newNotebook)
+
+    if (this.notebook) {
+      this._mergeNotebook(newNotebook);
+    } else {
+      this.notebook = newNotebook;
+    }
+  }
+
+  // FIXME: this method will change substantially or be replaced in full once notebook values
+  // are being broadcasted rather than the full notebook
+  _mergeNotebook (newNotebook: any) {
+
+    var that = this;
+
+    Object.keys(newNotebook.cells).forEach((cellId: any) => {
+      var currentCell = that.notebook.cells[cellId];
+      var newCell = newNotebook.cells[cellId];
+      if (currentCell) {
+        var cellIndex = that.notebook.worksheet.indexOf(currentCell.id);
+      }
+
+      // TODO(bryantd): Logic for merging worksheet order needs to be implemented here eventually
+      // Side-stepping issue at the moment because the worksheet is append-only currently
+      var isActive = false;
+      if (!currentCell) { // New cell received push it to tail of worksheet
+        that.notebook.worksheet.push(cellId);
+      } else {
+        // If this cell is currently active, keep it active
+        isActive = that.notebook.cells[cellId].active;
+      }
+
+      // Overwrite individual cells as they are broadcast from server
+      that.notebook.cells[cellId] = newNotebook.cells[cellId];
+
+      // FIXME: consider here all of the client-side modifications to a cell
+      // that might be blown away on update. Currently just concerned with cell.active flag
+      //
+      // Seems like there is a set of user-specific settings/state (e.g., cursor, active part of the page)
+      // that shouldn't be broadcasted/shared with all users
+      //
+      // Or maybe we should broadcast/persist these things, they just need to be
+      // marked as owned by user X (like realtime api)
+      //
+      // Leaning towards publishing the entirety of the state to the server
+      // because managing some local dirty state that needs re-application feels fragile
+      // and will eventually go away once we have multi-user working.
+      //
+      // Publishing the full state to the server for generating the ui-side view has the downside
+      // of adding more details to the content update message protocol between ui/server, but has
+      // the advantage of moving *all* notebook state server-side, simplifying the ui-side code
+
+      // Re-mark the cell as active if it was active before the update
+      if (isActive) {
+        that.notebook.cells[cellId].active = isActive
+      }
+
+    });
+
+  }
+
+  _markNotebookOutputsAsTrusted (notebook: any) {
+    // Save a reference to avoid needing to pass 'this' context through every level of nesting below
+    var sce = this._sce;
+
+    // Iterate through the cells and mark output content as trusted
+    Object.keys(notebook.cells).forEach((cellId) => {
+      var cell = notebook.cells[cellId];
+      if (cell.outputs) {
+        cell.outputs.forEach((output) => {
+          if (output.data) {
+            // TODO(bryantd): allow arbitrary output types here instead of just mapping text/plain
+            output.data['text/html'] = sce.trustAsHtml(output.data['text/plain']);
+          }
+        });
+      }
+    });
+  }
+
+}
+
+app.registrar.service('notebookData', NotebookData); // FIXME: move constant to constants
+log.debug('Registered notebook data service');

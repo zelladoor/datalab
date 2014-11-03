@@ -1,23 +1,83 @@
-<div class="datalab-editor-cell">
-  <div class="datalab-editor-cell-controls">
-    <!-- Single-cell controls/buttons go here -->
+<div id="cell-{{cell.id}}" class="datalab-editor-cell row" ng-class="{ 'datalab-editor-cell-active' : cell.active }">
+  <!-- NOTE: this template assumes that it lives inside of some bootstrap .container as the base grid system -->
+
+
+  <div class="col-md-11">
+    <div class="datalab-editor-cell-input row">
+      <div class="datalab-editor-cell-identifier datalab-editor-cell-identifier-input col-md-1">
+        <!-- FIXME: css class name s/cell-index/execution-counter/ -->
+        In&nbsp;
+        <span class="datalab-editor-cell-index">[{{ cell.executionCounter }}]</span>
+      </div>
+
+      <div class="datalab-editor-cell-input-content col-md-11">
+        <datalab-code-editor source="cell.source" active="cell.active" keymap='keymap' actions='actions'></datalab-code-editor>
+      </div>
+    </div>
+
+    <div class="datalab-editor-cell-output row" ng-show="cell.outputs">
+      <div class="datalab-editor-cell-identifier datalab-editor-cell-identifier-output col-md-1">
+        <!-- FIXME: css class name s/cell-index/execution-counter/ -->
+        Out
+        <span class="datalab-editor-cell-index">[{{ cell.executionCounter }}]</span>
+      </div>
+
+      <div class="datalab-editor-cell-outputs col-md-11">
+
+        <div ng-repeat="output in cell.outputs">
+          <div ng-bind-html="output.data['text/html']"></div>
+        </div>
+
+        <!-- FIXME: add back mimetype support -->
+  <!--       <div ng-repeat="output in outputs" ng-switch="output.mimetype">
+          <div ng-switch-when="text/html" ng-bind-html="output.content"></div>
+          Additional mime-types go here (css, js, etc.)
+        </div> -->
+      </div>
+    </div>
+    <div class="clearer"></div>
   </div>
-  <div class="datalab-editor-cell-input">
-    <div class="datalab-editor-cell-identifier">
-      <span class="datalab-editor-cell-index">[ {{ executionCounter }} ]<span>
-    </div>
-    <div class="datalab-editor-cell-input-content">
-      <datalab-code-editor contents="inputText"></datalab-code-editor>
-    </div>
-  </div>
-  <div class="datalab-editor-cell-output" ng-show="outputs">
-    <div class="datalab-editor-cell-output-indicator">
-      <span class="glyphicon glyphicon-log-out"></span>
-    </div>
-    <div class="datalab-editor-cell-outputs">
-      <div ng-repeat="output in outputs" ng-switch="output.mimetype">
-        <div ng-switch-when="text/html" ng-bind-html="output.content"></div>
-        <!-- Additional mime-types go here (css, js, etc.) -->
+
+  <div class="col-md-1">
+    <div class="datalab-editor-cell-controls">
+
+        <div class="row">
+          <div class="md-col-12">
+            <button type="button" class="btn btn-default btn-block btn-xs">
+              <i class="fa-long-arrow-down fa"></i>&nbsp;Run
+            </button>
+          </div>
+
+
+          <div class="md-col-12">
+            <button type="button" class="btn btn-default btn-block btn-xs">
+              <i class="fa-eraser fa"></i>&nbsp;Clear
+            </button>
+          </div>
+
+<!-- TODO(bryantd): find a more concise way to surface cell-level controls and then add these buttons back
+
+          <div class="md-col-6">
+          <button type="button" class="btn btn-default btn-block btn-xs">
+            <i class="fa fa-plus-square-o"></i>&nbsp;New cell
+          </button>
+          </div>
+
+          <div class="md-col-6">
+          <button type="button" class="btn btn-default btn-block btn-xs">
+            <i class="fa fa-minus-square-o"></i>&nbsp;Delete
+          </button>
+          </div>
+        </div>
+-->
+
+<!-- TODO: add options for toggling code/markdown/header cell
+
+          <ul class="dropdown-menu" role="menu">
+            <li><a href="#"><i class="fa fa-terminal"></i></a></li>
+            <li><a href="#"><i class="fa fa-paragraph"></i></a></li>
+          </ul>
+-->
       </div>
     </div>
   </div>

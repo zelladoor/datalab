@@ -101,10 +101,20 @@ export class UserConnection implements app.IUserConnection {
   }
 
   /**
-   * Sends a kernel status message to the user
+   * Sends a session status message to the user
    */
-  sendKernelStatus (status: app.KernelStatus) {
-    this._send('kernel-status', status);
+  sendSessionStatus (status: app.SessionStatus) {
+    this._send('session-status', status);
+  }
+
+  /**
+   * Sends a notebook update message to the user
+   */
+  sendNotebookUpdate (notebookUpdate: app.NotebookUpdate) {
+    // TODO(bryantd): when server-side configurable logging is available, emit the notebook updates
+    // at the debug level
+    // console.log('Sending notebook update: \n' + JSON.stringify(notebookUpdate, null, 4));
+    this._send('notebook-update', notebookUpdate);
   }
 
   _delegateExecuteRequestHandler (message: app.ExecuteRequest) {}

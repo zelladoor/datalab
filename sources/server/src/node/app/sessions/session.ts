@@ -24,7 +24,10 @@ export class Session implements app.ISession {
   id: string;
 
   _kernel: app.IKernel;
-  _userconn: app.IUserConnection;
+  _userconns: app.IUserConnection[];
+  _notebook: app.notebook.IActiveNotebook;
+  _requestIdToCellId: app.Map<string>;
+
   /**
    * All messages flowing in either direction between user<->kernel will pass through this handler
    */
@@ -34,20 +37,26 @@ export class Session implements app.ISession {
       id: string,
       userconn: app.IUserConnection,
       kernel: app.IKernel,
+      notebook: app.notebook.IActiveNotebook,
       messageHandler: app.MessageHandler) {
     this.id = id;
     this._kernel = kernel;
     this._registerKernelEventHandlers();
-    this.updateUserConnection(userconn);
+    this._notebook = notebook;
     this._messageHandler = messageHandler;
+    this._requestIdToCellId = {};
+    this._userconns = [];
+    this.updateUserConnection(userconn);
   }
 
   getKernelId (): string {
     return this._kernel.id;
   }
 
-  getUserConnectionId (): string {
-    return this._userconn.id;
+  getUserConnectionIds (): string[] {
+    return this._userconns.map((userconn) => {
+      return userconn.id;
+    });
   }
 
   /**
@@ -59,8 +68,28 @@ export class Session implements app.ISession {
    * This method allows a user to reestablish connection with an existing/running kernel.
    */
   updateUserConnection (userconn: app.IUserConnection) {
-    this._userconn = userconn;
-    this._registerUserEventHandlers();
+    this._userconns.push(userconn);
+    this._registerUserEventHandlers(userconn);
+    // Send the initial notebook state at the time of connection
+    userconn.sendNotebookUpdate(this._notebook.getData());
+    // console.log('!! New connection for session ' + this.id + ':\n' + JSON.stringify(this._userconns));
+  }
+
+  /**
+   * Gets the cell id that corresponds to the given request id
+   *
+   * Returns null if the given request id has no corresponding cell id recorded
+   */
+  _getCellId (requestId: string) {
+    var cellId = this._requestIdToCellId[requestId];
+    if (cellId) {
+      return cellId;
+    } else {
+      // TODO: should be an error-level message when levels are supported
+      console.log('ERROR: Request for unknown cell id arrived request='
+        + requestId + ', cellid=' + cellId + ': ignoring message...');
+      return null;
+    }
   }
 
   // Handlers for messages flowing in either direction between user<->kernel
@@ -80,7 +109,46 @@ export class Session implements app.ISession {
    * Forwards the execute reply to the user, post-middleware stack processing
    */
   _handleExecuteReplyPostDelegate (message: any) {
-    this._userconn.sendExecuteReply(message);
+    var cellId = this._getCellId(message.requestId);
+    if (!cellId) {
+      // Nothing to update
+      return;
+    }
+
+    var cellUpdate = {
+      id: cellId,
+      executionCounter: message.executionCounter.toString(),
+      outputs: []
+    };
+
+    // Add the error messaging as an output if an error has occurred
+    if (message.errorName) {
+      cellUpdate.outputs = [{
+        type: 'error', // FIXME: which pieces of code will care about this value?
+        data: {
+          // TODO(bryantd): parse and present the traceback data as well
+          // Hopefully there's a configuration setting for getting back html
+          // traceback data rather than the escape-code formatted traceback
+          'text/plain': message.errorName + ': ' + message.errorMessage
+        }
+      }];
+    }
+
+    var notebookUpdate = this._notebook.updateCell(cellUpdate);
+
+    this._broadcastNotebookUpdate(notebookUpdate);
+  }
+
+  // FIXME: make a single generic broadcast method if possible
+  _broadcastNotebookUpdate (notebookUpdate: any) {
+    this._userconns.forEach((userconn) => {
+      userconn.sendNotebookUpdate(notebookUpdate);
+    });
+  }
+  _broadcastSessionStatus (status: app.SessionStatus) {
+    this._userconns.forEach((userconn) => {
+      userconn.sendSessionStatus(status);
+    });
   }
 
   /**
@@ -94,21 +162,24 @@ export class Session implements app.ISession {
    * Forwards the execute result to the user, post-middleware stack processing
    */
   _handleExecuteResultPostDelegate (message: any) {
-    this._userconn.sendExecuteResult(message);
-  }
+    // FIXME: eventually need to merge outputs by appending, because multiple messagews
+    // might all write to a given request output
+    var cellId = this._getCellId(message.requestId);
+    if (!cellId) {
+      // Nothing to update
+      return;
+    }
+    var notebookUpdate = this._notebook.updateCell({
+      id: cellId,
+      outputs: [{
+        type: 'execute-result',
+        data: {
+          'text/plain': message.result['text/plain']
+        }
+      }]
+    });
 
-  /**
-   * Delegates in incoming kernel status (from kernel) to the middleware stack
-   */
-  _handleKernelStatusPreDelegate (status: app.KernelStatus) {
-    var nextAction = this._handleKernelStatusPostDelegate.bind(this);
-    this._messageHandler(status, this, nextAction);
-  }
-  /**
-   * Forwards the kernel status to the user, post-middleware stack processing
-   */
-  _handleKernelStatusPostDelegate (message: any) {
-    this._userconn.sendKernelStatus(message);
+    this._broadcastNotebookUpdate(notebookUpdate);
   }
 
   /**
@@ -122,16 +193,87 @@ export class Session implements app.ISession {
    * Forwards execute request to the kernel, post-middleware stack processing
    */
   _handleExecuteRequestPostDelegate (message: any) {
+    // Keep track of which cell id to map a given request id to
+    // The kernel doesn't know anything about cells/notebooks, just requests
+    // FIXME: need to implement some policy for removing request->cell mappings
+    // when they are no longer needed. Ideally there'd be a way to guarantee
+    // that a request will have no further messages.
+    // Worst case implement something like a fixed-size LRU cache to avoid growing without bound
+    this._requestIdToCellId[message.requestId] = message.cellId;
+
+    var notebookUpdate = this._notebook.putCell({
+      id: message.cellId,
+      type: 'code',
+      source: message.code
+    });
+
+    // Update all clients about the notebook data change
+    this._broadcastNotebookUpdate(notebookUpdate);
+    // Request that the kernel execute the code chunk
     this._kernel.execute(message);
   }
 
-  _registerUserEventHandlers () {
-    this._userconn.onExecuteRequest(this._handleExecuteRequestPreDelegate.bind(this));
+  /**
+   * Delegates in incoming kernel status (from kernel) to the middleware stack
+   */
+  _handleKernelStatusPreDelegate (status: app.KernelStatus) {
+    var nextAction = this._handleKernelStatusPostDelegate.bind(this);
+    this._messageHandler(status, this, nextAction);
+  }
+  /**
+   * Forwards the kernel status to the user, post-middleware stack processing
+   */
+  _handleKernelStatusPostDelegate (message: any) {
+    this._broadcastSessionStatus({
+      // TODO: add other session metdata here such as connected users, etc. eventually
+      kernelStatus: message.status
+    });
+  }
+
+  _handleStreamDataPreDelegate (streamData: app.StreamData) {
+    var nextAction = this._handleStreamDataPostDelegate.bind(this);
+    this._messageHandler(streamData, this, nextAction);
+  }
+  _handleStreamDataPostDelegate (message: any) {
+    // FIXME: eventually need to merge outputs by appending, because multiple messagews
+    // might all write to a given request output
+    var cellId = this._getCellId(message.requestId);
+    if (!cellId) {
+      // Nothing to update
+      return;
+    }
+
+    switch (message.stream) {
+      case 'stderr':
+        // Log the stderr messages for debugging
+        console.log('[kernel stderr] requestId=' + message.requestId + '\n' + message.data);
+        break;
+      case 'stdout':
+        // Publish stdout to the notebook model
+        var notebookUpdate = this._notebook.updateCell({
+          id: cellId,
+          outputs: [{
+            type: 'stdout',
+            data: {
+              'text/plain': message.data
+            }
+          }]
+        });
+        this._broadcastNotebookUpdate(notebookUpdate);
+        break;
+      default:
+        console.log('Error: unexpected stream data from stream type="' + message.stream + '"');
+    }
+  }
+
+  _registerUserEventHandlers (userconn: app.IUserConnection) {
+    userconn.onExecuteRequest(this._handleExecuteRequestPreDelegate.bind(this));
   }
 
   _registerKernelEventHandlers () {
     this._kernel.onExecuteReply(this._handleExecuteReplyPreDelegate.bind(this));
     this._kernel.onExecuteResult(this._handleExecuteResultPreDelegate.bind(this));
     this._kernel.onKernelStatus(this._handleKernelStatusPreDelegate.bind(this));
+    this._kernel.onStreamData(this._handleStreamDataPreDelegate.bind(this));
   }
 }

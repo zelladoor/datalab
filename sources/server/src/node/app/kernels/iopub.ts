@@ -36,8 +36,16 @@ export class IOPubChannelClient extends channels.ChannelClient {
   /**
    * Default no-op message delegation handlers
    */
-  _delegateKernelStatusHandler (status: app.KernelStatus): void {}
   _delegateExecuteResultHandler (result: app.ExecuteResult): void {}
+  _delegateKernelStatusHandler (status: app.KernelStatus): void {}
+  _delegateStreamDataHandler (streamData: app.StreamData): void {}
+
+  /**
+   * Specifies a callback to handle execute result messages
+   */
+  onExecuteResult (callback: app.EventHandler<app.ExecuteResult>): void {
+    this._delegateExecuteResultHandler = callback;
+  }
 
   /**
    * Specifies a callback to handle kernel status messages
@@ -47,11 +55,12 @@ export class IOPubChannelClient extends channels.ChannelClient {
   }
 
   /**
-   * Specifies a callback to handle execute result messages
+   * Specifies a callback to handle kernel status messages
    */
-  onExecuteResult (callback: app.EventHandler<app.ExecuteResult>): void {
-    this._delegateExecuteResultHandler = callback;
+  onStreamData (callback: app.EventHandler<app.StreamData>): void {
+    this._delegateStreamDataHandler = callback;
   }
+
 
   /**
    * Note: Upcoming changes to the IPython messaging protocol will remap the (protocol version 4.1)
@@ -85,11 +94,28 @@ export class IOPubChannelClient extends channels.ChannelClient {
         // no-op
         break;
 
+      case 'stream':
+        this._handleStreamData(message);
+        break;
+
       default: // No defined handler for the type, so log it and move on
         console.log('Unhandled message type "' + message.header.msg_type + '" received');
         return;
     }
 
+  }
+
+  /**
+   * Converts IPython message data for a execute_result msg to an internal message and delegates
+   */
+  _handleExecuteResult (message: app.ipy.Message) {
+
+    var result: app.ExecuteResult = {
+      result: message.content['data'],
+      requestId: message.parentHeader.msg_id
+    }
+
+    this._delegateExecuteResultHandler (result);
   }
 
   /**
@@ -106,16 +132,18 @@ export class IOPubChannelClient extends channels.ChannelClient {
   }
 
   /**
-   * Converts IPython message data for a execute_result msg to an internal message and delegates
+   * Converts IPython message data for a stream output (stdout/stderr) and delegates
+   * @type {[type]}
    */
-  _handleExecuteResult (message: app.ipy.Message) {
+  _handleStreamData (message: app.ipy.Message) {
 
-    var result: app.ExecuteResult = {
-      result: message.content['data'],
+    var streamData: app.StreamData = {
+      stream: message.content.name,
+      data: message.content['data'],
       requestId: message.parentHeader.msg_id
     }
 
-    this._delegateExecuteResultHandler (result);
+    this._delegateStreamDataHandler(streamData);
   }
 
 }

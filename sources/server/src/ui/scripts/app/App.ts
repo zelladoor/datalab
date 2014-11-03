@@ -72,3 +72,23 @@ app.config(addRoutes);
 angular.element(document).ready(() => {
   angular.bootstrap(document, [constants.appModuleName]);
 });
+
+// FIXME: for logging all events during debugging
+// See if it's possible to have this use the main logger so it can be disabled easily
+app.config(function($provide: any) {
+  $provide.decorator("$rootScope", function($delegate: any) {
+    var Scope = $delegate.constructor;
+    var origBroadcast = Scope.prototype.$broadcast;
+    var origEmit = Scope.prototype.$emit;
+
+    Scope.prototype.$broadcast = function() {
+      console.debug("$broadcast with arguments:", arguments);
+      return origBroadcast.apply(this, arguments);
+    };
+    Scope.prototype.$emit = function() {
+      console.debug("$emit with arguments:", arguments);
+      return origEmit.apply(this, arguments);
+    };
+    return $delegate;
+  });
+});

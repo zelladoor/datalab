@@ -1,1 +1,46 @@
-<p>TODO(bryantd): Add editor content
+<div class="container-fluid">
+
+  <div class="row datalab-editor-toolbar">
+    <div class="col-sm-6 col-md-4 col-lg-3">
+      <span class="datalab-notebook-title">My DataLab notebook</span>
+    </div>
+    <div class="col-sm-6 col-md-8 col-lg-9">
+
+
+      <div class="btn-group pull-right" role="group">
+        <button type="button" class="btn btn-default btn-sm" ng-click="pageCtrl.executeNotebook()">
+        <span ng-switch on="pageCtrl.sessionStatus.kernelStatus">
+          <span ng-switch-when="busy">
+            <i class="fa-refresh fa fa-spin"></i>
+          </span>
+          <span ng-switch-default>
+            <i class="fa-long-arrow-down fa"></i>
+          </span>
+        </span>
+          &nbsp;Run Notebook
+        </button>
+        <button type="button" class="btn btn-default btn-sm" ng-click="pageCtrl.clearAllOutputs()">
+          <i class="fa-eraser fa"></i>&nbsp;Clear Outputs
+        </button>
+        <button type="button" class="btn btn-default btn-sm" ng-click="pageCtrl.saveNotebook()">
+          <i class="fa-save fa"></i>&nbsp;Save
+        </button>
+      </div>
+
+      <!-- FIXME: remove this if no content to show -->
+<!--       <div class="datalab-session-status-indicator pull-right">
+        <i class="fa fa-cog" ng-class="{'fa-spin': pageCtrl.sessionStatus.kernelStatus == 'busy'}"></i>
+      </div> -->
+
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-md-12">
+      <datalab-notebook-editor notebook="pageCtrl.notebookData.notebook"></datalab-notebook-editor>
+    </div>
+  </div>
+
+  <!-- <datalab-markdown-cell>foo</datalab-markdown-cell> -->
+
+</div>

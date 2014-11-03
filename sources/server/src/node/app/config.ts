@@ -18,7 +18,6 @@ import express = require('express');
 import kernels = require('./kernels/api');
 import manager = require('./kernels/manager');
 
-
 /**
  * Default server configuration with support for environment variable overrides.
  *

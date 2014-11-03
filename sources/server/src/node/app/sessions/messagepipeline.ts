@@ -12,16 +12,19 @@
  * the License.
  */
 
-
+/// <reference path="../../../../../../externs/ts/node/node-uuid.d.ts" />
+import uuid = require('node-uuid');
 import utils = require('../common/util');
 import sessions = require('./session');
-
+import notebooks = require('../notebooks/notebook');
 
 /**
  * Controls the flow of messages between users and kernels.
  *
  * Binds together kernel and user connections via session objects and provides support
  * for passing some/all messages to a middleware stack for processing/interception/etc.
+ *
+ * FIXME: this should just be called SessionManager as that is its role currently.
  */
 export class MessagePipeline {
 
@@ -41,6 +44,32 @@ export class MessagePipeline {
     this._registerHandlers();
   }
 
+  // FIXME: eventually will want to wire in the storage bits
+  // but for now, create a blank notebook on each new session
+  _createBlankNotebook (): app.notebook.IActiveNotebook {
+    // Create a worksheet with a single blank code cell
+    var cell = this._createBlankCell();
+    var notebook: app.notebook.Notebook = {
+      id: uuid.v4(),
+      cells: {},
+      worksheet: [cell.id]
+    };
+    notebook.cells[cell.id] = cell;
+
+    return new notebooks.ActiveNotebook(notebook);
+  }
+
+  // FIXME: try to add shared util module that both the front-end and backend
+  // can access. there is a dupe of this method in ui-side code for creating
+  // a default empty cell.
+  _createBlankCell (): app.notebook.Cell {
+    return {
+      id: uuid.v4(),
+      type: 'code',
+      source: ''
+    };
+  }
+
   /**
    * Binds the user connection to a new kernel instance via a newly created session object
    */
@@ -49,7 +78,13 @@ export class MessagePipeline {
       iopubPort: utils.getAvailablePort(),
       shellPort: utils.getAvailablePort()
     });
-    return new sessions.Session(sessionId, connection, kernel, this._handleMessage.bind(this));
+    var notebook = this._createBlankNotebook();
+    return new sessions.Session(
+      sessionId,
+      connection,
+      kernel,
+      notebook,
+      this._handleMessage.bind(this));
   }
 
   /**

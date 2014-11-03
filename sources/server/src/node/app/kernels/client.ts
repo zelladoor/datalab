@@ -69,8 +69,14 @@ export class KernelClient implements app.IKernel {
    * Registers a callback to be invoked when a kernel status message arrives from the kernel
    */
   onKernelStatus (callback: app.EventHandler<app.KernelStatus>): void {
+    // Keep a direct reference to the kernel status callback so that the kernel client itself is
+    // can route its own kernel status messages (e.g., kernel died) to the given callback/handler
     this._delegateKernelStatusHandler = callback;
     this._iopub.onKernelStatus(callback);
+  }
+
+  onStreamData (callback: app.EventHandler<app.StreamData>): void {
+    this._iopub.onStreamData(callback);
   }
 
   /**

@@ -36,8 +36,29 @@ declare module app {
     (message: any, session: app.ISession, callback: app.EventHandler<any>): void
   }
 
+  interface NotebookUpdate extends app.notebook.Notebook {
+    // Note: eventually this message will contain a set of changes rather than the full notebook
+  }
+
+  // FIXME: have other event message types inherit from this base interface to avoid repetition
+  // of common fields like "requestId" (and other future common fields if any)
+  interface InternalMessage {
+    requestId: string;
+  }
+
   interface KernelStatus {
     status: string;
+    requestId: string;
+  }
+
+  interface SessionStatus {
+    kernelStatus: string;
+    // additional session metadata fields go here eventually (e.g., connected users)
+  }
+
+  interface StreamData {
+    stream: string;
+    data: string;
     requestId: string;
   }
 
@@ -45,7 +66,7 @@ declare module app {
     success: boolean;
     requestId: string;
     // When execute has not been aborted, we get back an execution count
-    executionCount?: number;
+    executionCounter?: number;
     // When an error has occurred, the following are populated
     errorName?: string;
     errorMessage?: string;
@@ -57,6 +78,7 @@ declare module app {
     // Note: user_variables and user_expressions are slated for removal/reworking in upcoming versions
     // https://github.com/ipython/ipython/wiki/IPEP-13:-Updating-the-Message-Spec
     requestId: string;
+    cellId: string;
   }
 
   interface ExecuteResult {

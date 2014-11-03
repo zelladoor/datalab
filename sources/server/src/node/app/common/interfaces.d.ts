@@ -42,6 +42,7 @@ declare module app {
     onExecuteReply (callback: EventHandler<ExecuteReply>): void;
     onExecuteResult (callback: EventHandler<ExecuteResult>): void;
     onKernelStatus (callback: EventHandler<KernelStatus>): void;
+    onStreamData (callback: EventHandler<StreamData>): void;
     shutdown (): void;
     start (): void;
   }
@@ -57,7 +58,7 @@ declare module app {
   interface ISession {
     id: string;
     getKernelId (): string;
-    getUserConnectionId (): string;
+    getUserConnectionIds (): string[];
     updateUserConnection (connection: IUserConnection): void;
   }
 
@@ -68,7 +69,8 @@ declare module app {
     onExecuteRequest (callback: EventHandler<ExecuteRequest>): void;
     sendExecuteReply (reply: ExecuteReply): void;
     sendExecuteResult (result: ExecuteResult): void;
-    sendKernelStatus (status: KernelStatus): void;
+    sendSessionStatus (status: SessionStatus): void;
+    sendNotebookUpdate (notebookUpdate: NotebookUpdate): void;
   }
 
   interface IUserConnectionManager {
@@ -76,4 +78,35 @@ declare module app {
     onDisconnect (callback: EventHandler<IUserConnection>): void;
   }
 
+
+  // FIXME: duplicate content of other interface file
+  module notebook {
+    interface CellOutput {
+      type: string;
+      data: any;
+    }
+    interface Cell {
+      id: string;
+      type?: string; // "code" || "markdown" || etc
+
+      source?: string; // the cell's "input" value
+      outputs?: CellOutput[];
+
+      executionCounter?: string;
+    }
+    interface Notebook {
+      cells?: Map<Cell>;
+      worksheet: string[]; // [cell ids]
+    }
+
+    interface IActiveNotebook { // FIXME: better name for this?
+      getData (): Notebook;
+      // TODO(bryantd): methods below will actually return a "Notebok changes"/delta eventually
+      // Returning a full notebook for the time being until notebook deltas are implemented
+      putCell (cell: Cell): Notebook;
+      updateCell (cell: Cell): Notebook;
+    }
+  }
+
 }
+
