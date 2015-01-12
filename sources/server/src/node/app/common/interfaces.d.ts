@@ -82,7 +82,7 @@ declare module app {
   // FIXME: duplicate content of other interface file
   module notebook {
     interface CellOutput {
-      type: string;
+      type: string; // FIXME: is this ever used? what was supposed to go here? stdout vs result vs display?
       data: any;
     }
     interface Cell {
