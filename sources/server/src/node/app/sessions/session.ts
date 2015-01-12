@@ -151,6 +151,7 @@ export class Session implements app.ISession {
     });
   }
 
+  // FIXME: remove all of the execute result handling (subsumed by output data handler)
   /**
    * Delegates an incoming execute result (from kernel) to the middleware stack
    */
@@ -162,8 +163,21 @@ export class Session implements app.ISession {
    * Forwards the execute result to the user, post-middleware stack processing
    */
   _handleExecuteResultPostDelegate (message: any) {
-    // FIXME: eventually need to merge outputs by appending, because multiple messagews
-    // might all write to a given request output
+    /*
+
+    FIXME: see if possible to eliminate the overlap with handleOutputData*()
+
+    Maybe can do away with all of the special execute result handling code paths
+    if nothing different needs to happen for that output.
+
+    1. The cell outputs should be cleared when the execute *request* is received
+    by the server (not when the execute *result* is received)
+    2. execute result mimetype bundle should be passed in tact to the client (can
+    make this change in the kernel/channel client)
+    3. Remainder of the logic is the same for handling this and other output types
+
+     */
+    /*
     var cellId = this._getCellId(message.requestId);
     if (!cellId) {
       // Nothing to update
@@ -173,13 +187,15 @@ export class Session implements app.ISession {
       id: cellId,
       outputs: [{
         type: 'execute-result',
-        data: {
+        mimetypeBundle: {
           'text/plain': message.result['text/plain']
         }
       }]
     });
 
     this._broadcastNotebookUpdate(notebookUpdate);
+    */
+    console.log('### ERROR ERROR ERROR: called exec result handler!');
   }
 
   /**
@@ -195,12 +211,14 @@ export class Session implements app.ISession {
   _handleExecuteRequestPostDelegate (message: any) {
     // Keep track of which cell id to map a given request id to
     // The kernel doesn't know anything about cells/notebooks, just requests
+    //
     // FIXME: need to implement some policy for removing request->cell mappings
     // when they are no longer needed. Ideally there'd be a way to guarantee
     // that a request will have no further messages.
     // Worst case implement something like a fixed-size LRU cache to avoid growing without bound
     this._requestIdToCellId[message.requestId] = message.cellId;
 
+    // Note that the following will also clear the list of cell outputs implicitly
     var notebookUpdate = this._notebook.putCell({
       id: message.cellId,
       type: 'code',
@@ -230,40 +248,26 @@ export class Session implements app.ISession {
     });
   }
 
-  _handleStreamDataPreDelegate (streamData: app.StreamData) {
-    var nextAction = this._handleStreamDataPostDelegate.bind(this);
-    this._messageHandler(streamData, this, nextAction);
+  _handleOutputDataPreDelegate (outputData: app.OutputData) {
+    var nextAction = this._handleOutputDataPostDelegate.bind(this);
+    this._messageHandler(outputData, this, nextAction);
   }
-  _handleStreamDataPostDelegate (message: any) {
-    // FIXME: eventually need to merge outputs by appending, because multiple messagews
-    // might all write to a given request output
+  _handleOutputDataPostDelegate (message: any) {
     var cellId = this._getCellId(message.requestId);
     if (!cellId) {
       // Nothing to update
       return;
     }
 
-    switch (message.stream) {
-      case 'stderr':
-        // Log the stderr messages for debugging
-        console.log('[kernel stderr] requestId=' + message.requestId + '\n' + message.data);
-        break;
-      case 'stdout':
-        // Publish stdout to the notebook model
-        var notebookUpdate = this._notebook.updateCell({
-          id: cellId,
-          outputs: [{
-            type: 'stdout',
-            data: {
-              'text/plain': message.data
-            }
-          }]
-        });
-        this._broadcastNotebookUpdate(notebookUpdate);
-        break;
-      default:
-        console.log('Error: unexpected stream data from stream type="' + message.stream + '"');
-    }
+    // Publish the output data to the notebook model
+    var notebookUpdate = this._notebook.updateCell({
+      id: cellId,
+      outputs: [{
+        type: message.type,
+        mimetypeBundle: message.mimetypeBundle
+      }]
+    });
+    this._broadcastNotebookUpdate(notebookUpdate);
   }
 
   _registerUserEventHandlers (userconn: app.IUserConnection) {
@@ -274,6 +278,6 @@ export class Session implements app.ISession {
     this._kernel.onExecuteReply(this._handleExecuteReplyPreDelegate.bind(this));
     this._kernel.onExecuteResult(this._handleExecuteResultPreDelegate.bind(this));
     this._kernel.onKernelStatus(this._handleKernelStatusPreDelegate.bind(this));
-    this._kernel.onStreamData(this._handleStreamDataPreDelegate.bind(this));
+    this._kernel.onOutputData(this._handleOutputDataPreDelegate.bind(this));
   }
 }

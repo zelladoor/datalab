@@ -56,9 +56,9 @@ declare module app {
     // additional session metadata fields go here eventually (e.g., connected users)
   }
 
-  interface StreamData {
-    stream: string;
-    data: string;
+  interface OutputData {
+    type: string; // 'stdout' | 'stderr' | 'result'
+    mimetypeBundle: any;
     requestId: string;
   }
 

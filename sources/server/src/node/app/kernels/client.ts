@@ -75,8 +75,8 @@ export class KernelClient implements app.IKernel {
     this._iopub.onKernelStatus(callback);
   }
 
-  onStreamData (callback: app.EventHandler<app.StreamData>): void {
-    this._iopub.onStreamData(callback);
+  onOutputData (callback: app.EventHandler<app.OutputData>): void {
+    this._iopub.onOutputData(callback);
   }
 
   /**

@@ -42,7 +42,7 @@ declare module app {
     onExecuteReply (callback: EventHandler<ExecuteReply>): void;
     onExecuteResult (callback: EventHandler<ExecuteResult>): void;
     onKernelStatus (callback: EventHandler<KernelStatus>): void;
-    onStreamData (callback: EventHandler<StreamData>): void;
+    onOutputData (callback: EventHandler<OutputData>): void;
     shutdown (): void;
     start (): void;
   }
@@ -60,6 +60,10 @@ declare module app {
     getKernelId (): string;
     getUserConnectionIds (): string[];
     updateUserConnection (connection: IUserConnection): void;
+  }
+
+  interface IStorageClient {
+    // TODO(bryantd)
   }
 
   interface IUserConnection {
@@ -82,12 +86,12 @@ declare module app {
   // FIXME: duplicate content of other interface file
   module notebook {
     interface CellOutput {
-      type: string; // FIXME: is this ever used? what was supposed to go here? stdout vs result vs display?
-      data: any;
+      type: string; // 'result' | 'stdout' | 'stderr'
+      mimetypeBundle: any;
     }
     interface Cell {
       id: string;
-      type?: string; // "code" || "markdown" || etc
+      type?: string; // 'code' | 'markdown' | 'heading' | 'etc'
 
       source?: string; // the cell's "input" value
       outputs?: CellOutput[];
