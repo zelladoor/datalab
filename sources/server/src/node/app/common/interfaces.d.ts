@@ -40,7 +40,6 @@ declare module app {
     config: KernelConfig;
     execute (request: ExecuteRequest): void;
     onExecuteReply (callback: EventHandler<ExecuteReply>): void;
-    onExecuteResult (callback: EventHandler<ExecuteResult>): void;
     onKernelStatus (callback: EventHandler<KernelStatus>): void;
     onOutputData (callback: EventHandler<OutputData>): void;
     shutdown (): void;

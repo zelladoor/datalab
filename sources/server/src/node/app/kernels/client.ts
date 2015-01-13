@@ -59,13 +59,6 @@ export class KernelClient implements app.IKernel {
   }
 
   /**
-   * Registers a callback to be invoked when an execute result message arrives from the kernel
-   */
-  onExecuteResult (callback: app.EventHandler<app.ExecuteResult>): void {
-    this._iopub.onExecuteResult(callback);
-  }
-
-  /**
    * Registers a callback to be invoked when a kernel status message arrives from the kernel
    */
   onKernelStatus (callback: app.EventHandler<app.KernelStatus>): void {

@@ -36,16 +36,8 @@ export class IOPubChannelClient extends channels.ChannelClient {
   /**
    * Default no-op message delegation handlers
    */
-  _delegateExecuteResultHandler (result: app.ExecuteResult): void {}
   _delegateKernelStatusHandler (status: app.KernelStatus): void {}
   _delegateOutputDataHandler (output: app.OutputData): void {}
-
-  /**
-   * Specifies a callback to handle execute result messages
-   */
-  onExecuteResult (callback: app.EventHandler<app.ExecuteResult>): void {
-    this._delegateExecuteResultHandler = callback;
-  }
 
   /**
    * Specifies a callback to handle kernel status messages

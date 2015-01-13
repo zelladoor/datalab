@@ -150,53 +150,6 @@ export class Session implements app.ISession {
     });
   }
 
-  // FIXME: remove all of the execute result handling (subsumed by output data handler)
-  /**
-   * Delegates an incoming execute result (from kernel) to the middleware stack
-   */
-  _handleExecuteResultPreDelegate (result: app.ExecuteResult) {
-    var nextAction = this._handleExecuteResultPostDelegate.bind(this);
-    this._messageHandler(result, this, nextAction);
-  }
-  /**
-   * Forwards the execute result to the user, post-middleware stack processing
-   */
-  _handleExecuteResultPostDelegate (message: any) {
-    /*
-
-    FIXME: see if possible to eliminate the overlap with handleOutputData*()
-
-    Maybe can do away with all of the special execute result handling code paths
-    if nothing different needs to happen for that output.
-
-    1. The cell outputs should be cleared when the execute *request* is received
-    by the server (not when the execute *result* is received)
-    2. execute result mimetype bundle should be passed in tact to the client (can
-    make this change in the kernel/channel client)
-    3. Remainder of the logic is the same for handling this and other output types
-
-     */
-    /*
-    var cellId = this._getCellId(message.requestId);
-    if (!cellId) {
-      // Nothing to update
-      return;
-    }
-    var notebookUpdate = this._notebook.updateCell({
-      id: cellId,
-      outputs: [{
-        type: 'execute-result',
-        mimetypeBundle: {
-          'text/plain': message.result['text/plain']
-        }
-      }]
-    });
-
-    this._broadcastNotebookUpdate(notebookUpdate);
-    */
-    console.log('### ERROR ERROR ERROR: called exec result handler!');
-  }
-
   /**
    * Delegates an incoming execute request (from user) to the middleware stack
    */
@@ -275,7 +228,6 @@ export class Session implements app.ISession {
 
   _registerKernelEventHandlers () {
     this._kernel.onExecuteReply(this._handleExecuteReplyPreDelegate.bind(this));
-    this._kernel.onExecuteResult(this._handleExecuteResultPreDelegate.bind(this));
     this._kernel.onKernelStatus(this._handleKernelStatusPreDelegate.bind(this));
     this._kernel.onOutputData(this._handleOutputDataPreDelegate.bind(this));
   }
