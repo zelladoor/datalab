@@ -45,6 +45,9 @@ export var codeCell = {
 export var markdownCell = {
   directiveName: 'datalabMarkdownCell'
 }
+export var markdownViewer = {
+  directiveName: 'datalabMarkdownViewer'
+}
 export var notebookEditor = {
   directiveName: 'datalabNotebookEditor'
 }
@@ -65,6 +68,7 @@ export var scopes = {
   markdownCell: 'markdownCell',
 
   codeEditor: 'codeEditor',
+  markdownViewer: 'markdownViewer',
   notebookEditor: 'notebookEditor',
 
   layouts: 'layouts',

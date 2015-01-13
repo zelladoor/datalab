@@ -26,9 +26,11 @@
  */
 /// <reference path="../../../../../../../../externs/ts/angularjs/angular.d.ts" />
 /// <amd-dependency path="app/components/editorcell/EditorCellDirective" />
+/// <amd-dependency path="app/components/markdownviewer/MarkdownViewerDirective" />
 import logging = require('app/common/Logging');
 import constants = require('app/common/Constants');
 import app = require('app/App');
+
 
 // FIXME: add missing config for importing marked
 // import marked = require('marked');
@@ -50,7 +52,7 @@ class MarkdownCellController {
   constructor (scope: MarkdownCellScope, rootScope: ng.IRootScopeService) {
     this._scope = scope;
     this._rootScope = rootScope;
-    // console.warn('Marked: ', marked);
+
     scope.keymap = this._createKeymap();
     scope.editMode = true;
   }
