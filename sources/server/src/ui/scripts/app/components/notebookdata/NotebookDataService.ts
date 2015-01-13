@@ -35,6 +35,18 @@ export class NotebookData {
   _rootScope: ng.IRootScopeService;
   _sce: ng.ISCEService;
 
+  // Mimetype preference order used by IPython
+  static _preferredMimetypes = [
+    'application/javascript',
+    'text/html',
+    'text/markdown',
+    'text/latex',
+    'image/svg+xml',
+    'image/png',
+    'image/jpeg',
+    'application/pdf',
+    'text/plain'];
+
   static $inject = ['$rootScope', '$sce'];
   constructor (rootScope: ng.IRootScopeService, sce: ng.ISCEService) {
     this._eventScope = rootScope; // FIXME: refactor to just refer to _rootScope throughout
@@ -60,13 +72,15 @@ export class NotebookData {
       return; // FIXME: better handling of this case
     }
 
-    this._markNotebookOutputsAsTrusted (newNotebook)
+    this._selectNotebookOutputMimetypes(newNotebook)
 
     if (this.notebook) {
       this._mergeNotebook(newNotebook);
     } else {
       this.notebook = newNotebook;
     }
+
+    console.warn('new notebook: ', this.notebook);
   }
 
   // FIXME: this method will change substantially or be replaced in full once notebook values
@@ -121,22 +135,55 @@ export class NotebookData {
 
   }
 
-  _markNotebookOutputsAsTrusted (notebook: any) {
-    // Save a reference to avoid needing to pass 'this' context through every level of nesting below
-    var sce = this._sce;
+  /**
+   * Selects a mimetype for the cell output out of possibilities within mimetype bundle
+   */
+  _selectMimetype (output: any) { // FIXME TYPE app.notebook.AugmentedCellOutput
+    var bundle = output.mimetypeBundle;
+    output.preferredMimetype = this._findPreferredMimetype(bundle);
 
-    // Iterate through the cells and mark output content as trusted
+    // Bail if there isn't a preferred mimetype within the bundle
+    if (!output.preferredMimetype) {
+      log.warn('Unable to select a mimetype for cell output: ', output);
+      return;
+    }
+
+    // Create a trusted html wrapper for the html content so that it is display-able
+    if (output.preferredMimetype == 'text/html') {
+      bundle = this._sce.trustAsHtml(bundle['text/html']);
+    }
+  }
+
+  /**
+   * Select mimetypes for all cell outputs within the given notebook
+   */
+  _selectNotebookOutputMimetypes (notebook: any) {
+    // Iterate through the cells
     Object.keys(notebook.cells).forEach((cellId) => {
       var cell = notebook.cells[cellId];
       if (cell.outputs) {
-        cell.outputs.forEach((output) => {
-          if (output.data) {
-            // TODO(bryantd): allow arbitrary output types here instead of just mapping text/plain
-            output.data['text/html'] = sce.trustAsHtml(output.data['text/plain']);
-          }
-        });
+        console.debug('outputs for cell id ' + cell.id, cell.outputs); // FIXME: debug
+        // Iterate through each cell's output and select a mimetype (one per output)
+        cell.outputs.forEach(this._selectMimetype.bind(this));
       }
     });
+  }
+
+  /**
+   * Finds the preferred mimetype from the options available in a given mimetype bundle.
+   *
+   * The preferred mimetype for displaying a given output is modeled on IPython's preference list.
+   *
+   * Returns null if none of the preferred mimetypes are available within the bundle.
+   */
+  _findPreferredMimetype (mimetypeBundle: any) {
+    for (var i = 0; i < NotebookData._preferredMimetypes.length; ++i) {
+      var mimetype = NotebookData._preferredMimetypes[i];
+      if (mimetypeBundle.hasOwnProperty(mimetype)) {
+        return mimetype;
+      }
+    }
+    return null;
   }
 
 }

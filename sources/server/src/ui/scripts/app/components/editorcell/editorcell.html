@@ -23,18 +23,29 @@
       </div>
 
       <div class="datalab-editor-cell-outputs col-md-11">
+        <p>number of outputs: {{ cell.outputs.length }}</p>
+        <div ng-repeat="output in cell.outputs" ng-switch="output.preferredMimetype">
+          <p>mimetype: {{ output.preferredMimetype }}</p>
+          <!-- <div ng-switch="output.preferredMimetype"> -->
+<!--             <p ng-switch-when="text/plain">text/plain</p>
+            <p ng-switch-when="text/html">text/html</p>
+            <p ng-switch-when="image/png">image/png</p> -->
+          <!-- </div> -->
+          <div ng-switch-when="text/plain">
+            {{ output.mimetypeBundle['text/plain'] }}
+          </div>
 
-        <div ng-repeat="output in cell.outputs">
-          <div ng-bind-html="output.data['text/html']"></div>
+          <div ng-switch-when="text/html" ng-bind-html="output.mimetypeBundle['text/html']"></div>
+
+          <img ng-switch-when="image/png" ng-src="data:image/png;base64,{{output.mimetypeBundle['image/png']}}"/>
+
+          <img ng-switch-when="image/jpeg" ng-src="data:image/jpeg;base64,{{output.mimetypeBundle['image/png']}}"/>
+
         </div>
-
-        <!-- FIXME: add back mimetype support -->
-  <!--       <div ng-repeat="output in outputs" ng-switch="output.mimetype">
-          <div ng-switch-when="text/html" ng-bind-html="output.content"></div>
-          Additional mime-types go here (css, js, etc.)
-        </div> -->
       </div>
+
     </div>
+
     <div class="clearer"></div>
   </div>
 

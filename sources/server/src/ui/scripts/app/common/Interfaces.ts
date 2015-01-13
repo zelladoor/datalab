@@ -81,8 +81,13 @@ declare module app {
   module notebook {
 
     interface CellOutput {
-      type: string; // display_data || execute_result || stream || etc.
-      data: any; // FIXME: set of different value types that we care about here (most of these are persisted as a single concatenated string?)
+      type: string; // 'result' | 'stdout' | 'stderr'
+      mimetypeBundle: any;
+    }
+
+    interface AugmentedCellOutput extends CellOutput{ // FIXME: better name for this interface?
+      preferredMimetype?: string;
+      trustedHtml?: string;
     }
     // FIXME: For diff types see: https://github.com/ipython/ipython/blob/master/docs/source/notebook/nbformat.rst
     // interface DisplayDataOutput extends CellOutput {
