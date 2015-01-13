@@ -38,17 +38,21 @@ var log = logging.getLogger(constants.scopes.markdownCell);
 interface MarkdownCellScope extends ng.IScope { // FIXME: naming convention for local scopes
   cell: any;
   keymap?: any;
-  actions?: any;
+  editMode?: boolean; // edit mode versus view/render mode
 }
 
 class MarkdownCellController {
+
+  _rootScope: ng.IRootScopeService;
   _scope: MarkdownCellScope;
 
-  static $inject: string[] = ['$scope'];
-  constructor (scope: MarkdownCellScope) {
+  static $inject: string[] = ['$scope', '$rootScope'];
+  constructor (scope: MarkdownCellScope, rootScope: ng.IRootScopeService) {
     this._scope = scope;
+    this._rootScope = rootScope;
     // console.warn('Marked: ', marked);
     scope.keymap = this._createKeymap();
+    scope.editMode = true;
   }
 
   _createKeymap () {
@@ -59,6 +63,10 @@ class MarkdownCellController {
 
   _handleSwitchToRenderedMode () {
     console.warn('Markdown cell switching to rendered mode...');
+    var scope = this._scope;
+    this._rootScope.$evalAsync(() => {
+      scope.editMode = false;
+    });
   }
 
 }

@@ -1,3 +1,5 @@
 <div class="datalab-markdown-cell">
-  <datalab-editor-cell cell="cell" keymap="keymap"></datalab-editor-cell>
+  <datalab-editor-cell ng-if="editMode" cell="cell" keymap="keymap"></datalab-editor-cell>
+  <p ng-if="!editMode">{{ cell.source }}</p>
+  <!-- <datalab-markdown-viewer ng-if="!editMode" source="cell.source"></datalab-markdown-viewer> -->
 </div>

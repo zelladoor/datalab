@@ -36,7 +36,7 @@ class CodeCellController {
   _scope: CodeCellScope;
 
   static $inject: string[] = ['$scope', '$rootScope'];
-  constructor (scope: CodeCellScope, rootScope: ng.IRootScopeService, socket: any) {
+  constructor (scope: CodeCellScope, rootScope: ng.IRootScopeService) {
     this._scope = scope;
     this._rootScope = rootScope;
 
