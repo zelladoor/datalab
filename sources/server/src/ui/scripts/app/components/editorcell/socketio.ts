@@ -24,7 +24,7 @@ var log = logging.getLogger('socket-factory');
 
 // FIXME: bunch of typing issues being ignored for now
 /**
- * [socketFactory description]
+ * Creates a (singleton) socket.io connection with wrappers for triggering the Angular digest cycle
  *
  * TODO(bryantd): Current socket factory provides only a singleton, but we'll need one per "datalab channel" eventually;
  * need to refactor this "angular factory" to be an object with a createSocket() method.
