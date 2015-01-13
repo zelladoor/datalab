@@ -6,8 +6,12 @@
     <div class="datalab-editor-cell-input row">
       <div class="datalab-editor-cell-identifier datalab-editor-cell-identifier-input col-md-1">
         <!-- FIXME: css class name s/cell-index/execution-counter/ -->
+        <!-- IPython-style input region with execution counter
         In&nbsp;
         <span class="datalab-editor-cell-index">[{{ cell.executionCounter }}]</span>
+        -->
+        <!-- Minimalistic input region marker -->
+        <span class="fa fa-terminal fa-lg"></span>
       </div>
 
       <div class="datalab-editor-cell-input-content col-md-11">
@@ -18,10 +22,11 @@
     <div class="datalab-editor-cell-output row" ng-show="cell.outputs">
       <div class="datalab-editor-cell-identifier datalab-editor-cell-identifier-output col-md-1">
         <!-- FIXME: css class name s/cell-index/execution-counter/ -->
+        <!-- IPython-style output region with execution counter
         Out
         <span class="datalab-editor-cell-index">[{{ cell.executionCounter }}]</span>
+      -->
       </div>
-
       <div class="datalab-editor-cell-outputs col-md-11">
         <!-- For each output, generate a mimetype-specific element -->
         <div ng-repeat="output in cell.outputs" ng-switch="output.preferredMimetype">
