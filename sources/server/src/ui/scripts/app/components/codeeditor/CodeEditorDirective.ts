@@ -58,7 +58,6 @@ interface CodeEditorScope extends ng.IScope {
   active?: boolean;
   getKeymap?: Function; // FIXME: more specific type
   getActionHandlers?: Function; // FIXME: prob rename, type
-  cmInstance?: any; // FIXME: probably can remove this eventually
 }
 
 class Ctrl {
@@ -83,8 +82,6 @@ function codeEditorDirectiveLink (
 
   var cmInstance: CodeMirror.Editor = codeMirror(cmContainer, codeMirrorOptions);
   cmInstance.addKeyMap(scope.getKeymap());
-
-  scope.cmInstance = cmInstance;
 
   // Sets the inital code editor content equal to the linked template attribute value.
   // The 'code' element attribute will point to a value in the parent scope/controller.

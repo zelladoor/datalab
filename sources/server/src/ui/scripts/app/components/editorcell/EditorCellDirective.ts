@@ -42,13 +42,13 @@ interface MyScope extends ng.IScope { // FIXME: naming convention for local scop
 
 class Ctrl {
 
-  _eventScope: ng.IRootScopeService;
+  _rootScope: ng.IRootScopeService;
   _scope: MyScope;
 
   static $inject: string[] = ['$scope', '$rootScope', 'Socket'];
   constructor (scope: MyScope, rootScope: ng.IRootScopeService, socket: any) {
     this._scope = scope;
-    this._eventScope = rootScope;
+    this._rootScope = rootScope;
 
     scope.keymap = this._createKeymap();
     scope.actions = this._createActionHandlers();
@@ -87,7 +87,7 @@ class Ctrl {
   // somewhere that the node and ui-side code can access/build against. These event names and messages
   // are effectively the "datalab websocket api" and should be well documented
   _handleExecute (cm: CodeMirror.Editor) {
-    this._eventScope.$emit('execute-cell', this._scope.cell);
+    this._rootScope.$emit('execute-cell', this._scope.cell);
   }
 
 }

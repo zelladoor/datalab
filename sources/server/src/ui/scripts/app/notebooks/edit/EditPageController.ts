@@ -98,9 +98,6 @@ export class EditPageController {
   executeNotebook () {
     log.debug('TODO: execute notebook');
   }
-  saveNotebook () {
-    log.debug('TODO: save notebook');
-  }
 
 }
 
