@@ -1,4 +1,17 @@
-// FIXME: hacking up the socket.io bits here
+/*
+ * Copyright 2014 Google Inc. All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under the License
+ * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
 
 /// <reference path="../../../../../../../../externs/ts/angularjs/angular.d.ts" />
 /// <reference path="../../../../../../../../externs/ts/socket.io.d.ts" />
@@ -9,7 +22,13 @@ import app = require('app/App');
 
 var log = logging.getLogger('socket-factory');
 
-// FIXME: bunch of typing issues being ignored fro now
+// FIXME: bunch of typing issues being ignored for now
+/**
+ * [socketFactory description]
+ *
+ * TODO(bryantd): Current socket factory provides only a singleton, but we'll need one per "datalab channel" eventually;
+ * need to refactor this "angular factory" to be an object with a createSocket() method.
+ */
 function socketFactory (rootScope: ng.IRootScopeService) {
   var socket: Socket = socketio();
   return {
@@ -32,7 +51,3 @@ socketFactory.$inject = ['$rootScope']
 
 app.registrar.factory('Socket', socketFactory);
 log.debug('Registered editor cell directive');
-
-
-// FIXME: Current socket factory provides only a singleton, but we'll need one per "datalab channel" eventually;
-// need to refactor this "angular factory" to be an object with a createSocket() method (i.e., a "real factory").
