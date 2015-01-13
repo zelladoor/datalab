@@ -79,8 +79,6 @@ export class NotebookData {
     } else {
       this.notebook = newNotebook;
     }
-
-    console.warn('new notebook: ', this.notebook);
   }
 
   // FIXME: this method will change substantially or be replaced in full once notebook values
@@ -140,6 +138,10 @@ export class NotebookData {
    */
   _selectMimetype (output: any) { // FIXME TYPE app.notebook.AugmentedCellOutput
     var bundle = output.mimetypeBundle;
+    if (!bundle) {
+      log.warn('Received an output with no mimetype bundle: ', output);
+      return;
+    }
     output.preferredMimetype = this._findPreferredMimetype(bundle);
 
     // Bail if there isn't a preferred mimetype within the bundle
@@ -150,7 +152,7 @@ export class NotebookData {
 
     // Create a trusted html wrapper for the html content so that it is display-able
     if (output.preferredMimetype == 'text/html') {
-      bundle = this._sce.trustAsHtml(bundle['text/html']);
+      output.trustedHtml = this._sce.trustAsHtml(bundle['text/html']);
     }
   }
 
@@ -162,7 +164,6 @@ export class NotebookData {
     Object.keys(notebook.cells).forEach((cellId) => {
       var cell = notebook.cells[cellId];
       if (cell.outputs) {
-        console.debug('outputs for cell id ' + cell.id, cell.outputs); // FIXME: debug
         // Iterate through each cell's output and select a mimetype (one per output)
         cell.outputs.forEach(this._selectMimetype.bind(this));
       }

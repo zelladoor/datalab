@@ -124,8 +124,8 @@ export class Session implements app.ISession {
     // Add the error messaging as an output if an error has occurred
     if (message.errorName) {
       cellUpdate.outputs = [{
-        type: 'error', // FIXME: which pieces of code will care about this value?
-        data: {
+        type: 'error',
+        mimetypeBundle: {
           // TODO(bryantd): parse and present the traceback data as well
           // Hopefully there's a configuration setting for getting back html
           // traceback data rather than the escape-code formatted traceback
@@ -134,12 +134,11 @@ export class Session implements app.ISession {
       }];
     }
 
-    var notebookUpdate = this._notebook.updateCell(cellUpdate);
 
+    var notebookUpdate = this._notebook.updateCell(cellUpdate);
     this._broadcastNotebookUpdate(notebookUpdate);
   }
 
-  // FIXME: make a single generic broadcast method if possible
   _broadcastNotebookUpdate (notebookUpdate: any) {
     this._userconns.forEach((userconn) => {
       userconn.sendNotebookUpdate(notebookUpdate);

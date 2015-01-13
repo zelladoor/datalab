@@ -86,7 +86,7 @@ declare module app {
   // FIXME: duplicate content of other interface file
   module notebook {
     interface CellOutput {
-      type: string; // 'result' | 'stdout' | 'stderr'
+      type: string; // 'result' | 'error' | 'stdout' | 'stderr'
       mimetypeBundle: any;
     }
     interface Cell {

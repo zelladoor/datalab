@@ -23,24 +23,18 @@
       </div>
 
       <div class="datalab-editor-cell-outputs col-md-11">
-        <p>number of outputs: {{ cell.outputs.length }}</p>
+        <!-- For each output, generate a mimetype-specific element -->
         <div ng-repeat="output in cell.outputs" ng-switch="output.preferredMimetype">
-          <p>mimetype: {{ output.preferredMimetype }}</p>
-          <!-- <div ng-switch="output.preferredMimetype"> -->
-<!--             <p ng-switch-when="text/plain">text/plain</p>
-            <p ng-switch-when="text/html">text/html</p>
-            <p ng-switch-when="image/png">image/png</p> -->
-          <!-- </div> -->
+          <!-- Plain text -->
           <div ng-switch-when="text/plain">
             {{ output.mimetypeBundle['text/plain'] }}
           </div>
-
-          <div ng-switch-when="text/html" ng-bind-html="output.mimetypeBundle['text/html']"></div>
-
+          <!-- HTML -->
+          <div ng-switch-when="text/html" ng-bind-html="output.trustedHtml"></div>
+          <!-- PNG -->
           <img ng-switch-when="image/png" ng-src="data:image/png;base64,{{output.mimetypeBundle['image/png']}}"/>
-
-          <img ng-switch-when="image/jpeg" ng-src="data:image/jpeg;base64,{{output.mimetypeBundle['image/png']}}"/>
-
+          <!-- JPEG -->
+          <img ng-switch-when="image/jpeg" ng-src="data:image/jpeg;base64,{{output.mimetypeBundle['image/jpeg']}}"/>
         </div>
       </div>
 
