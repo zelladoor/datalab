@@ -1,8 +1,10 @@
 <div class="notebook">
-<!-- FIXME: possible to put the ng-repeat directly on the cell element to avoid extra div? -->
+  <!-- FIXME: a single markdown cell during dev until there's controls for creating them... -->
+  <datalab-markdown-cell cell="debugMarkdownCell"></datalab-markdown-cell>
+
+  <!-- FIXME: possible to put the ng-repeat directly on the cell element to avoid extra div? -->
   <div ng-repeat="cellId in notebook.worksheet">
-    <!-- FIXME: rename directive to datalab-cell-editor for consistency with dl-notebook-editor, dl-markdown-editor -->
-    <datalab-code-cell cell="notebook.cells[cellId]"></datalab-editor-cell>
+    <datalab-code-cell cell="notebook.cells[cellId]"></datalab-code-cell>
   </div>
 </div>
 

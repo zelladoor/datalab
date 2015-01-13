@@ -45,14 +45,14 @@ class CodeCellController {
 
   _createKeymap () {
     return {
-      'Shift-Enter': this._handleExecute.bind(this),
+      'Shift-Enter': this._handleExecute.bind(this)
     };
   }
 
   // FIXME: move event name string constants to constants file and put these particular constants
   // somewhere that the node and ui-side code can access/build against. These event names and messages
   // are effectively the "datalab websocket api" and should be well documented
-  _handleExecute (cm: CodeMirror.Editor) {
+  _handleExecute () {
     this._rootScope.$emit('execute-cell', this._scope.cell);
   }
 }

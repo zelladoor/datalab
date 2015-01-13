@@ -1,7 +1,6 @@
 <div id="cell-{{cell.id}}" class="datalab-editor-cell row" ng-class="{ 'datalab-editor-cell-active' : cell.active }">
   <!-- NOTE: this template assumes that it lives inside of some bootstrap .container as the base grid system -->
 
-
   <div class="col-md-11">
     <div class="datalab-editor-cell-input row">
       <div class="datalab-editor-cell-identifier datalab-editor-cell-identifier-input col-md-1">
@@ -48,6 +47,7 @@
     <div class="clearer"></div>
   </div>
 
+  <!-- FIXME: make this cell controls widget appear whenever the cell is active: place it in the (vertical) gutter via negative margins (ala colab)-->
   <div class="col-md-1">
     <div class="datalab-editor-cell-controls">
 
@@ -79,14 +79,6 @@
           </button>
           </div>
         </div>
--->
-
-<!-- TODO: add options for toggling code/markdown/header cell
-
-          <ul class="dropdown-menu" role="menu">
-            <li><a href="#"><i class="fa fa-terminal"></i></a></li>
-            <li><a href="#"><i class="fa fa-paragraph"></i></a></li>
-          </ul>
 -->
       </div>
     </div>

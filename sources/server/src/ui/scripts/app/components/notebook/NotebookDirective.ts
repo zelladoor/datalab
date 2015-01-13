@@ -29,6 +29,7 @@ var log = logging.getLogger(constants.scopes.notebookEditor);
 interface DirectiveScope extends ng.IScope { // FIXME: naming convention for local scopes
   notebook?: any; // FIXME: define type
   ctrl?: any;
+  debugMarkdownCell?: any; // FIXME: for dev/debug
 }
 
 class Ctrl {
@@ -49,6 +50,12 @@ class Ctrl {
     // * logic for switching cell mode (edit/command) based upon events (keys)
 
     rootScope.$on('execute-cell', this._handleExecuteCellEvent.bind(this));
+
+    // FIXME: remove the debug cell when done developing markdown cell creation controls
+    scope.debugMarkdownCell = {
+      id: 'debug-markdown-cell',
+      source: 'This is a **markdown** cell'
+    }
   }
 
   _handleExecuteCellEvent (event: any, cell: any) {

@@ -15,6 +15,14 @@
 
 /**
  * Directive for creating a single markdown cell
+ *
+ * A Markdown cell has two modes: view and edit
+ *
+ * In "view" mode:
+ * - Double-clicking the cell switches the cell to edit mode
+ *
+ * In "edit" mode:
+ * - "Executing" the cell (shift-enter currently) switches the cell to view mode
  */
 /// <reference path="../../../../../../../../externs/ts/angularjs/angular.d.ts" />
 /// <amd-dependency path="app/components/editorcell/EditorCellDirective" />
@@ -27,17 +35,32 @@ import app = require('app/App');
 
 var log = logging.getLogger(constants.scopes.markdownCell);
 
-interface MyScope extends ng.IScope { // FIXME: naming convention for local scopes
+interface MarkdownCellScope extends ng.IScope { // FIXME: naming convention for local scopes
   cell: any;
   keymap?: any;
   actions?: any;
 }
 
-class Ctrl {
-  // TODO: figure out what logic is needed on top of the editor cell
-  constructor () {
+class MarkdownCellController {
+  _scope: MarkdownCellScope;
+
+  static $inject: string[] = ['$scope'];
+  constructor (scope: MarkdownCellScope) {
+    this._scope = scope;
     // console.warn('Marked: ', marked);
+    scope.keymap = this._createKeymap();
   }
+
+  _createKeymap () {
+    return {
+      'Shift-Enter': this._handleSwitchToRenderedMode.bind(this)
+    }
+  }
+
+  _handleSwitchToRenderedMode () {
+    console.warn('Markdown cell switching to rendered mode...');
+  }
+
 }
 
 /**
@@ -51,7 +74,7 @@ function markdownCellDirective (): ng.IDirective {
     },
     templateUrl: constants.scriptPaths.app + '/components/markdowncell/markdowncell.html',
     replace: true,
-    controller: Ctrl
+    controller: MarkdownCellController
   }
 }
 
