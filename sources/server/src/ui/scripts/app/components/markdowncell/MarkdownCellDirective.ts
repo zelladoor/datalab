@@ -32,9 +32,6 @@ import constants = require('app/common/Constants');
 import app = require('app/App');
 
 
-// FIXME: add missing config for importing marked
-// import marked = require('marked');
-
 var log = logging.getLogger(constants.scopes.markdownCell);
 
 interface MarkdownCellScope extends ng.IScope { // FIXME: naming convention for local scopes

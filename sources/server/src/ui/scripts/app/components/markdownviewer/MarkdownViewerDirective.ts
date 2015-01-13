@@ -18,9 +18,11 @@
  * Renders Markdown content to HTML
  */
 /// <reference path="../../../../../../../../externs/ts/angularjs/angular.d.ts" />
+/// <reference path="../../../../../../../../externs/ts/marked.d.ts" />
 import logging = require('app/common/Logging');
 import constants = require('app/common/Constants');
 import app = require('app/App');
+import marked = require('marked');
 
 
 var log = logging.getLogger(constants.scopes.markdownViewer);
@@ -31,13 +33,30 @@ interface MarkdownViewerScope extends ng.IScope { // FIXME: naming convention fo
 }
 
 class MarkdownViewerController {
-
+  _sce: ng.ISCEService;
   _scope: MarkdownViewerScope;
 
-  static $inject: string[] = ['$scope'];
-  constructor (scope: MarkdownViewerScope) {
+  static $inject: string[] = ['$scope', '$sce'];
+  constructor (scope: MarkdownViewerScope, sce: ng.ISCEService) {
+    this._sce = sce;
     this._scope = scope;
   }
+
+  renderMarkdownAsTrustedHtml (markdown: string) {
+    return this._sce.trustAsHtml(marked(markdown))
+  }
+}
+
+function markdownViewerDirectiveLink (
+    scope: MarkdownViewerScope,
+    element: ng.IAugmentedJQuery,
+    attrs: any,
+    ctrl: MarkdownViewerController) {
+
+  // Re-render the markdown sourced to html whenever the source value changes
+  scope.$watch('source', (newValue: any, oldValue: any) => {
+    scope.trustedHtml = ctrl.renderMarkdownAsTrustedHtml(newValue);
+  });
 
 }
 
@@ -52,6 +71,7 @@ function markdownViewerDirective (): ng.IDirective {
     },
     templateUrl: constants.scriptPaths.app + '/components/markdownviewer/markdownviewer.html',
     replace: true,
+    link: markdownViewerDirectiveLink,
     controller: MarkdownViewerController
   }
 }
