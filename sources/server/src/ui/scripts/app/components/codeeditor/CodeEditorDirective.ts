@@ -60,10 +60,10 @@ interface CodeEditorScope extends ng.IScope {
   getActionHandlers?: Function; // FIXME: prob rename, type
 }
 
-class Ctrl {
+class CodeEditorController {
   static $inject = ['$scope'];
   constructor (scope: any) {
-
+    // FIXME: get rid of this controller if there's no logic needed here
   }
 }
 
@@ -159,7 +159,7 @@ function codeEditorDirective (): ng.IDirective {
       getActionHandlers: '&actions'
     },
     link: codeEditorDirectiveLink,
-    controller: Ctrl
+    controller: CodeEditorController
   }
 }
 

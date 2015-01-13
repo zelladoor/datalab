@@ -17,7 +17,8 @@
  * Directive for rendering a single notebook
  */
 /// <reference path="../../../../../../../../externs/ts/angularjs/angular.d.ts" />
-/// <amd-dependency path="app/components/editorcell/EditorCellDirective" />
+/// <amd-dependency path="app/components/codecell/CodeCellDirective" />
+/// <amd-dependency path="app/components/markdowncell/MarkdownCellDirective" />
 import logging = require('app/common/Logging');
 import constants = require('app/common/Constants');
 import app = require('app/App');

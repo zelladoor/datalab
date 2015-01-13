@@ -84,7 +84,6 @@ declare module app {
       type: string; // 'result' | 'stdout' | 'stderr'
       mimetypeBundle: any;
     }
-
     interface AugmentedCellOutput extends CellOutput{ // FIXME: better name for this interface?
       preferredMimetype?: string;
       trustedHtml?: string;

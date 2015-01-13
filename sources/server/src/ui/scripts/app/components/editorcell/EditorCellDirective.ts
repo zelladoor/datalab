@@ -34,24 +34,23 @@ import app = require('app/App');
 
 var log = logging.getLogger(constants.scopes.editorCell);
 
-interface MyScope extends ng.IScope { // FIXME: naming convention for local scopes that are never externalized
+interface EditorCellScope extends ng.IScope { // FIXME: naming convention for local scopes that are never externalized
   cell: any;
+  getKeymap?: any;
   keymap?: any;
   actions?: any;
 }
 
-class Ctrl {
+class EditorCellController {
 
-  _rootScope: ng.IRootScopeService;
-  _scope: MyScope;
+  _scope: EditorCellScope;
 
-  static $inject: string[] = ['$scope', '$rootScope', 'Socket'];
-  constructor (scope: MyScope, rootScope: ng.IRootScopeService, socket: any) {
+  static $inject: string[] = ['$scope'];
+  constructor (scope: EditorCellScope) {
     this._scope = scope;
-    this._rootScope = rootScope;
 
-    scope.keymap = this._createKeymap();
     scope.actions = this._createActionHandlers();
+    scope.keymap = scope.getKeymap(); // FIXME: see if possible to just pass the getter function through
   }
 
   // handle events that occur on the editor instance
@@ -77,19 +76,6 @@ class Ctrl {
     this._setActive(false);
   }
 
-  _createKeymap () {
-    return {
-      'Shift-Enter': this._handleExecute.bind(this),
-    };
-  }
-
-  // FIXME: move event name string constants to constants file and put these particular constants
-  // somewhere that the node and ui-side code can access/build against. These event names and messages
-  // are effectively the "datalab websocket api" and should be well documented
-  _handleExecute (cm: CodeMirror.Editor) {
-    this._rootScope.$emit('execute-cell', this._scope.cell);
-  }
-
 }
 
 /**
@@ -99,11 +85,12 @@ function editorCellDirective (): ng.IDirective {
   return {
     restrict: 'E',
     scope: {
-      cell: '='
+      cell: '=',
+      getKeymap: '&keymap'
     },
     templateUrl: constants.scriptPaths.app + '/components/editorcell/editorcell.html',
     replace: true,
-    controller: Ctrl
+    controller: EditorCellController
   }
 }
 

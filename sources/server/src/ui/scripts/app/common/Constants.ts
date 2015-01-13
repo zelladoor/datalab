@@ -39,6 +39,9 @@ export var codeEditor = {
 export var editorCell = {
   directiveName: 'datalabEditorCell'
 }
+export var codeCell = {
+  directiveName: 'datalabCodeCell'
+}
 export var markdownCell = {
   directiveName: 'datalabMarkdownCell'
 }
@@ -57,10 +60,13 @@ export var notebooks = {
 // Logging scope names
 export var scopes = {
   // Generic components
-  notebookEditor: 'notebookEditor',
-  codeEditor: 'codeEditor',
+  codeCell: 'codeCell',
   editorCell: 'editorCell',
   markdownCell: 'markdownCell',
+
+  codeEditor: 'codeEditor',
+  notebookEditor: 'notebookEditor',
+
   layouts: 'layouts',
   kernel: 'kernel',
 
