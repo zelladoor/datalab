@@ -38,6 +38,7 @@ interface MarkdownCellScope extends ng.IScope { // FIXME: naming convention for 
   cell: any;
   keymap?: any;
   editMode?: boolean; // edit mode versus view/render mode
+  ctrl?: MarkdownCellController;
 }
 
 class MarkdownCellController {
@@ -52,16 +53,25 @@ class MarkdownCellController {
 
     scope.keymap = this._createKeymap();
     scope.editMode = true;
+    scope.ctrl = this;
+  }
+
+  switchToEditMode () {
+    console.warn('Markdown cell switching to edit mode...');
+    var scope = this._scope;
+    this._rootScope.$evalAsync(() => {
+      scope.editMode = true;
+    });
   }
 
   _createKeymap () {
     return {
-      'Shift-Enter': this._handleSwitchToRenderedMode.bind(this)
+      'Shift-Enter': this._handleSwitchToViewMode.bind(this)
     }
   }
 
-  _handleSwitchToRenderedMode () {
-    console.warn('Markdown cell switching to rendered mode...');
+  _handleSwitchToViewMode () {
+    console.warn('Markdown cell switching to view-only mode...');
     var scope = this._scope;
     this._rootScope.$evalAsync(() => {
       scope.editMode = false;

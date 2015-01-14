@@ -1,4 +1,12 @@
 <div class="datalab-markdown-cell">
-  <datalab-markdown-viewer source="cell.source"></datalab-markdown-viewer>
+  <!-- Markdown rendering element -->
+  <div class="row" ng-dblclick="ctrl.switchToEditMode()">
+    <div class="col-md-12">
+      <datalab-markdown-viewer source="cell.source"></datalab-markdown-viewer>
+    </div>
+  </div>
+
+  <!-- Markdown editing element -->
   <datalab-editor-cell ng-if="editMode" cell="cell" keymap="keymap"></datalab-editor-cell>
+
 </div>
