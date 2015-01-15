@@ -1,6 +1,16 @@
 <div id="cell-{{cell.id}}" class="datalab-editor-cell row" ng-class="{ 'datalab-editor-cell-active' : cell.active }">
   <!-- NOTE: this template assumes that it lives inside of some bootstrap .container as the base grid system -->
 
+  <div class="datalab-editor-cell-preview col-lg-12 col-md-12 col-sm-12 col-xs-12" ng-dblclick="ctrl.switchToEditMode()" ng-if="cell.type == 'markdown'">
+    <!-- FIXME: add a hook to editor cell for handling events on the preview region with configurable callback -->
+    <datalab-markdown-viewer source="cell.source"></datalab-markdown-viewer>
+    <!-- TODO(bryantd): see if possible to implement heading cell as text -> "generated markdown" (add the right number of '#'s on the line of text) to avoid needing another viewer type
+
+    Another option is to just switch on the cell type here (ng-switch)
+    and show the md viewer for markdown cells, simpler heading viewer directive for heading cells
+    -->
+  </div>
+
   <div class="col-md-11">
     <div class="datalab-editor-cell-input row">
       <div class="datalab-editor-cell-identifier datalab-editor-cell-identifier-input col-md-1">
@@ -18,9 +28,9 @@
       </div>
     </div>
 
+    <!-- TODO(bryantd): may want to separate out the output region into a separate directive as this is becoming large/long -->
     <div class="datalab-editor-cell-output row" ng-show="cell.outputs">
       <div class="datalab-editor-cell-identifier datalab-editor-cell-identifier-output col-md-1">
-        <!-- FIXME: css class name s/cell-index/execution-counter/ -->
         <!-- IPython-style output region with execution counter
         Out
         <span class="datalab-editor-cell-index">[{{ cell.executionCounter }}]</span>
@@ -47,6 +57,8 @@
     <div class="clearer"></div>
   </div>
 
+
+  <!-- FIXME: separate out the controls into a separate directive -->
   <!-- FIXME: make this cell controls widget appear whenever the cell is active: place it in the (vertical) gutter via negative margins (ala colab)-->
   <div class="col-md-1">
     <div class="datalab-editor-cell-controls">

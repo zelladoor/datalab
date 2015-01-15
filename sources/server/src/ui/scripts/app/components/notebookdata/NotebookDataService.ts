@@ -79,6 +79,23 @@ export class NotebookData {
     } else {
       this.notebook = newNotebook;
     }
+
+    this.__insertDebugMarkdownCell(); // FIXME: debug
+  }
+
+  // FIXME: this entire method is a temporary hack until there is a UI
+  // control for creating markdown cells. Until then, need a way to get
+  // md cell for debugging/testing
+  __insertDebugMarkdownCell () {
+    var id = 'debug-markdown-cell-id';
+    if (!this.notebook.cells[id]) { // only insert the cell once
+      this.notebook.cells[id] = {
+        id: id,
+        type: 'markdown',
+        source: 'Write *your* markdown **here**!'
+      }
+      this.notebook.worksheet.unshift(id);
+    }
   }
 
   // FIXME: this method will change substantially or be replaced in full once notebook values

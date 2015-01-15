@@ -34,7 +34,7 @@ import app = require('app/App');
 
 var log = logging.getLogger(constants.scopes.markdownCell);
 
-interface MarkdownCellScope extends ng.IScope { // FIXME: naming convention for local scopes
+interface MarkdownCellScope extends ng.IScope {
   cell: any;
   keymap?: any;
   editMode?: boolean; // edit mode versus view/render mode

@@ -56,7 +56,7 @@ var codeMirrorOptions: CodeMirror.EditorConfiguration = {
 interface CodeEditorScope extends ng.IScope {
   source?: string;
   active?: boolean;
-  getKeymap?: Function; // FIXME: more specific type
+  getKeymap?: Function;
   getActionHandlers?: Function; // FIXME: prob rename, type
 }
 
