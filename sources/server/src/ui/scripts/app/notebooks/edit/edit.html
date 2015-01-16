@@ -2,12 +2,20 @@
 
   <div class="row datalab-editor-toolbar">
     <div class="col-sm-6 col-md-4 col-lg-3">
-      <span class="datalab-notebook-title">My DataLab notebook</span>
+      <span class="datalab-notebook-title">Title of DataLab notebook</span>
     </div>
     <div class="col-sm-6 col-md-8 col-lg-9">
 
-
       <div class="btn-group pull-right" role="group">
+
+        <button type="button" class="btn btn-default btn-sm" ng-click="pageCtrl.addCodeCell()">
+          &nbsp;<i class="fa-paragraph fa"></i>&nbsp;Cell
+        </button>
+
+        <button type="button" class="btn btn-default btn-sm" ng-click="pageCtrl.addMarkdownCell()">
+          &nbsp;<i class="fa-terminal fa"></i>&nbsp;Cell
+        </button>
+
         <button type="button" class="btn btn-default btn-sm" ng-click="pageCtrl.executeNotebook()">
         <span ng-switch on="pageCtrl.sessionStatus.kernelStatus">
           <span ng-switch-when="busy">
@@ -17,17 +25,13 @@
             <i class="fa-long-arrow-down fa"></i>
           </span>
         </span>
-          &nbsp;Run Notebook
+          &nbsp;Run
         </button>
+
         <button type="button" class="btn btn-default btn-sm" ng-click="pageCtrl.clearAllOutputs()">
-          <i class="fa-eraser fa"></i>&nbsp;Clear Outputs
+          <i class="fa-eraser fa"></i>&nbsp;Outputs
         </button>
       </div>
-
-      <!-- FIXME: remove this if no content to show -->
-<!--       <div class="datalab-session-status-indicator pull-right">
-        <i class="fa fa-cog" ng-class="{'fa-spin': pageCtrl.sessionStatus.kernelStatus == 'busy'}"></i>
-      </div> -->
 
     </div>
   </div>

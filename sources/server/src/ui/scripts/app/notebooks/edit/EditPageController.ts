@@ -98,6 +98,12 @@ export class EditPageController {
   executeNotebook () {
     log.debug('TODO: execute notebook');
   }
+  addMarkdownCell () {
+    log.debug('TODO: add markdown cell');
+  }
+  addCodeCell() {
+    log.debug('TODO: add markdown cell');
+  }
 
 }
 
