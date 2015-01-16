@@ -16,6 +16,7 @@
           &nbsp;<i class="fa-paragraph fa"></i>&nbsp;Cell
         </button>
 
+        <!-- TODO(bryantd): wire up the execute/clear buttons once notebook operations are implemented
         <button type="button" class="btn btn-default btn-sm" ng-click="pageCtrl.executeNotebook()">
         <span ng-switch on="pageCtrl.sessionStatus.kernelStatus">
           <span ng-switch-when="busy">
@@ -31,6 +32,7 @@
         <button type="button" class="btn btn-default btn-sm" ng-click="pageCtrl.clearAllOutputs()">
           <i class="fa-eraser fa"></i>&nbsp;Outputs
         </button>
+        -->
       </div>
 
     </div>
@@ -41,7 +43,5 @@
       <datalab-notebook-editor notebook="pageCtrl.notebookData.notebook"></datalab-notebook-editor>
     </div>
   </div>
-
-  <!-- <datalab-markdown-cell>foo</datalab-markdown-cell> -->
 
 </div>

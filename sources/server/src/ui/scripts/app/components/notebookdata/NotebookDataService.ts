@@ -129,7 +129,7 @@ export class NotebookData {
     Object.keys(newNotebook.cells).forEach((cellId: any) => {
       var currentCell = that.notebook.cells[cellId];
       var newCell = newNotebook.cells[cellId];
-      if (currentCell) {
+      if (currentCell) { // FIXME: doesn't look like cellIndex is used below... remove this?
         var cellIndex = that.notebook.worksheet.indexOf(currentCell.id);
       }
 
@@ -144,7 +144,13 @@ export class NotebookData {
       }
 
       // Overwrite individual cells as they are broadcast from server
-      that.notebook.cells[cellId] = newNotebook.cells[cellId];
+      // TODO(bryantd): currently only overwrite code cells, since only those are being persisted
+      // to the server. Overwriting markdown cells will cause the contents to be erased since markdown
+      // cells are not "saved" to the server (yet)
+      if (newNotebook.cells[cellId].type == 'code') {
+        that.notebook.cells[cellId] = newNotebook.cells[cellId];
+      }
+
 
       // FIXME: consider here all of the client-side modifications to a cell
       // that might be blown away on update. Currently just concerned with cell.active flag

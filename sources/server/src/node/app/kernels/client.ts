@@ -102,7 +102,8 @@ export class KernelClient implements app.IKernel {
         '--Session.key=""',
         '--iopub=' + this.config.iopubPort,
         '--shell=' + this.config.shellPort,
-        '--log-level="DEBUG"'
+        '--log-level="DEBUG"',
+        '--matplotlib=inline'
         ];
     this._kernelProcess = childproc.spawn(cmd, args);
     // For now, consider both disconnected and exitted kernels as "dead"
