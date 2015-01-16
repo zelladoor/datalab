@@ -16,7 +16,8 @@
         <span class="datalab-editor-cell-index">[{{ cell.executionCounter }}]</span>
         -->
         <!-- Minimalistic input region marker -->
-        <span class="fa fa-terminal fa-lg"></span>
+        <span class="fa fa-terminal fa-lg" ng-if="cell.type == 'code'"></span>
+        <span class="fa fa-paragraph fa-lg" ng-if="cell.type == 'markdown'"></span>
       </div>
 
       <div class="datalab-editor-cell-input-content col-md-11">
