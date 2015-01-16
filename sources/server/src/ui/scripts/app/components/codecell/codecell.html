@@ -1,9 +1,8 @@
-<div class="datalab-code-cell">
-<!-- FIXME: possible to get rid of this tempolate?
-
-Can inline this into the directive file as a template string maybe...
-
-Same will go for the markdown and heading cells eventually...
- -->
-  <datalab-editor-cell cell="cell" keymap="keymap"></datalab-editor-cell>
+<div>
+  <datalab-editor-cell
+      cell="cell"
+      keymap="keymap"
+      enable-edit-region="ctrl.showEditRegion"
+      enable-preview-region="ctrl.showPreviewRegion"
+  ></datalab-editor-cell>
 </div>

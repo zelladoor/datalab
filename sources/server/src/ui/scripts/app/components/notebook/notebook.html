@@ -1,10 +1,15 @@
 <div class="notebook">
-  <!-- FIXME: a single markdown cell during dev until there's controls for creating them... -->
-  <!-- <datalab-markdown-cell cell="debugMarkdownCell"></datalab-markdown-cell> -->
-
-  <!-- FIXME: possible to put the ng-repeat directly on the cell element to avoid extra div? -->
   <div ng-repeat="cellId in notebook.worksheet">
-    <datalab-code-cell cell="notebook.cells[cellId]"></datalab-code-cell>
+
+    <div ng-switch="notebook.cells[cellId].type">
+    <datalab-code-cell
+        ng-switch-when="code"
+        cell="notebook.cells[cellId]"></datalab-code-cell>
+
+    <datalab-markdown-cell
+        ng-switch-when="markdown"
+        cell="notebook.cells[cellId]"></datalab-markdown-cell>
+    </div>
+
   </div>
 </div>
-

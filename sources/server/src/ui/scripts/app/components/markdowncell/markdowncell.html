@@ -1,12 +1,10 @@
-<div class="datalab-markdown-cell">
-  <!-- Markdown rendering element -->
-  <div class="row" ng-dblclick="ctrl.switchToEditMode()">
-    <div class="col-md-12">
-      <datalab-markdown-viewer source="cell.source"></datalab-markdown-viewer>
-    </div>
-  </div>
-
-  <!-- Markdown editing element -->
-  <datalab-editor-cell ng-if="editMode" cell="cell" keymap="keymap"></datalab-editor-cell>
-
+<div>
+  <!-- FIXME: see what happens if there is whitespace between directive open/close when the directive used replace... can you even put comments there? -->
+  <datalab-editor-cell
+      cell="cell"
+      keymap="keymap"
+      enable-edit-region="ctrl.showEditRegion"
+      enable-preview-region="ctrl.showPreviewRegion"
+      on-preview-region-double-click="ctrl.switchToEditMode()"
+  ></datalab-editor-cell>
 </div>

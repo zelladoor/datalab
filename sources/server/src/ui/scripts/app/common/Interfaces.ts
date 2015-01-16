@@ -16,6 +16,8 @@
 /// <reference path="../../../../../../../externs/ts/angularjs/angular.d.ts" />
 
 
+// TODO(bryantd): change the namespace from 'app' to 'datalab' to avoid colliding with
+// the ever present app module (app.App) (or change the app module name...)
 declare module app {
 
   interface IRegistrar {
@@ -34,6 +36,21 @@ declare module app {
     info (...objects: Object []): void;
     warn (...objects: Object []): void;
     error (...objects: Object []): void;
+  }
+
+  interface ICellController {
+    showEditRegion: boolean;
+    showPreviewRegion: boolean;
+    switchToEditMode (): void;
+  }
+
+  interface CellScope extends ng.IScope {
+    cell: any;
+    // TODO(bryantd): see if possible to remove the optional flags from the following
+    // Issue is that when the scope is first created (by directive), these fields will not exist.
+    // These fields are created/populated within the controller.
+    keymap?: any;
+    ctrl?: ICellController;
   }
 
   // FIXME: maybe split the ipy submodule into a separate file

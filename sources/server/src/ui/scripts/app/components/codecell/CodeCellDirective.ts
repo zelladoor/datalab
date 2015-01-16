@@ -20,28 +20,31 @@
 /// <amd-dependency path="app/components/editorcell/EditorCellDirective" />
 import logging = require('app/common/Logging');
 import constants = require('app/common/Constants');
-import app = require('app/App');
+import _app = require('app/App');
 
 
 var log = logging.getLogger(constants.scopes.codeCell);
 
-interface CodeCellScope extends ng.IScope { // FIXME: naming convention for local scopes
-  cell: any;
-  keymap?: any;
-}
-
-class CodeCellController {
+class CodeCellController implements app.ICellController {
 
   _rootScope: ng.IRootScopeService;
-  _scope: CodeCellScope;
+  _scope: app.CellScope;
+
+  showEditRegion: boolean;
+  showPreviewRegion: boolean;
 
   static $inject: string[] = ['$scope', '$rootScope'];
-  constructor (scope: CodeCellScope, rootScope: ng.IRootScopeService) {
+  constructor (scope: app.CellScope, rootScope: ng.IRootScopeService) {
     this._scope = scope;
     this._rootScope = rootScope;
+    this.showPreviewRegion = false; // always-off for code cell
+    this.showEditRegion = true; // always-on for code cell
 
     scope.keymap = this._createKeymap();
+    scope.ctrl = this;
   }
+
+  switchToEditMode () { /* noop: code cell always in edit mode */ }
 
   _createKeymap () {
     return {
@@ -72,5 +75,5 @@ function codeCellDirective (): ng.IDirective {
   }
 }
 
-app.registrar.directive(constants.codeCell.directiveName, codeCellDirective);
-log.debug('Registered markdown cell directive');
+_app.registrar.directive(constants.codeCell.directiveName, codeCellDirective);
+log.debug('Registered code cell directive');

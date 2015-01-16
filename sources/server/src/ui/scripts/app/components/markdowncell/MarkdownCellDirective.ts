@@ -29,38 +29,35 @@
 /// <amd-dependency path="app/components/markdownviewer/MarkdownViewerDirective" />
 import logging = require('app/common/Logging');
 import constants = require('app/common/Constants');
-import app = require('app/App');
+import _app = require('app/App');
 
 
 var log = logging.getLogger(constants.scopes.markdownCell);
 
-interface MarkdownCellScope extends ng.IScope {
-  cell: any;
-  keymap?: any;
-  editMode?: boolean; // edit mode versus view/render mode
-  ctrl?: MarkdownCellController;
-}
-
-class MarkdownCellController {
+class MarkdownCellController implements app.ICellController {
 
   _rootScope: ng.IRootScopeService;
-  _scope: MarkdownCellScope;
+  _scope: app.CellScope;
+
+  showEditRegion: boolean;
+  showPreviewRegion: boolean;
 
   static $inject: string[] = ['$scope', '$rootScope'];
-  constructor (scope: MarkdownCellScope, rootScope: ng.IRootScopeService) {
+  constructor (scope: app.CellScope, rootScope: ng.IRootScopeService) {
     this._scope = scope;
     this._rootScope = rootScope;
+    this.showPreviewRegion = true; // always-on for markdown cell
+    this.showEditRegion = true;
 
     scope.keymap = this._createKeymap();
-    scope.editMode = true;
     scope.ctrl = this;
   }
 
   switchToEditMode () {
     console.warn('Markdown cell switching to edit mode...');
-    var scope = this._scope;
+    var that = this;
     this._rootScope.$evalAsync(() => {
-      scope.editMode = true;
+      that.showEditRegion = true;
     });
   }
 
@@ -72,10 +69,14 @@ class MarkdownCellController {
 
   _handleSwitchToViewMode () {
     console.warn('Markdown cell switching to view-only mode...');
-    var scope = this._scope;
+    var that = this;
     this._rootScope.$evalAsync(() => {
-      scope.editMode = false;
+      that.showEditRegion = false;
     });
+  }
+
+  foo (msg: string) {
+    console.warn('markdown cell says: ' + msg);
   }
 
 }
@@ -95,5 +96,5 @@ function markdownCellDirective (): ng.IDirective {
   }
 }
 
-app.registrar.directive(constants.markdownCell.directiveName, markdownCellDirective);
+_app.registrar.directive(constants.markdownCell.directiveName, markdownCellDirective);
 log.debug('Registered markdown cell directive');

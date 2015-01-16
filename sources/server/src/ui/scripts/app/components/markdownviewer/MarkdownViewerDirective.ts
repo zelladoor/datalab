@@ -30,6 +30,8 @@ var log = logging.getLogger(constants.scopes.markdownViewer);
 interface MarkdownViewerScope extends ng.IScope { // FIXME: naming convention for local scopes
   source: string;
   trustedHtml?: any;
+
+  ctrl?: any; // FIXME: DEBUG
 }
 
 class MarkdownViewerController {
@@ -40,10 +42,16 @@ class MarkdownViewerController {
   constructor (scope: MarkdownViewerScope, sce: ng.ISCEService) {
     this._sce = sce;
     this._scope = scope;
+
+    scope.ctrl = this; // FIXME: debug hopefully
   }
 
   renderMarkdownAsTrustedHtml (markdown: string) {
     return this._sce.trustAsHtml(marked(markdown))
+  }
+
+  foo (msg: string) { // FIXME: debug
+    console.warn('markdown viewer says: ' + msg);
   }
 }
 

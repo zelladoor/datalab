@@ -35,10 +35,19 @@ import app = require('app/App');
 var log = logging.getLogger(constants.scopes.editorCell);
 
 interface EditorCellScope extends ng.IScope { // FIXME: naming convention for local scopes that are never externalized
+  // "input" scope attrs
   cell: any;
   getKeymap?: any;
+  enableEditRegion?: boolean;
+  enablePreviewRegion?: boolean;
+  onPreviewRegionDoubleClick?: Function;
+
+  // "output" scope attrs
   keymap?: any;
   actions?: any;
+
+  // debug
+  ctrl?: any;
 }
 
 class EditorCellController {
@@ -51,6 +60,8 @@ class EditorCellController {
 
     scope.actions = this._createActionHandlers();
     scope.keymap = scope.getKeymap(); // FIXME: see if possible to just pass the getter function through
+
+    scope.ctrl = this; // FIXME: DEBUG
   }
 
   // handle events that occur on the editor instance
@@ -76,6 +87,10 @@ class EditorCellController {
     this._setActive(false);
   }
 
+  foo (msg: string) { // FIXME: debug
+    console.warn('editor cell says: ' + msg);
+  }
+
 }
 
 /**
@@ -86,7 +101,10 @@ function editorCellDirective (): ng.IDirective {
     restrict: 'E',
     scope: {
       cell: '=',
-      getKeymap: '&keymap'
+      getKeymap: '&keymap',
+      enableEditRegion: '=',
+      enablePreviewRegion: '=',
+      onPreviewRegionDoubleClick: '&'
     },
     templateUrl: constants.scriptPaths.app + '/components/editorcell/editorcell.html',
     replace: true,
