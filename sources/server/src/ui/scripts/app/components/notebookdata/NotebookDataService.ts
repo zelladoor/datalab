@@ -79,22 +79,44 @@ export class NotebookData {
     } else {
       this.notebook = newNotebook;
     }
-
-    this.__insertDebugMarkdownCell(); // FIXME: debug
   }
 
-  // FIXME: this entire method is a temporary hack until there is a UI
-  // control for creating markdown cells. Until then, need a way to get
-  // md cell for debugging/testing
-  __insertDebugMarkdownCell () {
-    var id = 'debug-markdown-cell-id';
+  // FIXME: move this to a library/util module
+  // Light-weight uuid generation for cell ids
+  // Source: http://stackoverflow.com/a/8809472
+  _generateUUID (): string {
+    var d = new Date().getTime();
+    var uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+        var r = (d + Math.random()*16)%16 | 0;
+        d = Math.floor(d/16);
+        return (c=='x' ? r : (r&0x3|0x8)).toString(16);
+    });
+    return uuid;
+  }
+
+  insertMarkdownCell () {
+    var id = this._generateUUID();
     if (!this.notebook.cells[id]) { // only insert the cell once
       this.notebook.cells[id] = {
         id: id,
         type: 'markdown',
-        source: 'Write *your* markdown **here**!'
+        source: 'Write *your* markdown **here**!',
+        active: true
       }
-      this.notebook.worksheet.unshift(id);
+      this.notebook.worksheet.push(id);
+    }
+  }
+
+  insertCodeCell () {
+    var id = this._generateUUID();
+    if (!this.notebook.cells[id]) { // only insert the cell once
+      this.notebook.cells[id] = {
+        id: id,
+        type: 'code',
+        source: '',
+        active: true
+      }
+      this.notebook.worksheet.push(id);
     }
   }
 

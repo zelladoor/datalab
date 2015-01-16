@@ -26,20 +26,23 @@ import app = require('app/App');
 
 var log = logging.getLogger(constants.scopes.notebookEditor);
 
-interface DirectiveScope extends ng.IScope { // FIXME: naming convention for local scopes
+interface NotebookScope extends ng.IScope {
   notebook?: any; // FIXME: define type
   ctrl?: any;
-  debugMarkdownCell?: any; // FIXME: for dev/debug
 }
 
-class Ctrl {
-  _scope: DirectiveScope;
+// TODO(bryantd): Move all of the below controller logic to the notebook data service since it all
+// writes to the notebook data model (and those writes need to be published). Also easier to test there.
+// The resulting notebook changes *should* still be reflected in the directive via two-way binding
+// within the edit page controller
+class NotebookController {
+  _scope: NotebookScope;
   _rootScope: ng.IRootScopeService;
 
   _nextCellNum: number; // FIXME: replace this with uuid gen
 
   static $inject = ['$scope', '$rootScope'];
-  constructor (scope: DirectiveScope, rootScope: ng.IRootScopeService) {
+  constructor (scope: NotebookScope, rootScope: ng.IRootScopeService) {
     this._scope = scope;
     this._rootScope = rootScope;
 
@@ -50,12 +53,6 @@ class Ctrl {
     // * logic for switching cell mode (edit/command) based upon events (keys)
 
     rootScope.$on('execute-cell', this._handleExecuteCellEvent.bind(this));
-
-    // FIXME: remove the debug cell when done developing markdown cell creation controls
-    scope.debugMarkdownCell = {
-      id: 'debug-markdown-cell',
-      source: 'This is a **markdown** cell'
-    }
   }
 
   _handleExecuteCellEvent (event: any, cell: any) {
@@ -138,7 +135,7 @@ function notebookEditorDirective (): ng.IDirective {
       notebook: '='
     },
     replace: true,
-    controller: Ctrl,
+    controller: NotebookController,
     templateUrl: constants.scriptPaths.app + '/components/notebook/notebook.html',
   }
 }
