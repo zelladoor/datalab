@@ -129,6 +129,7 @@ export class Session implements app.ISession {
           // TODO(bryantd): parse and present the traceback data as well
           // Hopefully there's a configuration setting for getting back html
           // traceback data rather than the escape-code formatted traceback
+          // Look at the --colors='NoColor' argument to the kernel to see if can be disabled there?
           'text/plain': message.errorName + ': ' + message.errorMessage
         }
       }];
