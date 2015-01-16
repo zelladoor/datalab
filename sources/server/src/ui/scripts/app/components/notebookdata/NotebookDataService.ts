@@ -100,7 +100,7 @@ export class NotebookData {
       this.notebook.cells[id] = {
         id: id,
         type: 'markdown',
-        source: 'Write *your* markdown **here**!',
+        source: '',
         active: true
       }
       this.notebook.worksheet.push(id);
