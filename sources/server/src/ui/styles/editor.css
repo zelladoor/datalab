@@ -66,8 +66,9 @@
 
 }
 .datalab-editor-cell-active {
-  border: 1px solid #ccc; /* FIXME: check color palette for consistency */
-  border-radius: 8px;
+  -webkit-box-shadow: 3px 3px 10px 0px rgba(153,153,153,1);
+  -moz-box-shadow: 3px 3px 10px 0px rgba(153,153,153,1);
+  box-shadow: 3px 3px 10px 0px rgba(153,153,153,1);
 }
 .datalab-editor-cell-controls {
   /* FIXME: add the vendor prefixed versions of transition as well if needed for full cross-browser support*/
