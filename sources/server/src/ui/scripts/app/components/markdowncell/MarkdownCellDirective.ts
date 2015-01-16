@@ -54,7 +54,7 @@ class MarkdownCellController implements app.ICellController {
   }
 
   switchToEditMode () {
-    console.warn('Markdown cell switching to edit mode...');
+    log.debug('Switching to edit mode');
     var that = this;
     this._rootScope.$evalAsync(() => {
       that.showEditRegion = true;
@@ -68,15 +68,11 @@ class MarkdownCellController implements app.ICellController {
   }
 
   _handleSwitchToViewMode () {
-    console.warn('Markdown cell switching to view-only mode...');
+    log.debug('Switching to view-only mode');
     var that = this;
     this._rootScope.$evalAsync(() => {
       that.showEditRegion = false;
     });
-  }
-
-  foo (msg: string) {
-    console.warn('markdown cell says: ' + msg);
   }
 
 }

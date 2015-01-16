@@ -45,9 +45,6 @@ interface EditorCellScope extends ng.IScope { // FIXME: naming convention for lo
   // "output" scope attrs
   keymap?: any;
   actions?: any;
-
-  // debug
-  ctrl?: any;
 }
 
 class EditorCellController {
@@ -60,8 +57,6 @@ class EditorCellController {
 
     scope.actions = this._createActionHandlers();
     scope.keymap = scope.getKeymap(); // FIXME: see if possible to just pass the getter function through
-
-    scope.ctrl = this; // FIXME: DEBUG
   }
 
   // handle events that occur on the editor instance
@@ -85,10 +80,6 @@ class EditorCellController {
 
   _handleBlur () {
     this._setActive(false);
-  }
-
-  foo (msg: string) { // FIXME: debug
-    console.warn('editor cell says: ' + msg);
   }
 
 }
