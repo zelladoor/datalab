@@ -25,16 +25,30 @@ import express = require('express');
  */
 export class StorageApi {
 
-  _storage: app.IStorageClient;
+  _storage: app.IStorage;
 
-  constructor (storage: app.IStorageClient) {
+  constructor (storage: app.IStorage) {
     this._storage = storage;
   }
 
+  list (request: express.Request, response: express.Response) {
+
+  }
+
+  get (request: express.Request, response: express.Response) {
+
+  }
+
   /**
-   * Creates a new file/object in the storage
+   * Puts a new file/object in the storage
+   *
+   * Will overwrite any existing file/object
    */
-  create (request: express.Request, response: express.Response) {
+  put (request: express.Request, response: express.Response) {
+
+  }
+
+  delete (request: express.Request, response: express.Response) {
 
   }
 

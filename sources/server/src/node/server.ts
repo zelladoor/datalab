@@ -45,6 +45,7 @@ export function start (settings: app.Settings, apiRouter: express.Router) {
   var sessionManager = new sessions.SessionManager(
     new wsServer.UserConnectionManager(socketio.listen(httpServer)),
     config.getKernelManager(),
+    config.getStorage(),
     config.getMessageProcessors());
 }
 

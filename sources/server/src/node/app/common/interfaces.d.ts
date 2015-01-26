@@ -61,9 +61,12 @@ declare module app {
     updateUserConnection (connection: IUserConnection): void;
   }
 
-  interface IStorageClient {
-    // TODO(bryantd)
+
+
+  interface IStorage {
+    // TODO
   }
+
 
   interface IUserConnection {
     id: string;

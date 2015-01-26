@@ -29,18 +29,22 @@ import notebooks = require('../notebooks/notebook');
  */
 export class SessionManager {
 
-  _userconnManager: app.IUserConnectionManager;
-  _kernelManager: app.IKernelManager;
   _idToSession: app.Map<app.ISession>;
+  _kernelManager: app.IKernelManager;
   _messageProcessors: app.MessageProcessor[];
+  _storage: app.IStorage;
+  _userconnManager: app.IUserConnectionManager;
 
   constructor (
       userconnManager: app.IUserConnectionManager,
       kernelManager: app.IKernelManager,
+      storage: app.IStorage,
       messageProcessors: app.MessageProcessor[]) {
     this._userconnManager = userconnManager;
     this._kernelManager = kernelManager;
+    this._storage = storage;
     this._messageProcessors = messageProcessors;
+
     this._idToSession = {};
     this._registerHandlers();
   }
@@ -103,6 +107,7 @@ export class SessionManager {
       connection,
       kernel,
       notebook,
+      this._storage,
       this._handleMessage.bind(this));
   }
 

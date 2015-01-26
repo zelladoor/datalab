@@ -70,6 +70,6 @@ export function getMessageProcessors (): app.MessageProcessor[] {
 }
 
 
-export function getStorage (): app.IStorageClient {
+export function getStorage (): app.IStorage {
   return null;
 }
