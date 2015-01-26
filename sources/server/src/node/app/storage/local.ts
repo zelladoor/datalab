@@ -24,4 +24,16 @@ export class LocalFileSystemStorage implements app.IStorage {
     this._storagePath = storagePath;
   }
 
+  read (path: string) {
+    return null;
+  }
+
+  write (path: string, data: string) {
+
+  }
+
+  delete (path: string) {
+    return false;
+  }
+
 }

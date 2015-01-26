@@ -18,6 +18,12 @@ import utils = require('../common/util');
 import sessions = require('./session');
 import notebooks = require('../notebooks/notebook');
 
+
+// FIXME: actually get the notebook name based upon the url route for the current session
+// stop-gap solution until that is implemented within the connection establishment piece
+var __temp_notebook_path = 'temp-notebook'
+
+
 /**
  * Manages the lifecycles of a set of sessions between users and kernels
  *
@@ -49,50 +55,6 @@ export class SessionManager {
     this._registerHandlers();
   }
 
-  // FIXME: eventually will want to wire in the storage bits
-  // but for now, create a blank notebook on each new session
-  _createBlankNotebook (): app.notebook.IActiveNotebook {
-    // Create a worksheet with one markdown cell and one code cell
-    var notebook: app.notebook.Notebook = {
-      id: uuid.v4(),
-      cells: {},
-      worksheet: []
-    };
-    this._appendMarkdownCell(notebook);
-    this._appendCodeCell(notebook);
-    return new notebooks.ActiveNotebook(notebook);
-  }
-
-  // FIXME: try to add shared util module that both the front-end and backend
-  // can access. there is a dupe of this method in ui-side code for creating
-  // a default empty cell.
-  _appendMarkdownCell (notebook: any) {
-    var id = uuid.v4();
-    if (!notebook.cells[id]) { // only insert the cell once
-      notebook.cells[id] = {
-        id: id,
-        type: 'markdown',
-        source: '# DataLab has Markdown support',
-        active: true
-      }
-      notebook.worksheet.push(id);
-    }
-  }
-  // FIXME: try to add shared util module that both the front-end and backend
-  // can access. there is a dupe of this method in ui-side code for creating
-  // a default empty cell.
-  _appendCodeCell (notebook: any) {
-    var id = uuid.v4();
-    if (!notebook.cells[id]) { // only insert the cell once
-      notebook.cells[id] = {
-        id: id,
-        type: 'code',
-        source: '',
-      }
-      notebook.worksheet.push(id);
-    }
-  }
-
   /**
    * Binds the user connection to a new kernel instance via a newly created session object
    */
@@ -101,13 +63,14 @@ export class SessionManager {
       iopubPort: utils.getAvailablePort(),
       shellPort: utils.getAvailablePort()
     });
-    var notebook = this._createBlankNotebook();
+
+    var notebook = new notebooks.ActiveNotebook(__temp_notebook_path, this._storage);
+
     return new sessions.Session(
       sessionId,
       connection,
       kernel,
       notebook,
-      this._storage,
       this._handleMessage.bind(this));
   }
 

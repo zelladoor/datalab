@@ -26,7 +26,6 @@ export class Session implements app.ISession {
   _kernel: app.IKernel;
   _userconns: app.IUserConnection[];
   _notebook: app.notebook.IActiveNotebook;
-  _storage: app.IStorage;
   _requestIdToCellId: app.Map<string>;
 
   /**
@@ -39,13 +38,11 @@ export class Session implements app.ISession {
       userconn: app.IUserConnection,
       kernel: app.IKernel,
       notebook: app.notebook.IActiveNotebook,
-      storage: app.IStorage,
       messageHandler: app.MessageHandler) {
     this.id = id;
     this._kernel = kernel;
     this._registerKernelEventHandlers();
     this._notebook = notebook;
-    this._storage = storage;
     this._messageHandler = messageHandler;
     this._requestIdToCellId = {};
     this._userconns = [];

@@ -64,7 +64,11 @@ declare module app {
 
 
   interface IStorage {
-    // TODO
+    read (path: string): string;
+    write (path: string, data: string): void;
+    delete (path: string);
+    // move (sourcePath: string, destinationPath: string);
+    // copy (sourcePath: string, destinationPath: string);
   }
 
 
