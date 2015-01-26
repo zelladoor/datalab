@@ -16,6 +16,7 @@
 /// <reference path="../../../../../externs/ts/express/express.d.ts" />
 import express = require('express');
 import kernels = require('./kernels/index');
+import storage = require('./storage/local')
 
 /**
  * Default server configuration with support for environment variable overrides.
@@ -71,5 +72,5 @@ export function getMessageProcessors (): app.MessageProcessor[] {
 
 
 export function getStorage (): app.IStorage {
-  return null;
+  return new storage.LocalFileSystemStorage();
 }
