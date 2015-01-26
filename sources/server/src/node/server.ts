@@ -21,7 +21,7 @@ import express = require('express');
 import socketio = require('socket.io');
 import config = require('./app/config');
 import wsServer = require('./app/users/manager');
-import msgs = require('./app/sessions/messagepipeline');
+import sessions = require('./app/sessions/manager');
 
 
 /**
@@ -42,7 +42,7 @@ export function start (settings: app.Settings, apiRouter: express.Router) {
   console.log("Starting HTTP server on port " + settings.httpPort);
   httpServer.listen(settings.httpPort);
 
-  var messagePipeline = new msgs.MessagePipeline(
+  var sessionManager = new sessions.SessionManager(
     new wsServer.UserConnectionManager(socketio.listen(httpServer)),
     config.getKernelManager(),
     config.getMessageProcessors());

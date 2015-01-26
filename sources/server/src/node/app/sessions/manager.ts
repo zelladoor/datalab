@@ -19,14 +19,15 @@ import sessions = require('./session');
 import notebooks = require('../notebooks/notebook');
 
 /**
- * Controls the flow of messages between users and kernels.
+ * Manages the lifecycles of a set of sessions between users and kernels
  *
- * Binds together kernel and user connections via session objects and provides support
- * for passing some/all messages to a middleware stack for processing/interception/etc.
+ * When a user connects, the session manager specifies which session the user should
+ * join, which may involve creating a new session or joining an existing one.
  *
- * FIXME: this should just be called SessionManager as that is its role currently.
+ * In short, the session manager contains all of the business logic for how to bind together
+ * users and kernels into session objects.
  */
-export class MessagePipeline {
+export class SessionManager {
 
   _userconnManager: app.IUserConnectionManager;
   _kernelManager: app.IKernelManager;
