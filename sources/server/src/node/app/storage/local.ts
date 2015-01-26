@@ -18,4 +18,10 @@
  */
 export class LocalFileSystemStorage implements app.IStorage {
 
+  _storagePath: string;
+
+  constructor (storagePath: string) {
+    this._storagePath = storagePath;
+  }
+
 }
