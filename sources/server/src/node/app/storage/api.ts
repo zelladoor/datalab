@@ -19,13 +19,11 @@ import express = require('express');
 
 
 /**
- * Content management HTTP API
+ * Storage management HTTP API
  *
- * Handles CRUD operations for file-based resources (e.g., notebooks) stored in GCS.
- *
- * FIXME: other names: FileApi, StorageApi
+ * Handles CRUD operations for file/object-based resources (e.g., notebooks)
  */
-export class ContentApi {
+export class StorageApi {
 
   _storage: app.IStorageClient;
 
