@@ -39,11 +39,7 @@ export class ActiveNotebook implements app.notebook.IActiveNotebook {
   constructor (notebookPath: string, storage: app.IStorage) {
     this._notebookPath = notebookPath;
     this._storage = storage;
-
-    // Create a blank notebook and persist it
-    // TODO: actually check for pre-existing notebook and load it instead if possible
-    this._notebook = createBlankNotebook();
-    this._persistNotebook();
+    this._notebook = this._readOrCreateNotebook()
   }
 
   // Create a data-only object suitable for JSON serialization
@@ -98,6 +94,22 @@ export class ActiveNotebook implements app.notebook.IActiveNotebook {
   _persistNotebook () {
     console.log('Saving notebook ' + this._notebookPath + ' ...');
     this._storage.write(this._notebookPath, JSON.stringify(this.getData(), null, 2));
+  }
+
+  /**
+   * Reads in the notebook if it exists or creates a blank notebook if not.
+   */
+  _readOrCreateNotebook (): app.notebook.Notebook {
+    var notebook;
+    // First, attempt to read in the notebook if it already exists at the defined path
+    var notebookData = this._storage.read(this._notebookPath);
+    if (notebookData === undefined) {
+      notebook = createBlankNotebook();
+    } else {
+      // Deserialize the notebook data
+      notebook = JSON.parse(notebookData);
+    }
+    return notebook;
   }
 
   _updateWorksheet (cell: app.notebook.Cell) {

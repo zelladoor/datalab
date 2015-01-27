@@ -52,6 +52,14 @@ export class SessionManager {
 
   /**
    * Binds the user connection to a new kernel instance via a newly created session object
+   *
+   * TODO(bryantd): Consider making this entire session creation call path async
+   * to avoid blocking the server on file i/o (reading in notebook state). Persisting notebooks
+   * to local disk is already done async. When implementing the async route, there are also
+   * a few async json parsing libraries if parsing large notebooks becomes a bottleneck.
+   *
+   * This server blocking issue becomes more prominent when in a heavy-usage, multi-user
+   * environment (where many sessions are being created).
    */
   _createSession (sessionId: string, connection: app.IUserConnection) {
     var kernel = this._kernelManager.create({
