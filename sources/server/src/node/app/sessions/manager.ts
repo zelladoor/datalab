@@ -110,6 +110,7 @@ export class SessionManager {
    * existing session.
    */
   _handleUserConnect (connection: app.IUserConnection) {
+    var notebookPath = connection.getNotebookPath()); // FIXME: pass this through to the session
     var sessionId = connection.getSessionId();
     var session = this._idToSession[sessionId];
     if (!session) {

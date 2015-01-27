@@ -29,8 +29,12 @@ var log = logging.getLogger('socket-factory');
  * TODO(bryantd): Current socket factory provides only a singleton, but we'll need one per "datalab channel" eventually;
  * need to refactor this "angular factory" to be an object with a createSocket() method.
  */
-function socketFactory (rootScope: ng.IRootScopeService) {
-  var socket: Socket = socketio();
+function socketFactory (rootScope: ng.IRootScopeService, window, route) {
+
+  var socket: Socket = socketio(window.location.origin, {
+    query: 'notebookPath=' + route.current.params.notebookId
+  });
+
   return {
     on: function (message: string, callback: Function) {
       socket.on(message, function (data: any) {
@@ -46,7 +50,7 @@ function socketFactory (rootScope: ng.IRootScopeService) {
     }
   };
 }
-socketFactory.$inject = ['$rootScope']
+socketFactory.$inject = ['$rootScope', '$window', '$route'];
 
 
 app.registrar.factory('Socket', socketFactory);

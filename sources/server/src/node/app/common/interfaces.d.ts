@@ -66,7 +66,7 @@ declare module app {
   interface IStorage {
     read (path: string): string;
     write (path: string, data: string): void;
-    delete (path: string);
+    delete (path: string): boolean;
     // move (sourcePath: string, destinationPath: string);
     // copy (sourcePath: string, destinationPath: string);
   }
@@ -75,6 +75,7 @@ declare module app {
   interface IUserConnection {
     id: string;
     getSessionId (): string;
+    getNotebookPath (): string;
     onDisconnect (callback: EventHandler<IUserConnection>): void;
     onExecuteRequest (callback: EventHandler<ExecuteRequest>): void;
     sendExecuteReply (reply: ExecuteReply): void;

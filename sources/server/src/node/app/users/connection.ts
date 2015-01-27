@@ -72,6 +72,10 @@ export class UserConnection implements app.IUserConnection {
     return this._socket.handshake.address.address;
   }
 
+  getNotebookPath (): string {
+    return this._socket.handshake.query.notebookPath;
+  }
+
   /**
    * Registers a callback that is invoked whenever the user disconnects
    */

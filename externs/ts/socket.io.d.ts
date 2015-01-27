@@ -3,7 +3,7 @@
 // The socketio module is itself a function, so you need this odd-looking export= syntax to make the module callable
 // See: https://typescript.codeplex.com/discussions/444444
 declare module 'socketio' {
-  function moduleFunc(): Socket;
+  function moduleFunc(path: string, options: any): Socket;
   export = moduleFunc;
 }
 interface Socket {
