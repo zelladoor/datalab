@@ -41,6 +41,8 @@ export class UserConnection implements app.IUserConnection {
 
   /**
    * Gets an id for the session that corresponds to this user connection instance
+   *
+   * FIXME: can lose this method if the session id is superseded by the notebook path
    */
   getSessionId (): string {
     // TODO(bryantd): just use the ip address for the session id as stop-gap solution.

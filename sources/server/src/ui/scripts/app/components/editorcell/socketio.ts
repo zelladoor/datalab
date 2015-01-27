@@ -31,6 +31,7 @@ var log = logging.getLogger('socket-factory');
  */
 function socketFactory (rootScope: ng.IRootScopeService, window, route) {
 
+  // FIXME: any reason not to refer to the notebookId as notebookPath throughout UI-side too?
   var socket: Socket = socketio(window.location.origin, {
     query: 'notebookPath=' + route.current.params.notebookId
   });
