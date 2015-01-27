@@ -39,41 +39,6 @@ export class UserConnection implements app.IUserConnection {
     this._registerHandlers()
   }
 
-  /**
-   * Gets an id for the session that corresponds to this user connection instance
-   *
-   * FIXME: can lose this method if the session id is superseded by the notebook path
-   */
-  getSessionId (): string {
-    // TODO(bryantd): just use the ip address for the session id as stop-gap solution.
-    // This approach works if you assume all users will have unique IP addresses (not necessarily
-    // true) and that a user is only working with a single notebook at a time (we want to support
-    // working with multiple notebook simultaneously).
-    //
-    // Notes/thoughts on how to actually implement this eventually follow:
-    // Needs to be a value unique to given user and persistent across refreshes.
-    // Not sufficient to just set a cookie because need to support multiple
-    // (different) notebooks open at the same time by a single user.
-    //
-    // Should be able to deterministically derive a session id from
-    // (notebookId, userId) tuple.  userId could be an actual userId or
-    // just some value that we set via cookie.
-    //
-    // Possible solution: (userId, notebookId) --> uuid.v5 (if opaque id is desirable)
-    // Another solution '%s+%s' % (userId, notebookId) (if non-opaque id is desirable)
-    //
-    // Currently prefer an opaque id so that code doesn't start relying upon the id's structure
-    // (and so it can be changed easily if we need to further qualify the session id in the future)
-    //
-    // See also the authorization hook in socket.io if we need to augment
-    // the connection handshake data to insert the session identifier and make it available here
-    // https://github.com/Automattic/socket.io/wiki/Authorizing
-    //
-    // Note: the url of the webpage that initiated the connection (which has the notebook id)
-    // is available via socket.handshake.headers.referer --> http://host:port/notebooks/<id>
-    return this._socket.handshake.address.address;
-  }
-
   getNotebookPath (): string {
     return this._socket.handshake.query.notebookPath;
   }

@@ -74,7 +74,6 @@ declare module app {
 
   interface IUserConnection {
     id: string;
-    getSessionId (): string;
     getNotebookPath (): string;
     onDisconnect (callback: EventHandler<IUserConnection>): void;
     onExecuteRequest (callback: EventHandler<ExecuteRequest>): void;
