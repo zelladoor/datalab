@@ -13,15 +13,17 @@
  */
 
 
+import fs = require('fs');
+
 /**
  * Manages storage operations backed by a local file system
  */
 export class LocalFileSystemStorage implements app.IStorage {
 
-  _storagePath: string;
+  _storageRootPath: string;
 
-  constructor (storagePath: string) {
-    this._storagePath = storagePath;
+  constructor (storageRootPath: string) {
+    this._storageRootPath = storageRootPath;
   }
 
   read (path: string) {
@@ -29,11 +31,22 @@ export class LocalFileSystemStorage implements app.IStorage {
   }
 
   write (path: string, data: string) {
-
+    console.log('Writing to path: ' + path, data);
+    fs.writeFile(this._getAbsolutePath(path), data, this._handleError.bind(this));
   }
 
   delete (path: string) {
     return false;
+  }
+
+  _getAbsolutePath (path: string) {
+    return this._storageRootPath + path;
+  }
+
+  _handleError (error: any) {
+    if (error) {
+      console.log('ERROR during FileIO', error);
+    }
   }
 
 }

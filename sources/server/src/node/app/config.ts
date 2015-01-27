@@ -74,7 +74,7 @@ export function getMessageProcessors (): app.MessageProcessor[] {
 /**
  * Path to the root of the notebook storage location on the local file system
  */
-var notebookStoragePath = '.';
+var notebookStoragePath = './';
 export function getStorage (): app.IStorage {
   return new storage.LocalFileSystemStorage(notebookStoragePath);
 }

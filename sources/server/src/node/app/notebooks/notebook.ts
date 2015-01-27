@@ -33,19 +33,23 @@ import uuid = require('node-uuid');
 export class ActiveNotebook implements app.notebook.IActiveNotebook {
 
   _notebook: app.notebook.Notebook;
+  _notebookPath: string;
   _storage: app.IStorage;
 
   constructor (notebookPath: string, storage: app.IStorage) {
+    this._notebookPath = notebookPath;
     this._storage = storage;
-    // TODO(bryantd): actually check the storage and try to read it
+
+    // Create a blank notebook and persist it
+    // TODO: actually check for pre-existing notebook and load it instead if possible
     this._notebook = createBlankNotebook();
+    this._persistNotebook();
   }
 
   // Create a data-only object suitable for JSON serialization
   getData (): app.notebook.Notebook {
     return this._notebook;
   }
-
 
   // TODO: eventually return an object of "changes" for broadcasting rather than the full notebook.
   putCell (cell: app.notebook.Cell): app.notebook.Notebook {
@@ -55,7 +59,6 @@ export class ActiveNotebook implements app.notebook.IActiveNotebook {
   }
 
   updateCell (cell: app.notebook.Cell): app.notebook.Notebook {
-
     var mergedCell = this._notebook.cells[cell.id];
     if (!mergedCell) {
       // Nothing to merge with, simple case
@@ -89,6 +92,11 @@ export class ActiveNotebook implements app.notebook.IActiveNotebook {
       // Nothing to merge with, write the full set of outputs
       mergedCell.outputs = deltaCell.outputs;
     }
+  }
+
+  _persistNotebook () {
+    console.log('Saving notebook ' + this._notebookPath + ' ...');
+    this._storage.write(this._notebookPath, JSON.stringify(this.getData(), null, 2));
   }
 
   _updateWorksheet (cell: app.notebook.Cell) {
