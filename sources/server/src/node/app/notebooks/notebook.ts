@@ -55,6 +55,7 @@ export class ActiveNotebook implements app.notebook.IActiveNotebook {
   putCell (cell: app.notebook.Cell): app.notebook.Notebook {
     this._notebook.cells[cell.id] = cell;
     this._updateWorksheet(cell);
+    this._persistNotebook();
     return this.getData();
   }
 
