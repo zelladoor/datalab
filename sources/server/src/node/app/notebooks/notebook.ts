@@ -93,7 +93,7 @@ export class ActiveNotebook implements app.notebook.IActiveNotebook {
 
   _persistNotebook () {
     console.log('Saving notebook ' + this._notebookPath + ' ...');
-    this._storage.write(this._notebookPath, JSON.stringify(this.getData(), null, 2));
+    this._storage.write(this._notebookPath, serialize(this.getData()));
   }
 
   /**
@@ -107,7 +107,7 @@ export class ActiveNotebook implements app.notebook.IActiveNotebook {
       notebook = createBlankNotebook();
     } else {
       // Deserialize the notebook data
-      notebook = JSON.parse(notebookData);
+      notebook = deserialize(notebookData);
     }
     return notebook;
   }
@@ -120,6 +120,24 @@ export class ActiveNotebook implements app.notebook.IActiveNotebook {
     }
   }
 
+}
+
+// TODO(bryantd): wrap the serialization/deserialization bits into a separate object with defined
+// interface so that all different notebook ser/de can implement it. Configuration should provide a
+// mapping of extension -> ser/de and ActiveNotebook should just pick out and use the configured
+// ser/de on a per-extension basis
+
+/**
+ * Serialize the in-memory notebook model as-is to a JSON string
+ */
+function serialize (notebook: app.notebook.Notebook) {
+  return JSON.stringify(notebook, null, 2);
+}
+/**
+ * Deserialize an in-memory notebook model from a JSON string
+ */
+function deserialize (notebookData: string): app.notebook.Notebook {
+  return JSON.parse(notebookData);
 }
 
 
