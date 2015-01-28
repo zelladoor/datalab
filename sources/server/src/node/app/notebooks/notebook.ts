@@ -15,7 +15,7 @@
 
 /// <reference path="../../../../../../externs/ts/node/node-uuid.d.ts" />
 import uuid = require('node-uuid');
-
+import serializer = require('./serializer');
 
 // FIXME: move this discussion to the design doc for the server
 // Mention the advantage/value in separating the realtime
@@ -35,10 +35,13 @@ export class ActiveNotebook implements app.notebook.IActiveNotebook {
   _notebook: app.notebook.Notebook;
   _notebookPath: string;
   _storage: app.IStorage;
+  _serializer: app.INotebookSerializer;
 
   constructor (notebookPath: string, storage: app.IStorage) {
     this._notebookPath = notebookPath;
     this._storage = storage;
+
+    this._serializer = new serializer.NotebookSerializer();
     this._notebook = this._readOrCreateNotebook()
   }
 
@@ -93,7 +96,7 @@ export class ActiveNotebook implements app.notebook.IActiveNotebook {
 
   _persistNotebook () {
     console.log('Saving notebook ' + this._notebookPath + ' ...');
-    this._storage.write(this._notebookPath, serialize(this.getData()));
+    this._storage.write(this._notebookPath, this._serializer.toString(this.getData()));
   }
 
   /**
@@ -107,7 +110,7 @@ export class ActiveNotebook implements app.notebook.IActiveNotebook {
       notebook = createBlankNotebook();
     } else {
       // Deserialize the notebook data
-      notebook = deserialize(notebookData);
+      notebook = this._serializer.fromString(notebookData);
     }
     return notebook;
   }
@@ -120,24 +123,6 @@ export class ActiveNotebook implements app.notebook.IActiveNotebook {
     }
   }
 
-}
-
-// TODO(bryantd): wrap the serialization/deserialization bits into a separate object with defined
-// interface so that all different notebook ser/de can implement it. Configuration should provide a
-// mapping of extension -> ser/de and ActiveNotebook should just pick out and use the configured
-// ser/de on a per-extension basis
-
-/**
- * Serialize the in-memory notebook model as-is to a JSON string
- */
-function serialize (notebook: app.notebook.Notebook) {
-  return JSON.stringify(notebook, null, 2);
-}
-/**
- * Deserialize an in-memory notebook model from a JSON string
- */
-function deserialize (notebookData: string): app.notebook.Notebook {
-  return JSON.parse(notebookData);
 }
 
 

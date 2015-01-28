@@ -52,6 +52,7 @@ export class LocalFileSystemStorage implements app.IStorage {
    * Synchronously deletes the file at the given path
    *
    * Returns boolean to indicate success of the operation.
+   * TODO(bryantd): make this an idempotent operation
    */
   delete (path: string) {
     try {

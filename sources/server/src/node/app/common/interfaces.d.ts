@@ -54,14 +54,17 @@ declare module app {
     shutdownAll (): void;
   }
 
+  interface INotebookSerializer {
+    toString (notebook: notebook.Notebook): string;
+    fromString (data: string): notebook.Notebook;
+  }
+
   interface ISession {
     id: string;
     getKernelId (): string;
     getUserConnectionIds (): string[];
     updateUserConnection (connection: IUserConnection): void;
   }
-
-
 
   interface IStorage {
     read (path: string): string;
@@ -87,7 +90,6 @@ declare module app {
     onConnect (callback: EventHandler<IUserConnection>): void;
     onDisconnect (callback: EventHandler<IUserConnection>): void;
   }
-
 
   // FIXME: duplicate content of other interface file
   module notebook {

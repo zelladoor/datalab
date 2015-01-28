@@ -16,7 +16,7 @@
 /// <reference path="../../../../../externs/ts/express/express.d.ts" />
 import express = require('express');
 import kernels = require('./kernels/index');
-import storage = require('./storage/local')
+import storage = require('./storage/local');
 
 /**
  * Default server configuration with support for environment variable overrides.
@@ -69,7 +69,6 @@ function logMessage (message: any, session: app.ISession): any {
 export function getMessageProcessors (): app.MessageProcessor[] {
   return [logMessage];
 }
-
 
 /**
  * Path to the root of the notebook storage location on the local file system
