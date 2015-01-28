@@ -29,53 +29,11 @@
 /// <amd-dependency path="app/components/markdownviewer/MarkdownViewerDirective" />
 import logging = require('app/common/Logging');
 import constants = require('app/common/Constants');
+import doccell = require('app/components/documentcell/DocumentCell');
 import _app = require('app/App');
 
 
 var log = logging.getLogger(constants.scopes.markdownCell);
-
-class MarkdownCellController implements app.ICellController {
-
-  _rootScope: ng.IRootScopeService;
-  _scope: app.CellScope;
-
-  showEditRegion: boolean;
-  showPreviewRegion: boolean;
-
-  static $inject: string[] = ['$scope', '$rootScope'];
-  constructor (scope: app.CellScope, rootScope: ng.IRootScopeService) {
-    this._scope = scope;
-    this._rootScope = rootScope;
-    this.showPreviewRegion = true; // always-on for markdown cell
-    this.showEditRegion = true;
-
-    scope.keymap = this._createKeymap();
-    scope.ctrl = this;
-  }
-
-  switchToEditMode () {
-    log.debug('Switching to edit mode');
-    var that = this;
-    this._rootScope.$evalAsync(() => {
-      that.showEditRegion = true;
-    });
-  }
-
-  _createKeymap () {
-    return {
-      'Shift-Enter': this._handleSwitchToViewMode.bind(this)
-    }
-  }
-
-  _handleSwitchToViewMode () {
-    log.debug('Switching to view-only mode');
-    var that = this;
-    this._rootScope.$evalAsync(() => {
-      that.showEditRegion = false;
-    });
-  }
-
-}
 
 /**
  * Creates a directive definition.
@@ -88,7 +46,7 @@ function markdownCellDirective (): ng.IDirective {
     },
     templateUrl: constants.scriptPaths.app + '/components/markdowncell/markdowncell.html',
     replace: true,
-    controller: MarkdownCellController
+    controller: doccell.DocumentCellController
   }
 }
 

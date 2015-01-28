@@ -170,7 +170,7 @@ function appendMarkdownCell (notebook: any) {
     notebook.cells[id] = {
       id: id,
       type: 'markdown',
-      source: '# Markdown'
+      source: 'You **can** write markdown here'
     }
     notebook.worksheet.push(id);
   }

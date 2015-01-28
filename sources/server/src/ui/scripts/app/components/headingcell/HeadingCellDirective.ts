@@ -29,56 +29,11 @@
 /// <amd-dependency path="app/components/headingviewer/HeadingViewerDirective" />
 import logging = require('app/common/Logging');
 import constants = require('app/common/Constants');
+import doccell = require('app/components/documentcell/DocumentCell');
 import _app = require('app/App');
 
 
 var log = logging.getLogger(constants.scopes.headingCell);
-
-// FIXME: see how much overlap between this and markdown cell could be collected into a super class
-// the controllers are almost identical.
-// Maybe make a DocumentCellController that both can use and just import that here instead
-class HeadingCellController implements app.ICellController {
-
-  _rootScope: ng.IRootScopeService;
-  _scope: app.CellScope;
-
-  showEditRegion: boolean;
-  showPreviewRegion: boolean;
-
-  static $inject: string[] = ['$scope', '$rootScope'];
-  constructor (scope: app.CellScope, rootScope: ng.IRootScopeService) {
-    this._scope = scope;
-    this._rootScope = rootScope;
-    this.showPreviewRegion = true; // always-on for heading cell
-    this.showEditRegion = true;
-
-    scope.keymap = this._createKeymap();
-    scope.ctrl = this;
-  }
-
-  switchToEditMode () {
-    log.debug('Switching to edit mode');
-    var that = this;
-    this._rootScope.$evalAsync(() => {
-      that.showEditRegion = true;
-    });
-  }
-
-  _createKeymap () {
-    return {
-      'Shift-Enter': this._handleSwitchToViewMode.bind(this)
-    }
-  }
-
-  _handleSwitchToViewMode () {
-    log.debug('Switching to view-only mode');
-    var that = this;
-    this._rootScope.$evalAsync(() => {
-      that.showEditRegion = false;
-    });
-  }
-
-}
 
 /**
  * Creates a directive definition.
@@ -91,7 +46,7 @@ function headingCellDirective (): ng.IDirective {
     },
     templateUrl: constants.scriptPaths.app + '/components/headingcell/headingcell.html',
     replace: true,
-    controller: HeadingCellController
+    controller: doccell.DocumentCellController
   }
 }
 
