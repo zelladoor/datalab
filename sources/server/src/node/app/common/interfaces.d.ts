@@ -105,6 +105,8 @@ declare module app {
       outputs?: CellOutput[];
 
       executionCounter?: string;
+
+      metadata?: any;
     }
     interface Notebook {
       cells?: Map<Cell>;

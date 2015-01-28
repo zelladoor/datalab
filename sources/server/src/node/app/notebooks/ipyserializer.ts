@@ -57,8 +57,11 @@ export class IPyNotebookSerializer implements app.INotebookSerializer {
           cell.source = ipyCell.input.join('');
           break;
         case 'heading':
-          cell.type = 'markdown';
-          cell.source = '## ' + ipyCell.source.join('');
+          cell.type = 'heading';
+          cell.source = ipyCell.source.join('');
+          cell.metadata = {
+            level: ipyCell.level || 1
+          }
           break;
         default:
           console.log('Skipping unsupported cell type: ', ipyCell.cell_type);
