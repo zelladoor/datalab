@@ -120,6 +120,23 @@ export class NotebookData {
     }
   }
 
+  insertHeadingCell () {
+    var id = this._generateUUID();
+    if (!this.notebook.cells[id]) { // only insert the cell once
+      this.notebook.cells[id] = {
+        id: id,
+        type: 'heading',
+        source: '',
+        active: true,
+        metadata: {
+          // TODO(bryantd): implement a level selector UI element for configuring this attribute
+          level: 1
+        }
+      }
+      this.notebook.worksheet.push(id);
+    }
+  }
+
   // FIXME: this method will change substantially or be replaced in full once notebook values
   // are being broadcasted rather than the full notebook
   _mergeNotebook (newNotebook: any) {

@@ -48,6 +48,12 @@ export var markdownCell = {
 export var markdownViewer = {
   directiveName: 'datalabMarkdownViewer'
 }
+export var headingCell = {
+  directiveName: 'datalabHeadingCell'
+}
+export var headingViewer = {
+  directiveName: 'datalabHeadingViewer'
+}
 export var notebookEditor = {
   directiveName: 'datalabNotebookEditor'
 }
@@ -62,17 +68,19 @@ export var notebooks = {
 
 // Logging scope names
 export var scopes = {
-  // Generic components
+  // Cells
   codeCell: 'codeCell',
   editorCell: 'editorCell',
+  headingCell: 'headingCell',
   markdownCell: 'markdownCell',
 
+  // Generic components
   codeEditor: 'codeEditor',
+  headingViewer: 'headingViewer',
+  kernel: 'kernel',
+  layouts: 'layouts',
   markdownViewer: 'markdownViewer',
   notebookEditor: 'notebookEditor',
-
-  layouts: 'layouts',
-  kernel: 'kernel',
 
   // Route-specific components
   notebooks: {

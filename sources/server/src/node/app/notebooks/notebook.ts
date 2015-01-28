@@ -129,25 +129,52 @@ export class ActiveNotebook implements app.notebook.IActiveNotebook {
 
 }
 
+function createBlankNotebook (): app.notebook.Notebook {
+  // Create a worksheet with one markdown cell and one code cell
+  var notebook: app.notebook.Notebook = {
+    id: uuid.v4(),
+    cells: {},
+    worksheet: []
+  };
+
+  // Create one of each cell type in the blank notebook
+  appendHeadingCell(notebook);
+  appendMarkdownCell(notebook);
+  appendCodeCell(notebook);
+
+  return notebook;
+}
+
 
 // FIXME: try to add shared util module that both the front-end and backend
-// can access. there is a dupe of this method in ui-side code for creating
+// can access. there is a dupe of cell creation methods in ui-side code for creating
 // a default empty cell.
+function appendHeadingCell (notebook: any) {
+  var id = uuid.v4();
+  if (!notebook.cells[id]) { // only insert the cell once
+    notebook.cells[id] = {
+      id: id,
+      type: 'heading',
+      source: 'This is a heading',
+      metadata: {
+        // TODO(bryantd): implement a level selector UI element for configuring this attribute
+        level: 1
+      }
+    }
+    notebook.worksheet.push(id);
+  }
+}
 function appendMarkdownCell (notebook: any) {
   var id = uuid.v4();
   if (!notebook.cells[id]) { // only insert the cell once
     notebook.cells[id] = {
       id: id,
       type: 'markdown',
-      source: '# Markdown',
-      active: true
+      source: '# Markdown'
     }
     notebook.worksheet.push(id);
   }
 }
-// FIXME: try to add shared util module that both the front-end and backend
-// can access. there is a dupe of this method in ui-side code for creating
-// a default empty cell.
 function appendCodeCell (notebook: any) {
   var id = uuid.v4();
   if (!notebook.cells[id]) { // only insert the cell once
@@ -158,16 +185,4 @@ function appendCodeCell (notebook: any) {
     }
     notebook.worksheet.push(id);
   }
-}
-
-function createBlankNotebook (): app.notebook.Notebook {
-  // Create a worksheet with one markdown cell and one code cell
-  var notebook: app.notebook.Notebook = {
-    id: uuid.v4(),
-    cells: {},
-    worksheet: []
-  };
-  appendMarkdownCell(notebook);
-  appendCodeCell(notebook);
-  return notebook;
 }

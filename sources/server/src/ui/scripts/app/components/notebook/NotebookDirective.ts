@@ -19,6 +19,7 @@
 /// <reference path="../../../../../../../../externs/ts/angularjs/angular.d.ts" />
 /// <amd-dependency path="app/components/codecell/CodeCellDirective" />
 /// <amd-dependency path="app/components/markdowncell/MarkdownCellDirective" />
+/// <amd-dependency path="app/components/headingcell/HeadingCellDirective" />
 import logging = require('app/common/Logging');
 import constants = require('app/common/Constants');
 import app = require('app/App');
