@@ -40,12 +40,16 @@ export class ActiveNotebook implements app.notebook.IActiveNotebook {
   constructor (notebookPath: string, storage: app.IStorage) {
     this._notebookPath = notebookPath;
     this._storage = storage;
-
+    // TODO(bryantd): make the set of serializers configurable
+    // by specifying a map of extension -> serializer somewhere in configuration and
+    // passing it to this constructor instead of creating a serializer per-notebook
     this._serializer = new serializer.NotebookSerializer();
     this._notebook = this._readOrCreateNotebook()
   }
 
-  // Create a data-only object suitable for JSON serialization
+  /**
+   * Creates a data-only object suitable for JSON serialization
+   */
   getData (): app.notebook.Notebook {
     return this._notebook;
   }
