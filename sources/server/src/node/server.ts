@@ -49,4 +49,8 @@ export function start (settings: app.Settings, apiRouter: express.Router) {
     config.getMessageProcessors());
 }
 
+// Ensure that the notebook storage system is fully initialized
+config.initStorage();
+
+// Start the DataLab server running
 start(config.getSettings(), config.getApiRouter());

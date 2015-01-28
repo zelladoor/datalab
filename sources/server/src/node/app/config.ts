@@ -14,7 +14,9 @@
 
 
 /// <reference path="../../../../../externs/ts/express/express.d.ts" />
+/// <reference path="../../../../../externs/ts/node/mkdirp.d.ts" />
 import express = require('express');
+import mkdirp = require('mkdirp');
 import kernels = require('./kernels/index');
 import storage = require('./storage/local');
 
@@ -73,7 +75,19 @@ export function getMessageProcessors (): app.MessageProcessor[] {
 /**
  * Path to the root of the notebook storage location on the local file system
  */
-var notebookStoragePath = './';
+var notebookStoragePath = './notebooks';
+export function initStorage () {
+  mkdirp.sync(notebookStoragePath);
+}
+
+/**
+ * A single, server-wide storage backend instance
+ */
+var fsStorage = new storage.LocalFileSystemStorage(notebookStoragePath);
+
+/**
+ * Get the configured storage backend for persisting content (e.g., notebooks)
+ */
 export function getStorage (): app.IStorage {
-  return new storage.LocalFileSystemStorage(notebookStoragePath);
+  return fsStorage;
 }

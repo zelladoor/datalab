@@ -10,7 +10,8 @@
     "express": "4.x",
     "node-uuid": "1.4.x",
     "socket.io": "1.1.x",
-    "zmq": "2.8.x"
+    "zmq": "2.8.x",
+    "mkdirp": "0.5.x"
   },
   "author": "Google DataLab Team",
   "license": "Apache 2.0"

@@ -22,6 +22,10 @@ import express = require('express');
  * Storage management HTTP API
  *
  * Handles CRUD operations for file/object-based resources (e.g., notebooks)
+ *
+ * For implementing the storage browser, currently only need to support a list operation
+ * that returns all available files for a given path/prefix along with whatever per-file
+ * metadata is needed for display within the storage browser.
  */
 export class StorageApi {
 
@@ -32,24 +36,11 @@ export class StorageApi {
   }
 
   list (request: express.Request, response: express.Response) {
-
-  }
-
-  get (request: express.Request, response: express.Response) {
-
-  }
-
-  /**
-   * Puts a new file/object in the storage
-   *
-   * Will overwrite any existing file/object
-   */
-  put (request: express.Request, response: express.Response) {
-
-  }
-
-  delete (request: express.Request, response: express.Response) {
-
+    // sketch of how this might work
+    // var path = request.param('path', null);
+    // var files = this._storage.list(path);
+    // // FIXME: possible to specify an "ls depth" on the list operation?
+    // response.send(files);
   }
 
 }

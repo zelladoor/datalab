@@ -14,6 +14,8 @@
 
 
 import fs = require('fs');
+import pathlib = require('path');
+
 
 /**
  * Manages storage operations backed by a local file system
@@ -34,7 +36,7 @@ export class LocalFileSystemStorage implements app.IStorage {
   read (path: string) {
     var data;
     try {
-      data = fs.readFileSync(path);
+      data = fs.readFileSync(this._getAbsolutePath(path));
     } catch (e) {
       // No file exists at the given path, just leave data undefined for caller to handle
     }
@@ -65,7 +67,7 @@ export class LocalFileSystemStorage implements app.IStorage {
   }
 
   _getAbsolutePath (path: string) {
-    return this._storageRootPath + path;
+    return pathlib.join(this._storageRootPath, path);
   }
 
   _handleError (error: any) {
