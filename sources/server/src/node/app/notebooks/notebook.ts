@@ -15,7 +15,7 @@
 
 /// <reference path="../../../../../../externs/ts/node/node-uuid.d.ts" />
 import uuid = require('node-uuid');
-import serializer = require('./serializer');
+import serializer = require('./ipyserializer');
 
 // FIXME: move this discussion to the design doc for the server
 // Mention the advantage/value in separating the realtime
@@ -43,7 +43,7 @@ export class ActiveNotebook implements app.notebook.IActiveNotebook {
     // TODO(bryantd): make the set of serializers configurable
     // by specifying a map of extension -> serializer somewhere in configuration and
     // passing it to this constructor instead of creating a serializer per-notebook
-    this._serializer = new serializer.NotebookSerializer();
+    this._serializer = new serializer.IPyNotebookSerializer();
     this._notebook = this._readOrCreateNotebook()
   }
 
