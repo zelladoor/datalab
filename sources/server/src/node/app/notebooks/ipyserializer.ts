@@ -74,3 +74,12 @@ export class IPyNotebookSerializer implements app.INotebookSerializer {
   }
 
 }
+
+/**
+ * Notes on ipynb format interop
+ *
+ * - nb.metadata.signature
+ *   * sha256 signature of the notebook content
+ *   * used for validating the cell output media (e.g., javascript) is trusted
+ *   * ipython seems to ignore the signature field if it is not included
+ */
