@@ -121,7 +121,7 @@ export class IOPubChannelClient extends channels.ChannelClient {
 
     var result: app.OutputData = {
       type: 'result',
-      mimetypeBundle: message.content['data'],
+      mimetypeBundle: message.content.data,
       requestId: message.parentHeader.msg_id
     };
 
@@ -134,7 +134,7 @@ export class IOPubChannelClient extends channels.ChannelClient {
   _handleKernelStatus (message: app.ipy.Message) {
 
     var status: app.KernelStatus = {
-      status: message.content['execution_state'],
+      status: message.content.execution_state,
       requestId: message.parentHeader.msg_id
     };
 
@@ -150,7 +150,7 @@ export class IOPubChannelClient extends channels.ChannelClient {
       // the content.name field should have value in {'stdout', 'stderr'}
       type: message.content.name,
       mimetypeBundle: {
-        'text/plain': message.content['data']
+        'text/plain': message.content.data
       },
       requestId: message.parentHeader.msg_id
     }

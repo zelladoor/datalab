@@ -93,10 +93,12 @@ declare module app {
 
   // FIXME: duplicate content of other interface file
   module notebook {
+
     interface CellOutput {
       type: string; // 'result' | 'error' | 'stdout' | 'stderr'
       mimetypeBundle: any;
     }
+
     interface Cell {
       id: string;
       type?: string; // 'code' | 'markdown' | 'heading' | 'etc'
@@ -108,6 +110,7 @@ declare module app {
 
       metadata?: any;
     }
+
     interface Notebook {
       cells?: Map<Cell>;
       worksheet: string[]; // [cell ids]
@@ -119,6 +122,30 @@ declare module app {
       // Returning a full notebook for the time being until notebook deltas are implemented
       putCell (cell: Cell): Notebook;
       updateCell (cell: Cell): Notebook;
+    }
+  }
+
+  module ipy {
+    interface Cell {
+      cell_type: string;
+      metadata?: any;
+    }
+    interface CodeCell extends Cell {
+      input: string[];
+      prompt_number: number
+      collapsed: boolean;
+      language: string;
+      outputs: any[];
+    }
+    interface DocumentCell extends Cell {
+      source: string[];
+    }
+    interface MarkdownCell extends DocumentCell {
+      // FIXME: worth keeping this interface to make the code more explicit/self-documenting?
+    }
+    interface HeadingCell extends DocumentCell {
+      source: string[];
+      level: number;
     }
   }
 

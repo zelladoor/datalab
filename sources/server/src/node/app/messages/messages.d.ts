@@ -107,6 +107,7 @@ declare module app {
       store_history: boolean;
       allow_stdin: boolean;
     }
+
   }
 
 }
