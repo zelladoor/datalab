@@ -99,8 +99,9 @@ export class ActiveNotebook implements app.notebook.IActiveNotebook {
   }
 
   _persistNotebook () {
-    console.log('Saving notebook ' + this._notebookPath + ' ...');
-    this._storage.write(this._notebookPath, this._serializer.toString(this.getData()));
+    // TODO(bryantd): re-enable this once ipynb serialization is implemented
+    // console.log('Saving notebook ' + this._notebookPath + ' ...');
+    // this._storage.write(this._notebookPath, this._serializer.toString(this.getData()));
   }
 
   /**

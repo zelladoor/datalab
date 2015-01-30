@@ -32,7 +32,7 @@ export class DocumentCellController implements app.ICellController {
     this._scope = scope;
     this._rootScope = rootScope;
     this.showPreviewRegion = true; // always-on for heading cell
-    this.showEditRegion = true;
+    this.showEditRegion = false; // hide the edit region until the cell is put in edit mode
 
     scope.keymap = this._createKeymap();
     scope.ctrl = this;

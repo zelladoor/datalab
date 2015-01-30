@@ -26,7 +26,8 @@ export class IPyNotebookSerializer implements app.INotebookSerializer {
    * Serialize the in-memory notebook model as-is to a JSON string
    */
   toString (notebook: app.notebook.Notebook) {
-    console.log('TODO(bryantd): serialize to ipynb format');
+    // TODO(bryantd): serialize to ipynb format
+    return 'TODO';
   }
 
   /**

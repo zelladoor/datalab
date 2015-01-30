@@ -1,12 +1,6 @@
 <div id="cell-{{cell.id}}" class="datalab-editor-cell row" ng-class="{ 'datalab-editor-cell-active' : cell.active }">
   <!-- NOTE: this template assumes that it lives inside of some bootstrap .container as the base grid system -->
 
-  <!-- Preview region -->
-  <div class="datalab-editor-cell-preview-region col-lg-12 col-md-12 col-sm-12 col-xs-12" ng-dblclick="onPreviewRegionDoubleClick()" ng-if="enablePreviewRegion">
-    <datalab-markdown-viewer ng-if="cell.type == 'markdown'" source="cell.source"></datalab-markdown-viewer>
-    <datalab-heading-viewer ng-if="cell.type == 'heading'" source="cell.source"level="cell.metadata.level"></datalab-heading-viewer>
-  </div>
-
   <!-- Edit region -->
   <div class="datalab-editor-cell-edit-region col-lg-12 col-md-12 col-sm-12 col-xs-12" ng-show="enableEditRegion" >
     <div class="datalab-editor-cell-input row">
@@ -54,6 +48,12 @@
     </div>
 
     <div class="clearer"></div>
+  </div>
+
+  <!-- Preview region -->
+  <div class="datalab-editor-cell-preview-region col-lg-12 col-md-12 col-sm-12 col-xs-12" ng-dblclick="onPreviewRegionDoubleClick()" ng-if="enablePreviewRegion">
+    <datalab-markdown-viewer ng-if="cell.type == 'markdown'" source="cell.source"></datalab-markdown-viewer>
+    <datalab-heading-viewer ng-if="cell.type == 'heading'" source="cell.source"level="cell.metadata.level"></datalab-heading-viewer>
   </div>
 
   <!-- FIXME: separate out the controls into a separate directive -->
