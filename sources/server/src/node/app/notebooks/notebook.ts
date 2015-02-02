@@ -63,7 +63,7 @@ export class ActiveNotebook implements app.notebook.IActiveNotebook {
   }
 
   updateCell (cell: app.notebook.Cell): app.notebook.Notebook {
-    var mergedCell = this._notebook.cells[cell.id];
+    var mergedCell: app.notebook.Cell = this._notebook.cells[cell.id];
     if (!mergedCell) {
       // Nothing to merge with, simple case
       return this.putCell(cell);
