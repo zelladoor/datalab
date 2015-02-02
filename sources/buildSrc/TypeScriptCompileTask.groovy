@@ -35,6 +35,15 @@ class TypeScriptCompileTask extends DefaultTask {
     def compile() {
         // Enumerate the typescript files recursively within the given source path
         def tsFiles = []
+        // FIXME: hack to add the common files to the build
+        // Should make relativePath be a list of paths or srcDir a list of paths
+        new File("${ srcDir }/common").eachFileRecurse(FileType.FILES) {
+            if (it.name.endsWith('.ts')) {
+                println "FOUND A COMMON FILE: " + it;
+                tsFiles << it;
+            }
+        }
+        // Walk the filesystem from the specified path to find *.ts files
         new File("${ srcDir }${ relativePath }").eachFileRecurse(FileType.FILES) {
             if (it.name.endsWith('.ts')) {
                 tsFiles << it;
@@ -47,8 +56,9 @@ class TypeScriptCompileTask extends DefaultTask {
         }
 
         // Call out to the TypeScript compiler (tsc) to compile and emit to the build dir
-        def proc = """tsc $compilerArgs --module $moduleType \
-           --outDir $outDir${ outputRelativePath } ${ tsFiles.join(' ') }""".execute()
+        def tscCommand = """tsc $compilerArgs --module $moduleType \
+           --outDir $outDir${ outputRelativePath } ${ tsFiles.join(' ') }""";
+        def proc = tscCommand.execute()
         if (proc.in.text?.trim()) {
             println "tsc stdout:\n${ proc.in.text }"
         }

@@ -53,6 +53,14 @@ declare module app {
     ctrl?: ICellController;
   }
 
+  // UI-specific extensions to the datalab notebook types
+  module notebook {
+    interface AugmentedCellOutput extends CellOutput{ // FIXME: better name for this interface?
+      preferredMimetype?: string;
+      trustedHtml?: string;
+    }
+  }
+
   // FIXME: maybe split the ipy submodule into a separate file
   // Really, this model should be shared between front-end and backend, but need to setup
   // the build scripts such that this is possible.
@@ -85,55 +93,6 @@ declare module app {
       output_type: string;
       prompt_number: number;
       text: string[];
-    }
-  }
-
-  // FIXME: move this def to a common location for node/ui, duplicated here
-  interface Map<T> {
-    [index: string]: T;
-  }
-
-  // FIXME: duplicated interface from node/server-side until a shared
-  // interface file is added.
-  module notebook {
-
-    interface CellOutput {
-      type: string; // 'result' | 'stdout' | 'stderr'
-      mimetypeBundle: any;
-    }
-    interface AugmentedCellOutput extends CellOutput{ // FIXME: better name for this interface?
-      preferredMimetype?: string;
-      trustedHtml?: string;
-    }
-    // FIXME: For diff types see: https://github.com/ipython/ipython/blob/master/docs/source/notebook/nbformat.rst
-    // interface DisplayDataOutput extends CellOutput {
-    //   // TODO: define interfaces for each output type
-    // }
-
-    interface Cell {
-      id: string;
-      type?: string; // "code" || "markdown" || etc
-
-      source?: string; // the cell's "input" value
-      outputs?: CellOutput[];
-
-      executionCounter?: number;
-    }
-
-    interface Notebook {
-
-      // FIXME: cleanup these comments
-      // Just support a single worksheet initially within the implementation,
-      // but make the model representation support the definition of multiple
-      // worksheets to avoid needing refactoring when we want multi-worksheet UX
-      //
-      // Note that worksheets have been slated for removal in upcoming
-      // ipython notebook format updates (see latest juptyer proposal)
-      // https://github.com/ipython/ipython/wiki/Dev:-Meeting-notes,-February-6,-2013
-      // https://github.com/ipython/ipython/blob/master/docs/source/notebook/nbformat.rst
-      cells?: Map<Cell>;
-      worksheet: string[]; // ['first-cell-id', 'second', ...]
-
     }
   }
 }

@@ -25,10 +25,6 @@ interface Object {
  */
 declare module app {
 
-  interface Map<T> {
-    [index: string]: T;
-  }
-
   interface Settings {
     httpPort: number;
   }
@@ -40,6 +36,14 @@ declare module app {
   interface KernelConfig {
     iopubPort: number;
     shellPort: number;
+  }
+
+  interface IActiveNotebook { // FIXME: better name for this?
+    getData (): notebook.Notebook;
+    // TODO(bryantd): methods below will actually return a "Notebok changes"/delta eventually
+    // Returning a full notebook for the time being until notebook deltas are implemented
+    putCell (cell: notebook.Cell): notebook.Notebook;
+    updateCell (cell: notebook.Cell): notebook.Notebook;
   }
 
   interface IKernel {
@@ -96,40 +100,6 @@ declare module app {
   interface IUserConnectionManager {
     onConnect (callback: EventHandler<IUserConnection>): void;
     onDisconnect (callback: EventHandler<IUserConnection>): void;
-  }
-
-  // FIXME: duplicate content of other interface file
-  module notebook {
-
-    interface CellOutput {
-      type: string; // 'result' | 'error' | 'stdout' | 'stderr'
-      mimetypeBundle: any;
-    }
-
-    interface Cell {
-      id: string;
-      type?: string; // 'code' | 'markdown' | 'heading' | 'etc'
-
-      source?: string; // the cell's "input" value
-      outputs?: CellOutput[];
-
-      executionCounter?: string;
-
-      metadata?: any;
-    }
-
-    interface Notebook {
-      cells?: Map<Cell>;
-      worksheet: string[]; // [cell ids]
-    }
-
-    interface IActiveNotebook { // FIXME: better name for this?
-      getData (): Notebook;
-      // TODO(bryantd): methods below will actually return a "Notebok changes"/delta eventually
-      // Returning a full notebook for the time being until notebook deltas are implemented
-      putCell (cell: Cell): Notebook;
-      updateCell (cell: Cell): Notebook;
-    }
   }
 
   module ipy {

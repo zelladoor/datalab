@@ -30,7 +30,7 @@ import serializer = require('./ipyserializer');
  *
  * Note: this class will change substantially once notebook deltas are implemented
  */
-export class ActiveNotebook implements app.notebook.IActiveNotebook {
+export class ActiveNotebook implements app.IActiveNotebook {
 
   _notebook: app.notebook.Notebook;
   _notebookPath: string;
