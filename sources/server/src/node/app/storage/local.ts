@@ -34,9 +34,9 @@ export class LocalFileSystemStorage implements app.IStorage {
    * Returns undefined if no file exists at the given path
    */
   read (path: string) {
-    var data;
+    var data: string;
     try {
-      data = fs.readFileSync(this._getAbsolutePath(path));
+      data = fs.readFileSync(this._getAbsolutePath(path)).toString('utf8');
     } catch (e) {
       // No file exists at the given path, just leave data undefined for caller to handle
     }
