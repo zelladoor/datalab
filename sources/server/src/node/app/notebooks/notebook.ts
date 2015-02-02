@@ -108,7 +108,7 @@ export class ActiveNotebook implements app.notebook.IActiveNotebook {
    * Reads in the notebook if it exists or creates a blank notebook if not.
    */
   _readOrCreateNotebook (): app.notebook.Notebook {
-    var notebook;
+    var notebook: app.notebook.Notebook;
     // First, attempt to read in the notebook if it already exists at the defined path
     var notebookData = this._storage.read(this._notebookPath);
     if (notebookData === undefined) {

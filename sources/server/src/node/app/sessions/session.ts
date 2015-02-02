@@ -115,7 +115,7 @@ export class Session implements app.ISession {
       return;
     }
 
-    var cellUpdate = {
+    var cellUpdate: app.notebook.Cell = {
       id: cellId,
       executionCounter: message.executionCounter.toString(),
       outputs: []

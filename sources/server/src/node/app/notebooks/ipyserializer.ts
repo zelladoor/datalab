@@ -46,7 +46,7 @@ export class IPyNotebookSerializer implements app.INotebookSerializer {
     };
 
     ipynb.worksheets[0].cells.forEach(function (ipyCell: any) {
-      var cell;
+      var cell: app.notebook.Cell;
       switch (ipyCell.cell_type) {
         case 'markdown':
           cell = deserializeIPyMarkdownCell(<app.ipy.MarkdownCell>ipyCell);

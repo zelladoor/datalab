@@ -29,10 +29,17 @@ var log = logging.getLogger('socket-factory');
  * TODO(bryantd): Current socket factory provides only a singleton, but we'll need one per "datalab channel" eventually;
  * need to refactor this "angular factory" to be an object with a createSocket() method.
  */
-function socketFactory (rootScope: ng.IRootScopeService, window, route) {
+function socketFactory (
+    rootScope: ng.IRootScopeService,
+    location: ng.ILocationService,
+    route: ng.route.IRouteService) {
 
-  // FIXME: any reason not to refer to the notebookId as notebookPath throughout UI-side too?
-  var socket: Socket = socketio(window.location.origin, {
+  // TODO(bryantd): Add support for configuration overrides via query arg params and pass these
+  // along for websocket connection establishment. can use $location to get the angular path
+  // and query params here
+  console.warn('WS connect to ', location.host());
+  var socket: Socket = socketio(location.host(), {
+    // FIXME: any reason not to refer to the notebookId as notebookPath throughout UI-side too?
     query: 'notebookPath=' + route.current.params.notebookId
   });
 
@@ -51,7 +58,7 @@ function socketFactory (rootScope: ng.IRootScopeService, window, route) {
     }
   };
 }
-socketFactory.$inject = ['$rootScope', '$window', '$route'];
+socketFactory.$inject = ['$rootScope', '$location', '$route'];
 
 
 app.registrar.factory('Socket', socketFactory);

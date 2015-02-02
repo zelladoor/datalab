@@ -13,17 +13,24 @@
  */
 
 
+// Explicitly permit o['property'] references on all objects by defining
+// an explicity indexer on Object. For details,
+// see: https://typescript.codeplex.com/discussions/535628
+interface Object {
+  [index: string]: any;
+}
+
 /**
  * Interfaces definitions
  */
 declare module app {
 
-  interface Settings {
-    httpPort: number;
-  }
-
   interface Map<T> {
     [index: string]: T;
+  }
+
+  interface Settings {
+    httpPort: number;
   }
 
   interface EventHandler<T> {
