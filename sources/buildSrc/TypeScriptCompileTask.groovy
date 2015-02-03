@@ -24,7 +24,7 @@ import org.gradle.api.tasks.TaskAction
  */
 class TypeScriptCompileTask extends DefaultTask {
 
-    String relativePath = ''
+    String[] srcRelativePaths = [];
     String outputRelativePath = ''
     String srcDir = ''
     String outDir = project.buildDir.path
@@ -35,24 +35,13 @@ class TypeScriptCompileTask extends DefaultTask {
     def compile() {
         // Enumerate the typescript files recursively within the given source path
         def tsFiles = []
-        // FIXME: hack to add the common files to the build
-        // Should make relativePath be a list of paths or srcDir a list of paths
-        new File("${ srcDir }/common").eachFileRecurse(FileType.FILES) {
-            if (it.name.endsWith('.ts')) {
-                println "FOUND A COMMON FILE: " + it;
-                tsFiles << it;
+        srcRelativePaths.each{ relativePath ->
+            // Walk the filesystem from the specified path to find *.ts files
+            new File("${ srcDir }${ relativePath }").eachFileRecurse(FileType.FILES) {
+                if (it.name.endsWith('.ts')) {
+                    tsFiles << it;
+                }
             }
-        }
-        // Walk the filesystem from the specified path to find *.ts files
-        new File("${ srcDir }${ relativePath }").eachFileRecurse(FileType.FILES) {
-            if (it.name.endsWith('.ts')) {
-                tsFiles << it;
-            }
-        }
-
-        // If an output relative path was not defined, use the input relative path
-        if (outputRelativePath.isEmpty()) {
-            outputRelativePath = relativePath
         }
 
         // Call out to the TypeScript compiler (tsc) to compile and emit to the build dir
