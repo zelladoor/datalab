@@ -40,18 +40,11 @@ class NotebookController {
   _scope: NotebookScope;
   _rootScope: ng.IRootScopeService;
 
-  _nextCellNum: number; // FIXME: replace this with uuid gen
 
   static $inject = ['$scope', '$rootScope'];
   constructor (scope: NotebookScope, rootScope: ng.IRootScopeService) {
     this._scope = scope;
     this._rootScope = rootScope;
-
-    this._nextCellNum = 0;
-    // TODO:
-    // * bits for adding/removing/moving cells
-    // * some keyboard handlers for "notebook-level events" (when in command mode)
-    // * logic for switching cell mode (edit/command) based upon events (keys)
 
     rootScope.$on('execute-cell', this._handleExecuteCellEvent.bind(this));
   }
@@ -94,10 +87,6 @@ class NotebookController {
     this._scope.notebook.worksheet.push(newCell.id);
     this._scope.notebook.cells[newCell.id] = newCell;
     return newCell;
-  }
-
-  _generateCellId () {
-    return this._nextCellNum++;
   }
 
   // FIXME: move this to a library/util module
