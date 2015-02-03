@@ -13,13 +13,6 @@
  */
 
 
-// Explicitly permit o['property'] references on all objects by defining
-// an explicity indexer on Object. For details,
-// see: https://typescript.codeplex.com/discussions/535628
-interface Object {
-  [index: string]: any;
-}
-
 /**
  * Interfaces definitions
  */
@@ -100,30 +93,6 @@ declare module app {
   interface IUserConnectionManager {
     onConnect (callback: EventHandler<IUserConnection>): void;
     onDisconnect (callback: EventHandler<IUserConnection>): void;
-  }
-
-  module ipy {
-    interface Cell {
-      cell_type: string;
-      metadata?: any;
-    }
-    interface CodeCell extends Cell {
-      input: string[];
-      prompt_number: number
-      collapsed: boolean;
-      language: string;
-      outputs: any[];
-    }
-    interface DocumentCell extends Cell {
-      source: string[];
-    }
-    interface MarkdownCell extends DocumentCell {
-      // FIXME: worth keeping this interface to make the code more explicit/self-documenting?
-    }
-    interface HeadingCell extends DocumentCell {
-      source: string[];
-      level: number;
-    }
   }
 
 }

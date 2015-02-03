@@ -61,38 +61,4 @@ declare module app {
     }
   }
 
-  // FIXME: maybe split the ipy submodule into a separate file
-  // Really, this model should be shared between front-end and backend, but need to setup
-  // the build scripts such that this is possible.
-  module ipy {
-    // TODO: this is only a subset of the possible fields at the moment
-    interface Notebook {
-      metadata: any;
-      nbformat: number;
-      nbformat_minor: number;
-      worksheets: Worksheet[];
-    }
-
-    interface Worksheet {
-      metadata: any;
-      cells: Cell[];
-    }
-
-    interface Cell {
-      cell_type: string;
-      collapsed?: boolean;
-      input?: string[];
-      language?: string;
-      metadata?: any;
-      outputs?: CellOutput[];
-      prompt_number?: number;
-    }
-
-    interface CellOutput {
-      metadata: any;
-      output_type: string;
-      prompt_number: number;
-      text: string[];
-    }
-  }
 }
