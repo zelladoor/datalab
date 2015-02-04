@@ -32,91 +32,6 @@ interface NotebookScope extends ng.IScope {
   ctrl?: any;
 }
 
-// TODO(bryantd): Move all of the below controller logic to the notebook data service since it all
-// writes to the notebook data model (and those writes need to be published). Also easier to test there.
-// The resulting notebook changes *should* still be reflected in the directive via two-way binding
-// within the edit page controller
-class NotebookController {
-  _scope: NotebookScope;
-  _rootScope: ng.IRootScopeService;
-
-
-  static $inject = ['$scope', '$rootScope'];
-  constructor (scope: NotebookScope, rootScope: ng.IRootScopeService) {
-    this._scope = scope;
-    this._rootScope = rootScope;
-
-    rootScope.$on('execute-cell', this._handleExecuteCellEvent.bind(this));
-  }
-
-  _handleExecuteCellEvent (event: any, cell: any) {
-    log.debug('[nb] execute-cell event for cell: ', cell);
-    // Find the current index of the cell in the worksheet
-    var currentIndex = this._scope.notebook.worksheet.indexOf(cell.id);
-    if (currentIndex === -1) {
-      log.error('Attempted to insert a cell based upon a non-existent cell id');
-    }
-
-    var nextIndex = currentIndex + 1;
-    log.debug('setting active cell to index ' + nextIndex);
-    if (nextIndex < this._scope.notebook.worksheet.length) {
-      // There's already a cell at the next index, make it active
-      log.debug('found an existing cell to make active');
-      this._makeCellActive(this._getCellByIndex(nextIndex));
-    } else {
-      // Otherwise, append blank cell
-      log.debug('creating a blank cell to append');
-      var newCell = this._insertBlankCell(nextIndex);
-      this._makeCellActive(newCell);
-    }
-  }
-
-  _getCellByIndex (index: number) {
-    var cellId = this._scope.notebook.worksheet[index];
-    return this._scope.notebook.cells[cellId];
-  }
-
-  _makeCellActive (cell: any) {
-    this._rootScope.$evalAsync(() => {
-      cell.active = true;
-    });
-  }
-
-  _insertBlankCell (index: number) {
-    var newCell = this._createBlankCell();
-    this._scope.notebook.worksheet.push(newCell.id);
-    this._scope.notebook.cells[newCell.id] = newCell;
-    return newCell;
-  }
-
-  // FIXME: move this to a library/util module
-  // Light-weight uuid generation for cell ids
-  // Source: http://stackoverflow.com/a/8809472
-  _generateUUID (): string {
-    var d = new Date().getTime();
-    var uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-        var r = (d + Math.random()*16)%16 | 0;
-        d = Math.floor(d/16);
-        return (c=='x' ? r : (r&0x3|0x8)).toString(16);
-    });
-    return uuid;
-  }
-
-  _createBlankCell () {
-    return {
-      id: this._generateUUID(),
-      type: 'code', // FIXME: default cell type move to constant
-      executionCounter: '-', // FIXME CONSTANT (needs to be a nbsp, but that requires html trusting too), fix this
-      source: '' // a blank line
-    }
-  }
-
-  _insertCell (cell: any, index: number) {
-    this._scope.notebook.worksheet.splice(index, /* num elements to remove */ 0, cell);
-  }
-
-}
-
 // FIXME: RENAME  this file and the template to be notebook-editor
 function notebookEditorDirective (): ng.IDirective {
   return {
@@ -125,7 +40,6 @@ function notebookEditorDirective (): ng.IDirective {
       notebook: '='
     },
     replace: true,
-    controller: NotebookController,
     templateUrl: constants.scriptPaths.app + '/components/notebook/notebook.html',
   }
 }

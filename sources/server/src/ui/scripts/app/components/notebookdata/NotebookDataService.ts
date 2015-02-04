@@ -56,10 +56,10 @@ export class NotebookData {
     // FIXME: clean this up, possible to simplify the nesting?
     var callback: Function = this._updateNotebook.bind(this);
     rootScope.$on('notebook-update', (event: any, nb: any) => {
-      rootScope.$evalAsync(() => {
-        callback(event, nb);
-      });
+      rootScope.$evalAsync(() => { callback(event, nb) });
     });
+
+    rootScope.$on('execute-cell', this._handleExecuteCellEvent.bind(this));
   }
 
   // FIXME: eventually this will accept (one or more) deltas
@@ -247,6 +247,62 @@ export class NotebookData {
       }
     }
     return null;
+  }
+
+
+///////////////////////// FIXME: organize the below with the above
+
+  _handleExecuteCellEvent (event: any, cell: any) {
+    log.debug('[nb] execute-cell event for cell: ', cell);
+    // Find the current index of the cell in the worksheet
+    var currentIndex = this.notebook.worksheet.indexOf(cell.id);
+    if (currentIndex === -1) {
+      log.error('Attempted to insert a cell based upon a non-existent cell id');
+    }
+
+    var nextIndex = currentIndex + 1;
+    log.debug('setting active cell to index ' + nextIndex);
+    if (nextIndex < this.notebook.worksheet.length) {
+      // There's already a cell at the next index, make it active
+      log.debug('found an existing cell to make active');
+      this._makeCellActive(this._getCellByIndex(nextIndex));
+    } else {
+      // Otherwise, append blank cell
+      log.debug('creating a blank cell to append');
+      var newCell = this._insertBlankCell(nextIndex);
+      this._makeCellActive(newCell);
+    }
+  }
+
+  _getCellByIndex (index: number) {
+    var cellId = this.notebook.worksheet[index];
+    return this.notebook.cells[cellId];
+  }
+
+  _makeCellActive (cell: any) {
+    this._rootScope.$evalAsync(() => {
+      cell.active = true;
+    });
+  }
+
+  _insertBlankCell (index: number) {
+    var newCell = this._createBlankCell();
+    this.notebook.worksheet.push(newCell.id);
+    this.notebook.cells[newCell.id] = newCell;
+    return newCell;
+  }
+
+  _createBlankCell () {
+    return {
+      id: this._generateUUID(),
+      type: 'code', // FIXME: default cell type move to constant
+      executionCounter: '-', // FIXME CONSTANT (needs to be a nbsp, but that requires html trusting too), fix this
+      source: '' // a blank line
+    }
+  }
+
+  _insertCell (cell: any, index: number) {
+    this.notebook.worksheet.splice(index, /* num elements to remove */ 0, cell);
   }
 
 }
