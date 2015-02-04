@@ -81,6 +81,7 @@ export var scopes = {
   layouts: 'layouts',
   markdownViewer: 'markdownViewer',
   notebookEditor: 'notebookEditor',
+  notebookData: 'notebookData',
 
   // Route-specific components
   notebooks: {

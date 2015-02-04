@@ -25,7 +25,7 @@ task copyStaticUi(type: Copy) {
  */
 task tscUi(type: TypeScriptCompileTask) {
     srcDir = 'server/src'
-    srcRelativePaths = ['/ui/scripts/', '/common/']
+    srcRelativePaths = ['/common/', '/ui/scripts/']
     outputRelativePath = '/node/static/scripts'
     moduleType = 'amd'
 }
@@ -43,7 +43,7 @@ task copyStaticNode(type: Copy) {
  */
 task tscNode(type: TypeScriptCompileTask) {
     srcDir = 'server/src'
-    srcRelativePaths = ['/node/', '/common/']
+    srcRelativePaths = ['/common/', '/node/']
     outputRelativePath = '/node/'
     moduleType = 'commonjs'
 }

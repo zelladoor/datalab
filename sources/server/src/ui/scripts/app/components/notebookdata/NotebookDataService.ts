@@ -22,16 +22,15 @@
 /// <reference path="../../../../../../../../externs/ts/angularjs/angular.d.ts" />
 import logging = require('app/common/Logging');
 import constants = require('app/common/Constants');
-import app = require('app/App');
+import _app = require('app/App');
 
 
-var log = logging.getLogger(constants.scopes.editorCell); // FIXME: scope name
+var log = logging.getLogger(constants.scopes.notebookData);
 
 export class NotebookData {
 
-  notebook: any; // FIXME: define an interface for this
+  notebook: app.notebook.Notebook;
 
-  _eventScope: ng.IRootScopeService; // FIXME: just use the rootscope ref, don't define another ref
   _rootScope: ng.IRootScopeService;
   _sce: ng.ISCEService;
 
@@ -49,13 +48,12 @@ export class NotebookData {
 
   static $inject = ['$rootScope', '$sce'];
   constructor (rootScope: ng.IRootScopeService, sce: ng.ISCEService) {
-    this._eventScope = rootScope; // FIXME: refactor to just refer to _rootScope throughout
     this._rootScope = rootScope;
     this._sce = sce;
 
     // FIXME: clean this up, possible to simplify the nesting?
     var callback: Function = this._updateNotebook.bind(this);
-    rootScope.$on('notebook-update', (event: any, nb: any) => {
+    rootScope.$on('notebook-update', (event: any, nb: app.notebook.Notebook) => {
       rootScope.$evalAsync(() => { callback(event, nb) });
     });
 
@@ -64,7 +62,7 @@ export class NotebookData {
 
   // FIXME: eventually this will accept (one or more) deltas
   // but it will be the full notebook for now
-  _updateNotebook (event: any, newNotebook: any) {
+  _updateNotebook (event: any, newNotebook: app.notebook.Notebook) {
     log.debug('New notebook snapshot received (via websocket)', newNotebook);
 
     if (!newNotebook) {
@@ -81,69 +79,15 @@ export class NotebookData {
     }
   }
 
-  // FIXME: move this to a library/util module
-  // Light-weight uuid generation for cell ids
-  // Source: http://stackoverflow.com/a/8809472
-  _generateUUID (): string {
-    var d = new Date().getTime();
-    var uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-        var r = (d + Math.random()*16)%16 | 0;
-        d = Math.floor(d/16);
-        return (c=='x' ? r : (r&0x3|0x8)).toString(16);
-    });
-    return uuid;
-  }
 
-  insertMarkdownCell () {
-    var id = this._generateUUID();
-    if (!this.notebook.cells[id]) { // only insert the cell once
-      this.notebook.cells[id] = {
-        id: id,
-        type: 'markdown',
-        source: '',
-        active: true
-      }
-      this.notebook.worksheet.push(id);
-    }
-  }
-
-  insertCodeCell () {
-    var id = this._generateUUID();
-    if (!this.notebook.cells[id]) { // only insert the cell once
-      this.notebook.cells[id] = {
-        id: id,
-        type: 'code',
-        source: '',
-        active: true
-      }
-      this.notebook.worksheet.push(id);
-    }
-  }
-
-  insertHeadingCell () {
-    var id = this._generateUUID();
-    if (!this.notebook.cells[id]) { // only insert the cell once
-      this.notebook.cells[id] = {
-        id: id,
-        type: 'heading',
-        source: '',
-        active: true,
-        metadata: {
-          // TODO(bryantd): implement a level selector UI element for configuring this attribute
-          level: 1
-        }
-      }
-      this.notebook.worksheet.push(id);
-    }
-  }
 
   // FIXME: this method will change substantially or be replaced in full once notebook values
   // are being broadcasted rather than the full notebook
-  _mergeNotebook (newNotebook: any) {
+  _mergeNotebook (newNotebook: app.notebook.Notebook) {
 
     var that = this;
 
-    Object.keys(newNotebook.cells).forEach((cellId: any) => {
+    Object.keys(newNotebook.cells).forEach((cellId: string) => {
       var currentCell = that.notebook.cells[cellId];
       var newCell = newNotebook.cells[cellId];
       if (currentCell) { // FIXME: doesn't look like cellIndex is used below... remove this?
@@ -198,7 +142,7 @@ export class NotebookData {
   /**
    * Selects a mimetype for the cell output out of possibilities within mimetype bundle
    */
-  _selectMimetype (output: any) { // FIXME TYPE app.notebook.AugmentedCellOutput
+  _selectMimetype (output: app.notebook.AugmentedCellOutput) {
     var bundle = output.mimetypeBundle;
     if (!bundle) {
       log.warn('Received an output with no mimetype bundle: ', output);
@@ -221,7 +165,7 @@ export class NotebookData {
   /**
    * Select mimetypes for all cell outputs within the given notebook
    */
-  _selectNotebookOutputMimetypes (notebook: any) {
+  _selectNotebookOutputMimetypes (notebook: app.notebook.Notebook) {
     // Iterate through the cells
     Object.keys(notebook.cells).forEach((cellId) => {
       var cell = notebook.cells[cellId];
@@ -239,7 +183,7 @@ export class NotebookData {
    *
    * Returns null if none of the preferred mimetypes are available within the bundle.
    */
-  _findPreferredMimetype (mimetypeBundle: any) {
+  _findPreferredMimetype (mimetypeBundle: app.Map<string>) {
     for (var i = 0; i < NotebookData._preferredMimetypes.length; ++i) {
       var mimetype = NotebookData._preferredMimetypes[i];
       if (mimetypeBundle.hasOwnProperty(mimetype)) {
@@ -250,9 +194,23 @@ export class NotebookData {
   }
 
 
-///////////////////////// FIXME: organize the below with the above
 
-  _handleExecuteCellEvent (event: any, cell: any) {
+///// FIXME: The following section should likely remain here or be moved to notebook directive
+///// Everything around focusing/activating cells is purely client-side and does not effect the
+///// notebook in a persistent way. As such, could make more sense in directive.
+/////
+///// Still need a hook here for appending a blank cell (of default type)
+
+  /**
+   * Updates the currently active cell whenever a given cell is executed
+   *
+   * Whenever a cell is executed, the subsequent cell will be made active. If the executed cell
+   * is at the tail of the worksheet, a blank cell is appended and then made active.
+   *
+   * This behavior is consistent with IPython's and has the property of making it easy to execute
+   * a contiguous group of cells without requiring the user to manually focus each cell.
+   */
+  _handleExecuteCellEvent (event: any, cell: app.notebook.Cell) {
     log.debug('[nb] execute-cell event for cell: ', cell);
     // Find the current index of the cell in the worksheet
     var currentIndex = this.notebook.worksheet.indexOf(cell.id);
@@ -274,24 +232,80 @@ export class NotebookData {
     }
   }
 
+  /**
+   * Look up a notebook cell by its index within the worksheet
+   */
   _getCellByIndex (index: number) {
     var cellId = this.notebook.worksheet[index];
     return this.notebook.cells[cellId];
   }
 
-  _makeCellActive (cell: any) {
+  /**
+   * Programmatically focus a given cell by making it active
+   */
+  _makeCellActive (cell: app.notebook.Cell) {
     this._rootScope.$evalAsync(() => {
       cell.active = true;
     });
   }
 
+
+
+/////////// Below methods should issue a server ws request for the operations instead
+/// of simply applying them to the local notebook mode
+
+  /// Each of the following is wired to a UI control for inserting the cell
+  insertMarkdownCell () {
+    var id = this._generateUUID();
+    if (!this.notebook.cells[id]) { // only insert the cell once
+      this.notebook.cells[id] = {
+        id: id,
+        type: 'markdown',
+        source: '',
+        active: true
+      }
+      this.notebook.worksheet.push(id);
+    }
+  }
+
+  insertCodeCell () {
+    var id = this._generateUUID();
+    if (!this.notebook.cells[id]) { // only insert the cell once
+      this.notebook.cells[id] = {
+        id: id,
+        type: 'code',
+        source: '',
+        active: true
+      }
+      this.notebook.worksheet.push(id);
+    }
+  }
+
+  insertHeadingCell () {
+    var id = this._generateUUID();
+    if (!this.notebook.cells[id]) { // only insert the cell once
+      this.notebook.cells[id] = {
+        id: id,
+        type: 'heading',
+        source: '',
+        active: true,
+        metadata: {
+          // TODO(bryantd): implement a level selector UI element for configuring this attribute
+          level: 1
+        }
+      }
+      this.notebook.worksheet.push(id);
+    }
+  }
+
+  // Called as a side-effect of executing the notebook's tail cell
   _insertBlankCell (index: number) {
     var newCell = this._createBlankCell();
     this.notebook.worksheet.push(newCell.id);
     this.notebook.cells[newCell.id] = newCell;
     return newCell;
   }
-
+  // FIXME: Mostly a dupe of the insertCodeCell content
   _createBlankCell () {
     return {
       id: this._generateUUID(),
@@ -301,11 +315,25 @@ export class NotebookData {
     }
   }
 
+// FIXME: If all notebook modifications are handled server-side, can probably relocate/remove this
   _insertCell (cell: any, index: number) {
     this.notebook.worksheet.splice(index, /* num elements to remove */ 0, cell);
   }
 
+///// FIXME Might be able to get rid of this or relocate to utils
+  // Light-weight uuid generation for cell ids
+  // Source: http://stackoverflow.com/a/8809472
+  _generateUUID (): string {
+    var d = new Date().getTime();
+    var uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+        var r = (d + Math.random()*16)%16 | 0;
+        d = Math.floor(d/16);
+        return (c=='x' ? r : (r&0x3|0x8)).toString(16);
+    });
+    return uuid;
+  }
+
 }
 
-app.registrar.service('notebookData', NotebookData); // FIXME: move constant to constants
+_app.registrar.service('notebookData', NotebookData); // FIXME: move constant to constants
 log.debug('Registered notebook data service');

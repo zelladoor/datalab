@@ -43,6 +43,10 @@ declare module app {
       executionCounter?: string;
 
       metadata?: any;
+
+      // Note: The following fields are user-scoped; these should be handled on a per-user basis
+      // under any future multi-writer implementation.
+      active?: boolean;
     }
 
     interface Notebook {
