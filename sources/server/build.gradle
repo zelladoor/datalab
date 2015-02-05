@@ -48,6 +48,24 @@ task tscNode(type: TypeScriptCompileTask) {
     moduleType = 'commonjs'
 }
 
+/**
+ * Copy files shared between the server/client into the respective source trees.
+ *
+ * TODO(bryantd): hopefully it's possible to do something more elegant with the tsc compiler
+ * Issue is that the shared filepaths referenced by files on the client will differ
+ * between build and runtime.
+ *
+ * At build time file src/ui/scripts/app/foo.ts needs to import shared file src/shared/bar.ts
+ * by specifying the correct relative path from foo.ts to bar.ts as ../../../shared/bar.ts
+ *
+ * However, at runtime, this relative path will not work because the given path is outside of the
+ * requirejs file serving scope. For example at runtime the (amd) path to the shared file would
+ * ideally be 'shared/bar', with 'shared/' configured as a path in the requirejs config (main.ts)
+ *
+ * Hopefully there's a simple fix for this issue that avoids having to cp the shared files into
+ * the source trees. This is a stopgap solution that circumvents the issue.
+ *
+ */
 task embedSharedFilesNode(type: Copy) {
     from './src/shared'
     into './src/node/app/shared'

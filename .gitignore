@@ -1,7 +1,8 @@
-*.ipynb_checkpoints
+.ipynb_checkpoints
 build
-*.gradle
-*.pyc
-*.idea
-*.iml
+.gradle
+content/ipython/scratch
+sources/ipython/MANIFEST
+sources/ipython/IPythonGCP-0.1.0
+*.tar.gz
 
