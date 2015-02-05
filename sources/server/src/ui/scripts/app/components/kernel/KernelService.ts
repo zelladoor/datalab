@@ -21,6 +21,7 @@
 import logging = require('app/common/Logging');
 import constants = require('app/common/Constants');
 import app = require('app/App');
+import actions = require('app/shared/actions');
 
 
 var log = logging.getLogger(constants.scopes.kernel);
@@ -44,7 +45,7 @@ class Kernel { // FIXME RENAME this to "Session" or something like that
     this._rootScope = rootScope;
 
     this._nextRequestId = 1; // Execution counter starts from 1 within ipy kernel
-    var executeCellEvent = 'execute-cell'; // FIXME: move this to constants
+    var executeCellEvent = actions.cell.execute;
     this._rootScope.$on(executeCellEvent, this._handleExecuteCellEvent.bind(this));
     socket.on('notebook-update', this._handleNotebookUpdate.bind(this));
     socket.on('session-status', function (socket: any, message: any) {
@@ -63,7 +64,7 @@ class Kernel { // FIXME RENAME this to "Session" or something like that
   }
 
   _handleExecuteCellEvent (event: ng.IAngularEvent, cell: any) {
-    log.debug('Processing execute-cell event', event, cell);
+    log.debug('Processing cell.execute event', event, cell);
     this._rootScope.$apply(() => {
       // FIXME: is this the best object to be modifying the cell-level notebook data?
       // Feel like this could be better encapsulated somewhere else (maybe notebook data service?)

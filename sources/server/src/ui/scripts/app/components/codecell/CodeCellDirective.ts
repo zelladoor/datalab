@@ -21,7 +21,7 @@
 import logging = require('app/common/Logging');
 import constants = require('app/common/Constants');
 import _app = require('app/App');
-
+import actions = require('app/shared/actions');
 
 var log = logging.getLogger(constants.scopes.codeCell);
 
@@ -56,7 +56,7 @@ class CodeCellController implements app.ICellController {
   // somewhere that the node and ui-side code can access/build against. These event names and messages
   // are effectively the "datalab websocket api" and should be well documented
   _handleExecute () {
-    this._rootScope.$emit('execute-cell', this._scope.cell);
+    this._rootScope.$emit(actions.cell.execute, this._scope.cell);
   }
 }
 

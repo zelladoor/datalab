@@ -23,6 +23,7 @@
 import logging = require('app/common/Logging');
 import constants = require('app/common/Constants');
 import _app = require('app/App');
+import actions = require('app/shared/actions');
 
 var log = logging.getLogger(constants.scopes.notebookData);
 
@@ -74,7 +75,7 @@ export class NotebookData {
       rootScope.$evalAsync(() => { callback(event, nb) });
     });
 
-    rootScope.$on('execute-cell', this._handleExecuteCellEvent.bind(this));
+    rootScope.$on(actions.cell.execute, this._handleExecuteCellEvent.bind(this));
   }
 
   insertMarkdownCell () {
@@ -239,7 +240,7 @@ export class NotebookData {
    * a contiguous group of cells without requiring the user to manually focus each cell.
    */
   _handleExecuteCellEvent (event: any, cell: app.notebook.Cell) {
-    log.debug('[nb] execute-cell event for cell: ', cell);
+    log.debug('[nb] cell.execute event for cell: ', cell);
     // Find the current index of the cell in the worksheet
     var currentIndex = this.notebook.worksheet.indexOf(cell.id);
     if (currentIndex === -1) {
