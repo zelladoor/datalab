@@ -25,6 +25,12 @@ import app = require('app/App');
 
 var log = logging.getLogger(constants.scopes.kernel);
 
+//// FIXME REFACTOR this class becomes the "session event subscriber"
+//// listens for any event that should be propagated to the server as a protocol msg over ws
+//// Handles converting events to protocol messages (via components or directly)
+
+//// FIXME REFACTOR this class also becomes the "session event publisher"
+/// listens for any incoming messages over websocket and translates them to events
 
 class Kernel { // FIXME RENAME this to "Session" or something like that
   _socket: any; // FIXME TYPE
@@ -38,7 +44,7 @@ class Kernel { // FIXME RENAME this to "Session" or something like that
     this._rootScope = rootScope;
 
     this._nextRequestId = 1; // Execution counter starts from 1 within ipy kernel
-    var executeCellEvent = 'execute-cell';
+    var executeCellEvent = 'execute-cell'; // FIXME: move this to constants
     this._rootScope.$on(executeCellEvent, this._handleExecuteCellEvent.bind(this));
     socket.on('notebook-update', this._handleNotebookUpdate.bind(this));
     socket.on('session-status', function (socket: any, message: any) {

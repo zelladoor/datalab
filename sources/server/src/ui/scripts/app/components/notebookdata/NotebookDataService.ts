@@ -24,9 +24,25 @@ import logging = require('app/common/Logging');
 import constants = require('app/common/Constants');
 import _app = require('app/App');
 
-
 var log = logging.getLogger(constants.scopes.notebookData);
 
+/**
+ * An instance of this class manages a single notebook's data, client-side. Handles updating the
+ * notebook data model whenever update events are published from the notebook server.
+ *
+ * It should be considered a read-only view of the authoritative notebook data stored on the
+ * server. Any local modifications to the notebook model should be predictive of eminent updates
+ * that will be published from the server and should never corrupt the notebook state such that
+ * a notebook data update cannot cause the client-side and server-side notebook data models
+ * to diverge.
+ *
+ * For example, if the user inserts a new cell within a notebook worksheet, a "new cell action"
+ * is sent to the server, and a corresponding update broadcast to all clients. The client that
+ * performed the cell insert action should ideally see the new cell appear immediately (responsive)
+ * but appending the cell locally, rather than waiting for the server to broadcast the update, has
+ * the danger of causing local and server states to diverge. Thus, any local modifications to the
+ * notebook model for responsiveness purposes need to be handled with great caution.
+ */
 export class NotebookData {
 
   notebook: app.notebook.Notebook;
@@ -51,6 +67,7 @@ export class NotebookData {
     this._rootScope = rootScope;
     this._sce = sce;
 
+    // FIXME: move event name strings to constants file
     // FIXME: clean this up, possible to simplify the nesting?
     var callback: Function = this._updateNotebook.bind(this);
     rootScope.$on('notebook-update', (event: any, nb: app.notebook.Notebook) => {
@@ -59,6 +76,19 @@ export class NotebookData {
 
     rootScope.$on('execute-cell', this._handleExecuteCellEvent.bind(this));
   }
+
+  insertMarkdownCell () {
+    this._appendMarkdownCell();
+  }
+
+  insertCodeCell () {
+    this._appendCodeCell();
+  }
+
+  insertHeadingCell () {
+    this._appendHeadingCell();
+  }
+
 
   // FIXME: eventually this will accept (one or more) deltas
   // but it will be the full notebook for now
@@ -78,8 +108,6 @@ export class NotebookData {
       this.notebook = newNotebook;
     }
   }
-
-
 
   // FIXME: this method will change substantially or be replaced in full once notebook values
   // are being broadcasted rather than the full notebook
@@ -255,7 +283,7 @@ export class NotebookData {
 /// of simply applying them to the local notebook mode
 
   /// Each of the following is wired to a UI control for inserting the cell
-  insertMarkdownCell () {
+  _appendMarkdownCell () {
     var id = this._generateUUID();
     if (!this.notebook.cells[id]) { // only insert the cell once
       this.notebook.cells[id] = {
@@ -268,7 +296,7 @@ export class NotebookData {
     }
   }
 
-  insertCodeCell () {
+  _appendCodeCell () {
     var id = this._generateUUID();
     if (!this.notebook.cells[id]) { // only insert the cell once
       this.notebook.cells[id] = {
@@ -281,7 +309,7 @@ export class NotebookData {
     }
   }
 
-  insertHeadingCell () {
+  _appendHeadingCell () {
     var id = this._generateUUID();
     if (!this.notebook.cells[id]) { // only insert the cell once
       this.notebook.cells[id] = {

@@ -25,7 +25,7 @@ task copyStaticUi(type: Copy) {
  */
 task tscUi(type: TypeScriptCompileTask) {
     srcDir = 'server/src'
-    srcRelativePaths = ['/common/', '/ui/scripts/']
+    srcRelativePaths = ['/ui/scripts/']
     outputRelativePath = '/node/static/scripts'
     moduleType = 'amd'
 }
@@ -43,17 +43,33 @@ task copyStaticNode(type: Copy) {
  */
 task tscNode(type: TypeScriptCompileTask) {
     srcDir = 'server/src'
-    srcRelativePaths = ['/common/', '/node/']
+    srcRelativePaths = ['/node/']
     outputRelativePath = '/node/'
     moduleType = 'commonjs'
 }
 
+task embedSharedFilesNode(type: Copy) {
+    from './src/shared'
+    into './src/node/app/shared'
+}
+task embedSharedFilesUi(type: Copy) {
+    from './src/shared'
+    into './src/ui/scripts/app/shared'
+}
+
+task('buildNode') {
+    dependsOn 'copyStaticNode', 'embedSharedFilesNode', 'tscNode'
+}
+
 // TODO(bryantd): Add support for JavaScript compilation/minification of the UI js
 // TODO(bryantd): Add tasks for concatenating file sets for both Node and UI
+task('buildUi') {
+    dependsOn 'copyStaticUi', 'embedSharedFilesUi', 'tscUi'
+}
 
 /**
  * Execute all of the tasks necessary to build the DataLab server
  */
 task('build') {
-    dependsOn 'copyStaticNode', 'tscNode', 'copyStaticUi', 'tscUi'
+    dependsOn 'buildNode', 'buildUi'
 }
