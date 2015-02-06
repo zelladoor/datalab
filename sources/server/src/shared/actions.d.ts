@@ -74,8 +74,8 @@ declare module app {
      * action == 'worksheet.moveCell',
      */
     interface MoveCell extends Action {
-      sourceWorksheet: string; // worksheetId
-      destinationWorksheet: string; // worksheetId
+      sourceWorksheetId: string;
+      destinationWorksheetId: string;
       cellId: string;
       insertAfter: string; // the cell ID after which to insert the moved cell
     }

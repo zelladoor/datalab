@@ -41,21 +41,20 @@ declare module app {
 
     interface Worksheet {
       id: string; // the worksheet id
-      label: string; // worksheet display label
+      name: string; // worksheet display name
       metadata: any;
       cells: Cell[];
     }
 
     interface Cell {
       id: string; // the cell id
-      type: string; // 'code' | 'markdown' | 'heading' | 'etc'
+      type?: string; // 'code' | 'markdown' | 'heading' | 'etc'
 
       /**
        * Some metadata fields reserved for internal usage
        * {
        *   // if cell type is code
        *   language: 'python' | 'java' | 'html' | 'javascript' | etc.
-       *   executionCounter: '<prompt text / number>'
        *   // if cell type is heading
        *   level: 1 | 2 | 3 | 4 | 5 | 6
        *   // other metadata needed for new/plugin-defined cell types go here
@@ -65,6 +64,8 @@ declare module app {
 
       source?: string; // source content (e.g., code, markdown text, etc.)
       outputs?: CellOutput[];
+
+      prompt?: string; // prompt to display; e.g., execution counter value, busy symbol, etc.
 
       // Note: The following fields are user-scoped; these should be handled on a per-user basis
       // under any future multi-writer implementation.
