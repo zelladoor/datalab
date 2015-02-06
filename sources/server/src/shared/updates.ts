@@ -14,26 +14,24 @@
 
 
 /**
- * Constants used to label notebook actions
+ * Constants used to label notebook updates
  */
 
-// Notebook-level actions
+// Notebook-level update
 export var notebook = {
-  clearOutputs: 'notebook.clearOutputs',
-  executeCells: 'notebook.executeCells',
-  rename: 'notebook.rename',
+  snapshot: 'notebook.snapshot',
+  metadata: 'notebook.metadata',
+  sessionStatus: 'notebook.sessionStatus'
 };
 
-// Worksheet-level actions
+// Worksheet-level update
 export var worksheet = {
-  createCell: 'worksheet.createCell',
+  addCell: 'worksheet.addCell',
   deleteCell: 'worksheet.deleteCell',
-  moveCell: 'worksheet.moveCell'
-};
+  reorderCells: 'worksheet.reorderCells'
+}
 
-// Cell-level actions
+// Cell-level update
 export var cell = {
-  clearOutput: 'cell.clearOutput',
-  update: 'cell.update',
-  execute: 'cell.execute'
-};
+  update: 'cell.update'
+}

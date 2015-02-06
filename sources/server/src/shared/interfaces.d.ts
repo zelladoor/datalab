@@ -26,41 +26,65 @@ declare module app {
     [index: string]: T;
   }
 
+  /**
+   * Typedefs for the in-memory notebook model
+   */
   module notebook {
 
-    interface CellOutput {
-      type: string; // 'result' | 'error' | 'stdout' | 'stderr'
-      mimetypeBundle: any;
+    interface Notebook {
+      name: string; // the name of the notebook
+      id: string; // the notebook id
+      worksheetIds: string[];
+      worksheets: app.Map<Worksheet>; // worksheetId -> Worksheet
+      metadata: any;
+    }
+
+    interface Worksheet {
+      id: string; // the worksheet id
+      label: string; // worksheet display label
+      metadata: any;
+      cells: Cell[];
     }
 
     interface Cell {
-      id: string;
-      type?: string; // 'code' | 'markdown' | 'heading' | 'etc'
+      id: string; // the cell id
+      type: string; // 'code' | 'markdown' | 'heading' | 'etc'
 
-      source?: string; // the cell's "input" value
-      outputs?: CellOutput[];
-
-      executionCounter?: string;
-
+      /**
+       * Some metadata fields reserved for internal usage
+       * {
+       *   // if cell type is code
+       *   language: 'python' | 'java' | 'html' | 'javascript' | etc.
+       *   executionCounter: '<prompt text / number>'
+       *   // if cell type is heading
+       *   level: 1 | 2 | 3 | 4 | 5 | 6
+       *   // other metadata needed for new/plugin-defined cell types go here
+       * }
+      */
       metadata?: any;
+
+      source?: string; // source content (e.g., code, markdown text, etc.)
+      outputs?: CellOutput[];
 
       // Note: The following fields are user-scoped; these should be handled on a per-user basis
       // under any future multi-writer implementation.
       active?: boolean;
     }
 
-    interface Notebook {
-      cells?: Map<Cell>;
-      // FIXME: cleanup these comments
-      // Just support a single worksheet initially within the implementation,
-      // but make the model representation support the definition of multiple
-      // worksheets to avoid needing refactoring when we want multi-worksheet UX
-      //
-      // Note that worksheets have been slated for removal in upcoming
-      // ipython notebook format updates (see latest juptyer proposal)
-      // https://github.com/ipython/ipython/wiki/Dev:-Meeting-notes,-February-6,-2013
-      // https://github.com/ipython/ipython/blob/master/docs/source/notebook/nbformat.rst
-      worksheet: string[]; // [cell ids]
+
+    interface CellOutput {
+      type: string; // 'result' | 'error' | 'stdout' | 'stderr'
+
+      /**
+       * Each output has a mimetype bundle {<mimetype string>: <content string>}
+       * {
+       *   'text/html':  <content for mimetype text/html>,
+       *   'text/plain':  <content for mimetype text/plain>,
+       *   // any other mimetypes here for the output go here too
+       * }
+       */
+      mimetypeBundle: Map<string>;
     }
+
   }
 }
