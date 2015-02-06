@@ -20,93 +20,94 @@
  */
 declare module app {
   module notebook {
+    module action {
+      /**
+       * Common fields for all action messages
+       */
+      interface Action {
+        action: string; // the name/label for the action type
+      }
 
-    /**
-     * Common fields for all action messages
-     */
-    interface Action {
-      action: string; // the name/label for the action type
-    }
+      /* Notebook-level actions */
 
-    /* Notebook-level actions */
+      /**
+       * action == 'notebook.clearOutputs'
+       */
+      interface ClearOutputs extends Action {
+        // The action label carries sufficient information for processing this action
+      }
+      /**
+       * action == 'notebook.executeCells'
+       */
+      interface ExecuteCells extends Action {
+        // Additional flags here eventually: e.g., flag for performing a "clean run" in sandbox
+      }
+      /**
+       * action == 'notebook.rename'
+       */
+      interface Rename extends Action {
+        name: string; // 'New name for the notebook'
+      }
 
-    /**
-     * action == 'notebook.clearOutputs'
-     */
-    interface ClearOutputs extends Action {
-      // The action label carries sufficient information for processing this action
-    }
-    /**
-     * action == 'notebook.executeCells'
-     */
-    interface ExecuteCells extends Action {
-      // Additional flags here eventually: e.g., flag for performing a "clean run" in sandbox
-    }
-    /**
-     * action == 'notebook.rename'
-     */
-    interface Rename extends Action {
-      name: string; // 'New name for the notebook'
-    }
+      /* Worksheet-level actions */
 
-    /* Worksheet-level actions */
+      /**
+       * action == 'worksheet.addCell',
+       */
+      interface AddCell extends Action {
+        // Fields for specifying the cell insertion point within the notebook
+        worksheetId: string;
+        cellId: string;
+        insertAfter: string; // the cell ID after which to insert the added cell
+        // Configuration for the cell to add
+        type: string; // 'code' | 'md' | 'heading' | 'etc'
+        source: string; // cell content string (e.g., code, markdown, etc.)
+      }
+      /**
+       * action == 'worksheet.deleteCell'
+       */
+      interface DeleteCell extends Action {
+        worksheetId: string;
+        cellId: string;
+      }
+      /**
+       * action == 'worksheet.moveCell',
+       */
+      interface MoveCell extends Action {
+        sourceWorksheetId: string;
+        destinationWorksheetId: string;
+        cellId: string;
+        insertAfter: string; // the cell ID after which to insert the moved cell
+      }
 
-    /**
-     * action == 'worksheet.createCell',
-     */
-    interface CreateCell extends Action {
-      // Fields for specifying the cell insertion point within the notebook
-      worksheetId: string;
-      cellId: string;
-      insertAfter: string; // the cell ID after which to insert the created cell
-      // Configuration for the cell to create
-      type: string; // 'code' | 'md' | 'heading' | 'etc'
-      source: string; // cell content string (e.g., code, markdown, etc.)
-    }
-    /**
-     * action == 'worksheet.deleteCell'
-     */
-    interface DeleteCell extends Action {
-      worksheetId: string;
-      cellId: string;
-    }
-    /**
-     * action == 'worksheet.moveCell',
-     */
-    interface MoveCell extends Action {
-      sourceWorksheetId: string;
-      destinationWorksheetId: string;
-      cellId: string;
-      insertAfter: string; // the cell ID after which to insert the moved cell
-    }
+      /* Cell-level actions */
 
-    /* Cell-level actions */
-
-    /**
-     * action == 'cell.clearOutput'
-     */
-    interface ClearOutput extends Action {
-      worksheetId: string;
-      cellId: string;
-    }
-    /**
-     * action == 'cell.update'
-     */
-    interface UpdateCell extends Action {
-      worksheetId: string;
-      cellId: string;
-      source: string; // cell content string (e.g., code, markdown, etc.)
-      metadata: any;
-      // Flag to indicate whether the metadata dict should be merged with existing metadata
-      // on the server or fully replace it (false ⇒ merge; true ⇒ replace)
-      replaceMetadata: boolean;
-    }
-    /**
-     * action == 'cell.execute'
-     */
-    interface ExecuteCell extends Action {
-      worksheetId: string;
-      cellId: string;
+      /**
+       * action == 'cell.clearOutput'
+       */
+      interface ClearOutput extends Action {
+        worksheetId: string;
+        cellId: string;
+      }
+      /**
+       * action == 'cell.update'
+       */
+      interface UpdateCell extends Action {
+        worksheetId: string;
+        cellId: string;
+        source: string; // cell content string (e.g., code, markdown, etc.)
+        metadata: any;
+        // Flag to indicate whether the metadata dict should be merged with existing metadata
+        // on the server or fully replace it (false ⇒ merge; true ⇒ replace)
+        replaceMetadata: boolean;
+      }
+      /**
+       * action == 'cell.execute'
+       */
+      interface ExecuteCell extends Action {
+        worksheetId: string;
+        cellId: string;
+      }
     }
   }
 }

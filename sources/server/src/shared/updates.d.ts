@@ -21,85 +21,86 @@
  */
 declare module app {
   module notebook {
+    module update {
+      /**
+       * Common fields for all update messages
+       */
+      interface Update {
+        update: string; // A name/label for the type of update message
+      }
 
-    /**
-     * Common fields for all update messages
-     */
-    interface Update {
-      update: string; // A name/label for the type of update message
-    }
+      /**
+       * A snapshot of the notebook data
+       *
+       * Note that the server may send the full data for only a subset of all worksheets.
+       *
+       * update == 'notebook.snapshot'
+       */
+      interface Snapshot extends Update {
+        notebook: Notebook;
+      }
 
-    /**
-     * A snapshot of the notebook data
-     *
-     * Note that the server may send the full data for only a subset of all worksheets.
-     *
-     * update == 'notebook.snapshot'
-     */
-    interface Snapshot extends Update {
-      notebook: Notebook;
-    }
+      /* Notebook-level updates */
 
-    /* Notebook-level updates */
+      /**
+       * update == 'notebook.metadata'
+       */
+      interface NotebookMetadata extends Update {
+        name: string; // notebook name
+      }
+      /**
+       * update == 'notebook.sessionStatus'
+       */
+      interface SessionStatus extends Update {
+        kernelState: string; // 'starting' | 'idle' | 'busy'
+        kernelName: string; // a string that uniquely identifies a kernel flavor; e.g., 'Python 2.7'
+      }
 
-    /**
-     * update == 'notebook.metadata'
-     */
-    interface NotebookMetadata extends Update {
-      name: string; // notebook name
-    }
-    /**
-     * update == 'notebook.sessionStatus'
-     */
-    interface SessionStatus extends Update {
-      kernelState: string; // 'starting' | 'idle' | 'busy'
-      kernelName: string; // a string that uniquely identifies a kernel flavor; e.g., 'Python 2.7'
-    }
+      /* Worksheet-level updates */
 
-    /* Worksheet-level updates */
+      /**
+       * update == 'worksheet.addCell'
+       */
+      interface AddCell extends Update {
+        worksheetId: string;
+        cell: Cell;
+      }
+      /**
+       * update == 'worksheet.deleteCell'
+       */
+      interface DeleteCell extends Update {
+        worksheetId: string;
+        cellId: string;
+      }
+      /**
+       * update == 'worksheet.reorderCells'
+       */
+      interface ReorderCells extends Update {
+        cellIds: string[]; // the new cell order for the worksheet
+      }
 
-    /**
-     * update == 'worksheet.addCell'
-     */
-    interface AddCell extends Update {
-      worksheetId: string;
-      cell: Cell;
-    }
-    /**
-     * update == 'worksheet.deleteCell'
-     */
-    interface DeleteCell extends Update {
-      worksheetId: string;
-      cellId: string;
-    }
-    /**
-     * update == 'worksheet.reorderCells'
-     */
-    interface ReorderCells extends Update {
-      cellIds: string[]; // the new cell order for the worksheet
-    }
+      /* Cell-level updates */
 
-    /* Cell-level updates */
+      /**
+       * A cell-level update
+       *
+       * update == 'cell.update'
+       */
+      interface CellUpdate extends Update {
+        cellId: string;
+        cellType: string; // 'md' | 'code' | 'heading' | 'etc'
+        source: string; // new source string value
 
-    /**
-     * A cell-level update
-     *
-     * update == 'cell.update'
-     */
-    interface CellUpdate extends Update {
-      cellId: string;
-      cellType: string; // 'md' | 'code' | 'heading' | 'etc'
-      source: string; // new source string value
+        outputs?: CellOutput[];
+        // Flag determines whether the above list of outputs is appended or replaces existing
+        // output list within the cell (false ⇒ append; true ⇒ replace)
+        replaceOutputs?: boolean;
 
-      outputs?: CellOutput[];
-      // Flag determines whether the above list of outputs is appended or replaces existing
-      // output list within the cell (false ⇒ append; true ⇒ replace)
-      replaceOutputs?: boolean;
-
-      metadata?: {};
-      // Flag to indicate whether the metadata dict should be merged with existing metadata
-      // on the client or fully replace it (false ⇒ merge; true ⇒ replace)
-      replaceMetadata?: boolean;
+        metadata?: {};
+        // Flag to indicate whether the metadata dict should be merged with existing metadata
+        // on the client or fully replace it (false ⇒ merge; true ⇒ replace)
+        replaceMetadata?: boolean;
+      }
     }
   }
 }

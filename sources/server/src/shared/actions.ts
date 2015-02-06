@@ -26,7 +26,7 @@ export var notebook = {
 
 // Worksheet-level actions
 export var worksheet = {
-  createCell: 'worksheet.createCell',
+  createCell: 'worksheet.addCell',
   deleteCell: 'worksheet.deleteCell',
   moveCell: 'worksheet.moveCell'
 };

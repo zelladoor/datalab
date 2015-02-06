@@ -48,13 +48,16 @@ export class ActiveNotebook implements app.IActiveNotebook {
 
   // TODO: eventually return an object of "changes" for broadcasting rather than the full notebook.
   putCell (cell: app.notebook.Cell): app.notebook.Notebook {
+    /* FIXME: update this for new protocol
     this._notebook.cells[cell.id] = cell;
     this._updateWorksheet(cell);
     this._persistNotebook();
+    */
     return this.getData();
   }
 
   updateCell (cell: app.notebook.Cell): app.notebook.Notebook {
+    /* FIXME: update this for new protocol
     var mergedCell: app.notebook.Cell = this._notebook.cells[cell.id];
     if (!mergedCell) {
       // Nothing to merge with, simple case
@@ -73,11 +76,12 @@ export class ActiveNotebook implements app.IActiveNotebook {
     });
 
     return this.putCell(mergedCell);
+    */
+    return this.getData();
   }
 
-  /**
-   * Given a "changes"/delta cell, append the outputs of the delta to the given "merged" cell
-   */
+/*
+  // Given a "changes"/delta cell, append the outputs of the delta to the given "merged" cell
   _appendCellOutputs (mergedCell: app.notebook.Cell, deltaCell: app.notebook.Cell) {
     // Update should be called with only the new data (i.e., not pre-merged/pre-combined)
     // so append any new outputs to the tail of the current set of outputs
@@ -96,9 +100,16 @@ export class ActiveNotebook implements app.IActiveNotebook {
     // this._storage.write(this._notebookPath, this._serializer.toString(this.getData()));
   }
 
-  /**
-   * Reads in the notebook if it exists or creates a blank notebook if not.
-   */
+  _updateWorksheet (cell: app.notebook.Cell) {
+    // append the cell to the end of the worksheet if it isn't alread on the worksheet
+    if (-1 === this._notebook.worksheet.indexOf(cell.id)) {
+      // Then the cell isn't on the worksheet currently, append it
+      this._notebook.worksheet.push(cell.id);
+    }
+  }
+*/
+
+  // Reads in the notebook if it exists or creates a blank notebook if not.
   _readOrCreateNotebook (): app.notebook.Notebook {
     var notebook: app.notebook.Notebook;
     // First, attempt to read in the notebook if it already exists at the defined path
@@ -110,13 +121,5 @@ export class ActiveNotebook implements app.IActiveNotebook {
       notebook = this._serializer.fromString(notebookData);
     }
     return notebook;
-  }
-
-  _updateWorksheet (cell: app.notebook.Cell) {
-    // append the cell to the end of the worksheet if it isn't alread on the worksheet
-    if (-1 === this._notebook.worksheet.indexOf(cell.id)) {
-      // Then the cell isn't on the worksheet currently, append it
-      this._notebook.worksheet.push(cell.id);
-    }
   }
 }
