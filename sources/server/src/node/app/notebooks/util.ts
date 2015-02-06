@@ -18,20 +18,27 @@
  */
 /// <reference path="../../../../../../externs/ts/node/node-uuid.d.ts" />
 import uuid = require('node-uuid');
+import cells = require('../shared/cells');
 
 
 /**
- * For notebooks that lack a specified name
+ * Name for notebooks with unspecified name
  */
 export var defaultNotebookName = 'Untitled Notebook';
 
 /**
- * For worksheets that lack a specified name
+ * Name for worksheets with unspecified name
  */
 export var defaultWorksheetName = 'Untitled Worksheet';
 
+// Starter notebook default content configuration
+var defaultCodeCellContent = '';
+var defaultHeadingCellLevel = 1;
+var defaultHeadingCellContent = 'This is a heading';
+var defaultMarkdownCellContent = 'You **can** write markdown here';
+
 /**
- * Create an empty notebook with no cells
+ * Creates an empty notebook with no cells
  */
 export function createEmptyNotebook (): app.notebook.Notebook {
   var cells: app.notebook.Cell[] = [];
@@ -54,7 +61,7 @@ export function createEmptyNotebook (): app.notebook.Notebook {
 }
 
 /**
- * Create a new notebook with an initial (non-empty) set of cells
+ * Creates a new notebook with an initial (non-empty) set of cells
  *
  * The purpose of the initial set of cells is to provide the user with some fill-in-the-blank
  * bits to aid in getting started.
@@ -70,42 +77,52 @@ export function createStarterNotebook (): app.notebook.Notebook {
   return notebook;
 }
 
-function appendHeadingCell (notebook: any) {
-  var id = uuid.v4();
-  if (!notebook.cells[id]) { // only insert the cell once
-    notebook.cells[id] = {
-      id: id,
-      type: 'heading',
-      source: 'This is a heading',
-      metadata: {
-        // TODO(bryantd): implement a level selector UI element for configuring this attribute
-        level: 1
-      }
-    }
-    notebook.worksheet.push(id);
+/**
+ * Appends a code cell to the default worksheet within the notebook
+ */
+function appendCodeCell (notebook: app.notebook.Notebook) {
+  var cell = {
+    id: uuid.v4(),
+    type: cells.code,
+    source: defaultCodeCellContent,
+    metadata: {}
   }
+  getDefaultWorksheet(notebook).cells.push(cell);
 }
 
-function appendMarkdownCell (notebook: any) {
-  var id = uuid.v4();
-  if (!notebook.cells[id]) { // only insert the cell once
-    notebook.cells[id] = {
-      id: id,
-      type: 'markdown',
-      source: 'You **can** write markdown here'
+/**
+ * Appends a heading cell to the default worksheet within the notebook
+ */
+function appendHeadingCell (notebook: app.notebook.Notebook) {
+  var cell = {
+    id: uuid.v4(),
+    type: cells.heading,
+    source: defaultHeadingCellContent,
+    metadata: {
+      level: defaultHeadingCellLevel
     }
-    notebook.worksheet.push(id);
   }
+  getDefaultWorksheet(notebook).cells.push(cell);
 }
 
-function appendCodeCell (notebook: any) {
-  var id = uuid.v4();
-  if (!notebook.cells[id]) { // only insert the cell once
-    notebook.cells[id] = {
-      id: id,
-      type: 'code',
-      source: '',
-    }
-    notebook.worksheet.push(id);
+/**
+ * Appends a markdown cell to the default worksheet within the notebook
+ */
+function appendMarkdownCell (notebook: app.notebook.Notebook) {
+  var cell = {
+    id: uuid.v4(),
+    type: cells.markdown,
+    source: defaultMarkdownCellContent,
+    metadata: {}
   }
+  getDefaultWorksheet(notebook).cells.push(cell);
+}
+
+/**
+ * Gets the default worksheet from the notebook for appending cells
+ */
+function getDefaultWorksheet (notebook: app.notebook.Notebook): app.notebook.Worksheet {
+  // Return the first worksheet by default
+  var worksheetId = notebook.worksheetIds[0];
+  return notebook.worksheets[worksheetId];
 }

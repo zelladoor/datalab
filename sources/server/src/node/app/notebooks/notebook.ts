@@ -13,16 +13,8 @@
  */
 
 
-/// <reference path="../../../../../../externs/ts/node/node-uuid.d.ts" />
-import uuid = require('node-uuid');
 import serializer = require('./ipyserializer');
-
-// FIXME: move this discussion to the design doc for the server
-// Mention the advantage/value in separating the realtime
-// part (this object) from the persistence part (the storage/repo/serialization bits)
-//
-// Committing/persisting the data to storage is a different type
-// of interaction than updating the notebook data model itself.
+import util = require('./util');
 
 
 /**
@@ -112,7 +104,7 @@ export class ActiveNotebook implements app.IActiveNotebook {
     // First, attempt to read in the notebook if it already exists at the defined path
     var notebookData = this._storage.read(this._notebookPath);
     if (notebookData === undefined) {
-      notebook = createBlankNotebook();
+      notebook = util.createStarterNotebook();
     } else {
       // Deserialize the notebook data
       notebook = this._serializer.fromString(notebookData);
@@ -126,64 +118,5 @@ export class ActiveNotebook implements app.IActiveNotebook {
       // Then the cell isn't on the worksheet currently, append it
       this._notebook.worksheet.push(cell.id);
     }
-  }
-
-}
-
-function createBlankNotebook (): app.notebook.Notebook {
-  // Create a worksheet with one markdown cell and one code cell
-  var notebook: app.notebook.Notebook = {
-    id: uuid.v4(),
-    cells: {},
-    worksheet: []
-  };
-
-  // Create one of each cell type in the blank notebook
-  appendHeadingCell(notebook);
-  appendMarkdownCell(notebook);
-  appendCodeCell(notebook);
-
-  return notebook;
-}
-
-
-// FIXME: try to add shared util module that both the front-end and backend
-// can access. there is a dupe of cell creation methods in ui-side code for creating
-// a default empty cell.
-function appendHeadingCell (notebook: any) {
-  var id = uuid.v4();
-  if (!notebook.cells[id]) { // only insert the cell once
-    notebook.cells[id] = {
-      id: id,
-      type: 'heading',
-      source: 'This is a heading',
-      metadata: {
-        // TODO(bryantd): implement a level selector UI element for configuring this attribute
-        level: 1
-      }
-    }
-    notebook.worksheet.push(id);
-  }
-}
-function appendMarkdownCell (notebook: any) {
-  var id = uuid.v4();
-  if (!notebook.cells[id]) { // only insert the cell once
-    notebook.cells[id] = {
-      id: id,
-      type: 'markdown',
-      source: 'You **can** write markdown here'
-    }
-    notebook.worksheet.push(id);
-  }
-}
-function appendCodeCell (notebook: any) {
-  var id = uuid.v4();
-  if (!notebook.cells[id]) { // only insert the cell once
-    notebook.cells[id] = {
-      id: id,
-      type: 'code',
-      source: '',
-    }
-    notebook.worksheet.push(id);
   }
 }

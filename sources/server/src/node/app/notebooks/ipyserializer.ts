@@ -15,7 +15,7 @@
 
 /// <reference path="../../../../../../externs/ts/node/node-uuid.d.ts" />
 import uuid = require('node-uuid');
-
+import util = require('./util');
 
 /**
  * Serializer for reading/writing the .ipynb (IPython) v3 format
@@ -27,7 +27,8 @@ export class IPyNotebookSerializer implements app.INotebookSerializer {
    */
   toString (notebook: app.notebook.Notebook) {
     // TODO(bryantd): serialize to ipynb format
-    return 'TODO';
+    throw 'NotImplemented';
+    return 'NotImplemented'; // Must return string response for compilation to succeed
   }
 
   /**
@@ -38,13 +39,13 @@ export class IPyNotebookSerializer implements app.INotebookSerializer {
     var ipynb = JSON.parse(notebookData);
     console.log(JSON.stringify(ipynb, null, 4));
 
-    // Create an empty notebook object for mapping ipynb attributes into
-    var notebook: app.notebook.Notebook = {
-      id: uuid.v4(),
-      cells: {},
-      worksheet: []
-    };
+    var notebook = util.createEmptyNotebook();
+    // FIMXE: set the notebook name here somehow... need filename for consistency with ipython
 
+    // Get a reference to the first worksheet
+    var worksheet = notebook.worksheets[notebook.worksheetIds[0]];
+
+    // Notebooks created by IPython in v3 format always have a single worksheet
     ipynb.worksheets[0].cells.forEach(function (ipyCell: any) {
       var cell: app.notebook.Cell;
       switch (ipyCell.cell_type) {
@@ -60,13 +61,10 @@ export class IPyNotebookSerializer implements app.INotebookSerializer {
         default:
           console.log('WARNING: skipping unsupported cell type: ', ipyCell.cell_type);
       }
-
-      // Attach the converted cell to the notebook
-      notebook.cells[cell.id] = cell;
-      notebook.worksheet.push(cell.id);
+      // Attach the converted cell to the worksheet
+      worksheet.cells.push(cell);
     });
 
-    console.log('@@@@@ FROM IPY CAME: ', JSON.stringify(notebook, null, 4));
     return notebook;
   }
 
@@ -83,7 +81,7 @@ function deserializeIPyCodeCell (ipyCell: app.ipy.CodeCell): app.notebook.Cell {
   var cell = createCell();
   cell.type = 'code';
   cell.source = ipyCell.input.join('');
-  cell.executionCounter = ''+ipyCell.prompt_number;
+  cell.prompt = ''+ipyCell.prompt_number;
   cell.metadata.language = ipyCell.language;
   cell.outputs = [];
 
@@ -161,12 +159,3 @@ function deserializeIPyMarkdownCell (ipyCell: app.ipy.MarkdownCell): app.noteboo
   cell.source = ipyCell.source.join('');
   return cell;
 }
-
-/**
- * Notes on ipynb format interop
- *
- * - nb.metadata.signature
- *   * sha256 signature of the notebook content
- *   * used for validating the cell output media (e.g., javascript) is trusted
- *   * ipython seems to ignore the signature field if it is not included
- */
