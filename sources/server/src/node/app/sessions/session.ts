@@ -13,6 +13,9 @@
  */
 
 
+import updates = require('../shared/updates');
+
+
 /**
  * Binds a user connection to a kernel and routes communication between them
  *
@@ -71,8 +74,7 @@ export class Session implements app.ISession {
     this._userconns.push(userconn);
     this._registerUserEventHandlers(userconn);
     // Send the initial notebook state at the time of connection
-    userconn.sendNotebookUpdate(this._notebook.getData());
-    // console.log('!! New connection for session ' + this.id + ':\n' + JSON.stringify(this._userconns));
+    this._sendSnapshot(userconn);
   }
 
   /**
@@ -143,13 +145,17 @@ export class Session implements app.ISession {
   }
 
   _broadcastNotebookUpdate (notebookUpdate: any) {
+    console.log('WARNING not broadcasting notebook update (TODO)');
     this._userconns.forEach((userconn) => {
-      userconn.sendNotebookUpdate(notebookUpdate);
+      // FIXME: update to use new ws protocol msg/interface
+      // userconn.sendSnapshot(notebookUpdate);
     });
   }
   _broadcastSessionStatus (status: app.SessionStatus) {
+    console.log('WARNING not broadcasting session status (TODO)');
     this._userconns.forEach((userconn) => {
-      userconn.sendSessionStatus(status);
+      // FIXME: update for ws protocol
+      // userconn.sendSessionStatus(status);
     });
   }
 
@@ -233,5 +239,15 @@ export class Session implements app.ISession {
     this._kernel.onExecuteReply(this._handleExecuteReplyPreDelegate.bind(this));
     this._kernel.onKernelStatus(this._handleKernelStatusPreDelegate.bind(this));
     this._kernel.onOutputData(this._handleOutputDataPreDelegate.bind(this));
+  }
+
+  /**
+   * Sends a snapshot of this session's notebook to a single user
+   */
+  _sendSnapshot (userconn: app.IUserConnection) {
+    userconn.sendSnapshot({
+      update: updates.notebook.snapshot,
+      notebook: this._notebook.getData()
+    });
   }
 }

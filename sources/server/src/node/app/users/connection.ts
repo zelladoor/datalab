@@ -15,6 +15,7 @@
 
 /// <reference path="../../../../../../externs/ts/node/socket.io.d.ts" />
 import socketio = require('socket.io');
+import updates = require('../shared/updates');
 
 
 /**
@@ -58,34 +59,17 @@ export class UserConnection implements app.IUserConnection {
   }
 
   /**
-   * Sends an execute reply message to the user
+   * Sends a session status update message to the user
    */
-  sendExecuteReply (reply: app.ExecuteReply) {
-    this._send('execute-reply', reply);
+  sendSessionStatus (status: app.notebook.update.SessionStatus) {
+    this._send(updates.notebook.sessionStatus, status);
   }
 
   /**
-   * Sends an execute result message to the user
+   * Sends a notebook snapshot update message to the user
    */
-  sendExecuteResult (result: app.ExecuteResult) {
-    this._send('execute-result', result);
-  }
-
-  /**
-   * Sends a session status message to the user
-   */
-  sendSessionStatus (status: app.SessionStatus) {
-    this._send('session-status', status);
-  }
-
-  /**
-   * Sends a notebook update message to the user
-   */
-  sendNotebookUpdate (notebookUpdate: app.NotebookUpdate) {
-    // TODO(bryantd): when server-side configurable logging is available, emit the notebook updates
-    // at the debug level
-    // console.log('Sending notebook update: \n' + JSON.stringify(notebookUpdate, null, 4));
-    this._send('notebook-update', notebookUpdate);
+  sendSnapshot (snapshot: app.notebook.update.Snapshot) {
+    this._send(updates.notebook.snapshot, snapshot);
   }
 
   _delegateExecuteRequestHandler (message: app.ExecuteRequest) {}

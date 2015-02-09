@@ -84,10 +84,8 @@ declare module app {
     getNotebookPath (): string;
     onDisconnect (callback: EventHandler<IUserConnection>): void;
     onExecuteRequest (callback: EventHandler<ExecuteRequest>): void;
-    sendExecuteReply (reply: ExecuteReply): void;
-    sendExecuteResult (result: ExecuteResult): void;
-    sendSessionStatus (status: SessionStatus): void;
-    sendNotebookUpdate (notebookUpdate: NotebookUpdate): void;
+    sendSessionStatus (status: notebook.update.SessionStatus): void;
+    sendSnapshot (snapshot: notebook.update.Snapshot): void;
   }
 
   interface IUserConnectionManager {
