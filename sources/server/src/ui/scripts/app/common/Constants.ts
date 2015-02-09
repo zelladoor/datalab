@@ -57,6 +57,9 @@ export var headingViewer = {
 export var notebookEditor = {
   directiveName: 'datalabNotebookEditor'
 }
+export var worksheetEditor = {
+  directiveName: 'datalabWorksheetEditor'
+}
 
 // Route-specific angular component names used for dependency injection
 export var notebooks = {
@@ -82,6 +85,7 @@ export var scopes = {
   markdownViewer: 'markdownViewer',
   notebookEditor: 'notebookEditor',
   notebookData: 'notebookData',
+  worksheetEditor: 'worksheetEditor',
 
   // Route-specific components
   notebooks: {

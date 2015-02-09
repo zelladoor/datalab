@@ -17,22 +17,19 @@
  * Directive for rendering a single notebook
  */
 /// <reference path="../../../../../../../../externs/ts/angularjs/angular.d.ts" />
-/// <amd-dependency path="app/components/codecell/CodeCellDirective" />
-/// <amd-dependency path="app/components/markdowncell/MarkdownCellDirective" />
-/// <amd-dependency path="app/components/headingcell/HeadingCellDirective" />
+/// <amd-dependency path="app/components/worksheeteditor/WorksheetEditorDirective" />
 import logging = require('app/common/Logging');
 import constants = require('app/common/Constants');
-import app = require('app/App');
+import _app = require('app/App');
 
 
 var log = logging.getLogger(constants.scopes.notebookEditor);
 
 interface NotebookScope extends ng.IScope {
-  notebook?: any; // FIXME: define type
-  ctrl?: any;
+  notebook?: app.notebook.Notebook;
+  activeWorksheet?: app.notebook.Worksheet;
 }
 
-// FIXME: RENAME  this file and the template to be notebook-editor
 function notebookEditorDirective (): ng.IDirective {
   return {
     restrict: 'E',
@@ -40,9 +37,9 @@ function notebookEditorDirective (): ng.IDirective {
       notebook: '='
     },
     replace: true,
-    templateUrl: constants.scriptPaths.app + '/components/notebook/notebook.html',
+    templateUrl: constants.scriptPaths.app + '/components/notebookeditor/notebookeditor.html',
   }
 }
 
-app.registrar.directive(constants.notebookEditor.directiveName, notebookEditorDirective);
-log.debug('Registered notebook directive');
+_app.registrar.directive(constants.notebookEditor.directiveName, notebookEditorDirective);
+log.debug('Registered notebook editor directive');
