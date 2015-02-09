@@ -32,34 +32,37 @@ export var layouts = {
   sidebar: {
     directiveName: 'sidebarLayout'
   }
-}
+};
 export var codeEditor = {
   directiveName: 'datalabCodeEditor'
 };
 export var editorCell = {
   directiveName: 'datalabEditorCell'
-}
+};
 export var codeCell = {
   directiveName: 'datalabCodeCell'
-}
+};
 export var markdownCell = {
   directiveName: 'datalabMarkdownCell'
-}
+};
 export var markdownViewer = {
   directiveName: 'datalabMarkdownViewer'
-}
+};
 export var headingCell = {
   directiveName: 'datalabHeadingCell'
-}
+};
 export var headingViewer = {
   directiveName: 'datalabHeadingViewer'
-}
+};
 export var notebookEditor = {
   directiveName: 'datalabNotebookEditor'
-}
+};
 export var worksheetEditor = {
   directiveName: 'datalabWorksheetEditor'
-}
+};
+export var sessionConnection = {
+  name: 'sessionConnection'
+};
 
 // Route-specific angular component names used for dependency injection
 export var notebooks = {
@@ -71,16 +74,15 @@ export var notebooks = {
 
 // Logging scope names
 export var scopes = {
-  // Cells
+  // Cell directives
   codeCell: 'codeCell',
   editorCell: 'editorCell',
   headingCell: 'headingCell',
   markdownCell: 'markdownCell',
 
-  // Generic components
+  // Generic directives
   codeEditor: 'codeEditor',
   headingViewer: 'headingViewer',
-  kernel: 'kernel',
   layouts: 'layouts',
   markdownViewer: 'markdownViewer',
   notebookEditor: 'notebookEditor',
@@ -93,6 +95,9 @@ export var scopes = {
     edit: {
       page: 'notebooks.edit.page'
     }
-  }
+  },
+
+  // Other injectables (services, factories, providers, etc.)
+  sessionConnection: sessionConnection.name
 };
 

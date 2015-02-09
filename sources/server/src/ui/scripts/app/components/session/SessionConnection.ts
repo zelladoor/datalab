@@ -13,77 +13,46 @@
  */
 
 
-/**
- * FIXME: docs here
- */
 /// <reference path="../../../../../../../../externs/ts/angularjs/angular.d.ts" />
-/// <amd-dependency path="app/components/editorcell/socketio" />
-import logging = require('app/common/Logging');
+/// <reference path="../../../../../../../../externs/ts/socket.io.d.ts" />
+import socketio = require('socketio');
 import constants = require('app/common/Constants');
+import logging = require('app/common/Logging');
 import app = require('app/App');
-import actions = require('app/shared/actions');
-import updates = require('app/shared/updates');
 
 
-var log = logging.getLogger(constants.scopes.kernel);
+var log = logging.getLogger(constants.scopes.sessionConnection);
 
-//// FIXME REFACTOR this class becomes the "session event subscriber"
-//// listens for any event that should be propagated to the server as a protocol msg over ws
-//// Handles converting events to protocol messages (via components or directly)
+/**
+ * Creates a (singleton) socket.io connection with wrappers for triggering the Angular digest cycle
+ */
+function socketConnectionFactory (
+    rootScope: ng.IRootScopeService,
+    location: ng.ILocationService,
+    route: ng.route.IRouteService) {
 
-//// FIXME REFACTOR this class also becomes the "session event publisher"
-/// listens for any incoming messages over websocket and translates them to events
+  var socket: Socket = socketio(location.host(), {
+    // FIXME: any reason not to refer to the notebookId as notebookPath throughout UI-side too?
+    query: 'notebookPath=' + route.current.params.notebookId
+  });
 
-class Kernel { // FIXME RENAME this to "Session" or something like that
-  _socket: any; // FIXME TYPE
-  _rootScope: ng.IRootScopeService;
-  _nextRequestId: number; // FIXME: replace with uuid generation
-
-  // FIXME: use the constants.compoents.socket var instead of str const name here
-  static $inject = ['$rootScope', 'Socket'];
-  constructor (rootScope: ng.IRootScopeService, socket: any) {
-    this._socket = socket;
-    this._rootScope = rootScope;
-
-    this._nextRequestId = 1; // Execution counter starts from 1 within ipy kernel
-    var executeCellEvent = actions.cell.execute;
-    this._rootScope.$on(executeCellEvent, this._handleExecuteCellEvent.bind(this));
-    socket.on('notebook-update', this._handleNotebookUpdate.bind(this));
-    socket.on('session-status', function (socket: any, message: any) {
-      log.debug('session status', message);
-      rootScope.$emit('session-status', message);
-    });
-    socket.on(updates.notebook.snapshot, function (socket: any, message: any) {
-      log.warn('NOTEBOOK SNAPSHOT message: ', message);
-    })
-  }
-
-  _handleNotebookUpdate (socket: any, notebookUpdate: any) {
-    log.debug('notebook-update event received:', notebookUpdate);
-    this._rootScope.$emit('notebook-update', notebookUpdate);
-  }
-
-  _generateRequestId (): string {
-    return '' + this._nextRequestId++;
-  }
-
-  _handleExecuteCellEvent (event: ng.IAngularEvent, cell: any) {
-    log.debug('Processing cell.execute event', event, cell);
-    this._rootScope.$apply(() => {
-      // FIXME: is this the best object to be modifying the cell-level notebook data?
-      // Feel like this could be better encapsulated somewhere else (maybe notebook data service?)
-      cell.executionCounter = '*';
-    });
-    var msg: any = {
-      code: cell.source,
-      cellId: cell.id,
-      requestId: this._generateRequestId()
-    };
-    this._socket.emit('execute', msg);
-    log.debug('sent execute', msg);
-  }
-
+  return {
+    on: function (event: string, callback: Function) {
+      socket.on(event, function (message: any) {
+        // Execute the given callback within a scope.$apply so that angular will
+        // know about any variable updates (that it can then propagate).
+        rootScope.$apply(function () {
+          callback(socket, message);
+        });
+      });
+    },
+    emit: function(event: string, message: any) {
+      socket.emit(event, message);
+    }
+  };
 }
+socketConnectionFactory.$inject = ['$rootScope', '$location', '$route'];
 
-app.registrar.service('kernel', Kernel);
-log.debug('Registered ', constants.scopes.kernel);
+
+app.registrar.factory(constants.sessionConnection.name, socketConnectionFactory);
+log.debug('Registered socket connection factory');
