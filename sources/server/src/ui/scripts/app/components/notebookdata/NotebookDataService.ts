@@ -75,292 +75,311 @@ export class NotebookData {
       rootScope.$evalAsync(() => { callback(event, nb) });
     });
 
-    rootScope.$on(actions.cell.execute, this._handleExecuteCellEvent.bind(this));
+    // rootScope.$on(actions.cell.execute, this._handleExecuteCellEvent.bind(this));
   }
 
+  // TODO(bryantd): decide if we want a local "predictive modification" for the various insert functions
+  // to make the UI more responsive (given the latency in getting back a server response)
+
   insertMarkdownCell () {
-    this._appendMarkdownCell();
+    console.debug('insert markdown cell()');
   }
 
   insertCodeCell () {
-    this._appendCodeCell();
+    console.debug('insert code cell()');
   }
 
   insertHeadingCell () {
-    this._appendHeadingCell();
+    console.debug('insert heading cell()');
   }
 
-
-  // FIXME: eventually this will accept (one or more) deltas
-  // but it will be the full notebook for now
-  _updateNotebook (event: any, newNotebook: app.notebook.Notebook) {
-    log.debug('New notebook snapshot received (via websocket)', newNotebook);
-
-    if (!newNotebook) {
-      log.debug('Unable to update notebook with a false-y notebook data model. Ignoring...');
-      return; // FIXME: better handling of this case
-    }
-
-    this._selectNotebookOutputMimetypes(newNotebook)
-
-    if (this.notebook) {
-      this._mergeNotebook(newNotebook);
-    } else {
-      this.notebook = newNotebook;
-    }
+  _updateNotebook(event: any, update: app.notebook.update.Update) {
+    console.info('updateNotebook(): ', update);
   }
 
-  // FIXME: this method will change substantially or be replaced in full once notebook values
-  // are being broadcasted rather than the full notebook
-  _mergeNotebook (newNotebook: app.notebook.Notebook) {
+// FIXME: get basic wiring for new ws protocol and then pull the following bits back
+// into the client/server side update pieces
 
-    var that = this;
+//   // FIXME: eventually this will accept (one or more) deltas
+//   // but it will be the full notebook for now
+//   _updateNotebook (event: any, newNotebook: app.notebook.Notebook) {
+//     log.debug('New notebook snapshot received (via websocket)', newNotebook);
 
-    Object.keys(newNotebook.cells).forEach((cellId: string) => {
-      var currentCell = that.notebook.cells[cellId];
-      var newCell = newNotebook.cells[cellId];
-      if (currentCell) { // FIXME: doesn't look like cellIndex is used below... remove this?
-        var cellIndex = that.notebook.worksheet.indexOf(currentCell.id);
-      }
+//     if (!newNotebook) {
+//       log.debug('Unable to update notebook with a false-y notebook data model. Ignoring...');
+//       return; // FIXME: better handling of this case
+//     }
 
-      // TODO(bryantd): Logic for merging worksheet order needs to be implemented here eventually
-      // Side-stepping issue at the moment because the worksheet is append-only currently
-      var isActive = false;
-      if (!currentCell) { // New cell received push it to tail of worksheet
-        that.notebook.worksheet.push(cellId);
-      } else {
-        // If this cell is currently active, keep it active
-        isActive = that.notebook.cells[cellId].active;
-      }
+//     this._selectNotebookOutputMimetypes(newNotebook)
 
-      // Overwrite individual cells as they are broadcast from server
-      // TODO(bryantd): currently only overwrite code cells, since only those are being persisted
-      // to the server. Overwriting markdown cells will cause the contents to be erased since markdown
-      // cells are not "saved" to the server (yet)
-      if (newNotebook.cells[cellId].type == 'code') {
-        that.notebook.cells[cellId] = newNotebook.cells[cellId];
-      }
+//     if (this.notebook) {
+//       this._mergeNotebook(newNotebook);
+//     } else {
+//       this.notebook = newNotebook;
+//     }
+//   }
 
+//   // FIXME: this method will change substantially or be replaced in full once notebook values
+//   // are being broadcasted rather than the full notebook
+//   _mergeNotebook (newNotebook: app.notebook.Notebook) {
+//     console.error('Not merging notebook update.. TODO'); // FIXME
+//     /*
 
-      // FIXME: consider here all of the client-side modifications to a cell
-      // that might be blown away on update. Currently just concerned with cell.active flag
-      //
-      // Seems like there is a set of user-specific settings/state (e.g., cursor, active part of the page)
-      // that shouldn't be broadcasted/shared with all users
-      //
-      // Or maybe we should broadcast/persist these things, they just need to be
-      // marked as owned by user X (like realtime api)
-      //
-      // Leaning towards publishing the entirety of the state to the server
-      // because managing some local dirty state that needs re-application feels fragile
-      // and will eventually go away once we have multi-user working.
-      //
-      // Publishing the full state to the server for generating the ui-side view has the downside
-      // of adding more details to the content update message protocol between ui/server, but has
-      // the advantage of moving *all* notebook state server-side, simplifying the ui-side code
+//     var that = this;
 
-      // Re-mark the cell as active if it was active before the update
-      if (isActive) {
-        that.notebook.cells[cellId].active = isActive
-      }
+//     Object.keys(newNotebook.cells).forEach((cellId: string) => {
+//       var currentCell = that.notebook.cells[cellId];
+//       var newCell = newNotebook.cells[cellId];
+//       if (currentCell) { // FIXME: doesn't look like cellIndex is used below... remove this?
+//         var cellIndex = that.notebook.worksheet.indexOf(currentCell.id);
+//       }
 
-    });
+//       // TODO(bryantd): Logic for merging worksheet order needs to be implemented here eventually
+//       // Side-stepping issue at the moment because the worksheet is append-only currently
+//       var isActive = false;
+//       if (!currentCell) { // New cell received push it to tail of worksheet
+//         that.notebook.worksheet.push(cellId);
+//       } else {
+//         // If this cell is currently active, keep it active
+//         isActive = that.notebook.cells[cellId].active;
+//       }
 
-  }
-
-  /**
-   * Selects a mimetype for the cell output out of possibilities within mimetype bundle
-   */
-  _selectMimetype (output: app.notebook.AugmentedCellOutput) {
-    var bundle = output.mimetypeBundle;
-    if (!bundle) {
-      log.warn('Received an output with no mimetype bundle: ', output);
-      return;
-    }
-    output.preferredMimetype = this._findPreferredMimetype(bundle);
-
-    // Bail if there isn't a preferred mimetype within the bundle
-    if (!output.preferredMimetype) {
-      log.warn('Unable to select a mimetype for cell output: ', output);
-      return;
-    }
-
-    // Create a trusted html wrapper for the html content so that it is display-able
-    if (output.preferredMimetype == 'text/html') {
-      output.trustedHtml = this._sce.trustAsHtml(bundle['text/html']);
-    }
-  }
-
-  /**
-   * Select mimetypes for all cell outputs within the given notebook
-   */
-  _selectNotebookOutputMimetypes (notebook: app.notebook.Notebook) {
-    // Iterate through the cells
-    Object.keys(notebook.cells).forEach((cellId) => {
-      var cell = notebook.cells[cellId];
-      if (cell.outputs) {
-        // Iterate through each cell's output and select a mimetype (one per output)
-        cell.outputs.forEach(this._selectMimetype.bind(this));
-      }
-    });
-  }
-
-  /**
-   * Finds the preferred mimetype from the options available in a given mimetype bundle.
-   *
-   * The preferred mimetype for displaying a given output is modeled on IPython's preference list.
-   *
-   * Returns null if none of the preferred mimetypes are available within the bundle.
-   */
-  _findPreferredMimetype (mimetypeBundle: app.Map<string>) {
-    for (var i = 0; i < NotebookData._preferredMimetypes.length; ++i) {
-      var mimetype = NotebookData._preferredMimetypes[i];
-      if (mimetypeBundle.hasOwnProperty(mimetype)) {
-        return mimetype;
-      }
-    }
-    return null;
-  }
+//       // Overwrite individual cells as they are broadcast from server
+//       // TODO(bryantd): currently only overwrite code cells, since only those are being persisted
+//       // to the server. Overwriting markdown cells will cause the contents to be erased since markdown
+//       // cells are not "saved" to the server (yet)
+//       if (newNotebook.cells[cellId].type == 'code') {
+//         that.notebook.cells[cellId] = newNotebook.cells[cellId];
+//       }
 
 
+//       // FIXME: consider here all of the client-side modifications to a cell
+//       // that might be blown away on update. Currently just concerned with cell.active flag
+//       //
+//       // Seems like there is a set of user-specific settings/state (e.g., cursor, active part of the page)
+//       // that shouldn't be broadcasted/shared with all users
+//       //
+//       // Or maybe we should broadcast/persist these things, they just need to be
+//       // marked as owned by user X (like realtime api)
+//       //
+//       // Leaning towards publishing the entirety of the state to the server
+//       // because managing some local dirty state that needs re-application feels fragile
+//       // and will eventually go away once we have multi-user working.
+//       //
+//       // Publishing the full state to the server for generating the ui-side view has the downside
+//       // of adding more details to the content update message protocol between ui/server, but has
+//       // the advantage of moving *all* notebook state server-side, simplifying the ui-side code
 
-///// FIXME: The following section should likely remain here or be moved to notebook directive
-///// Everything around focusing/activating cells is purely client-side and does not effect the
-///// notebook in a persistent way. As such, could make more sense in directive.
-/////
-///// Still need a hook here for appending a blank cell (of default type)
+//       // Re-mark the cell as active if it was active before the update
+//       if (isActive) {
+//         that.notebook.cells[cellId].active = isActive
+//       }
 
-  /**
-   * Updates the currently active cell whenever a given cell is executed
-   *
-   * Whenever a cell is executed, the subsequent cell will be made active. If the executed cell
-   * is at the tail of the worksheet, a blank cell is appended and then made active.
-   *
-   * This behavior is consistent with IPython's and has the property of making it easy to execute
-   * a contiguous group of cells without requiring the user to manually focus each cell.
-   */
-  _handleExecuteCellEvent (event: any, cell: app.notebook.Cell) {
-    log.debug('[nb] cell.execute event for cell: ', cell);
-    // Find the current index of the cell in the worksheet
-    var currentIndex = this.notebook.worksheet.indexOf(cell.id);
-    if (currentIndex === -1) {
-      log.error('Attempted to insert a cell based upon a non-existent cell id');
-    }
+//     });
+//   */
+//   }
 
-    var nextIndex = currentIndex + 1;
-    log.debug('setting active cell to index ' + nextIndex);
-    if (nextIndex < this.notebook.worksheet.length) {
-      // There's already a cell at the next index, make it active
-      log.debug('found an existing cell to make active');
-      this._makeCellActive(this._getCellByIndex(nextIndex));
-    } else {
-      // Otherwise, append blank cell
-      log.debug('creating a blank cell to append');
-      var newCell = this._insertBlankCell(nextIndex);
-      this._makeCellActive(newCell);
-    }
-  }
+//   /**
+//    * Selects a mimetype for the cell output out of possibilities within mimetype bundle
+//    */
+//   _selectMimetype (output: app.notebook.AugmentedCellOutput) {
+//     var bundle = output.mimetypeBundle;
+//     if (!bundle) {
+//       log.warn('Received an output with no mimetype bundle: ', output);
+//       return;
+//     }
+//     output.preferredMimetype = this._findPreferredMimetype(bundle);
 
-  /**
-   * Look up a notebook cell by its index within the worksheet
-   */
-  _getCellByIndex (index: number) {
-    var cellId = this.notebook.worksheet[index];
-    return this.notebook.cells[cellId];
-  }
+//     // Bail if there isn't a preferred mimetype within the bundle
+//     if (!output.preferredMimetype) {
+//       log.warn('Unable to select a mimetype for cell output: ', output);
+//       return;
+//     }
 
-  /**
-   * Programmatically focus a given cell by making it active
-   */
-  _makeCellActive (cell: app.notebook.Cell) {
-    this._rootScope.$evalAsync(() => {
-      cell.active = true;
-    });
-  }
+//     // Create a trusted html wrapper for the html content so that it is display-able
+//     if (output.preferredMimetype == 'text/html') {
+//       output.trustedHtml = this._sce.trustAsHtml(bundle['text/html']);
+//     }
+//   }
+
+//   /**
+//    * Select mimetypes for all cell outputs within the given notebook
+//    */
+//   _selectNotebookOutputMimetypes (notebook: app.notebook.Notebook) {
+//     /* FIXME: this method needs information about which worksheet was modified to avoid iterating over all worksheets
+//     Will change slightly under the new delta model
+
+//     // Iterate through the cells
+//     Object.keys(notebook.cells).forEach((cellId) => {
+//       var cell = notebook.cells[cellId];
+//       if (cell.outputs) {
+//         // Iterate through each cell's output and select a mimetype (one per output)
+//         cell.outputs.forEach(this._selectMimetype.bind(this));
+//       }
+//     });
+//   */
+//   }
+
+//   *
+//    * Finds the preferred mimetype from the options available in a given mimetype bundle.
+//    *
+//    * The preferred mimetype for displaying a given output is modeled on IPython's preference list.
+//    *
+//    * Returns null if none of the preferred mimetypes are available within the bundle.
+
+//   _findPreferredMimetype (mimetypeBundle: app.Map<string>) {
+//     for (var i = 0; i < NotebookData._preferredMimetypes.length; ++i) {
+//       var mimetype = NotebookData._preferredMimetypes[i];
+//       if (mimetypeBundle.hasOwnProperty(mimetype)) {
+//         return mimetype;
+//       }
+//     }
+//     return null;
+//   }
 
 
 
-/////////// Below methods should issue a server ws request for the operations instead
-/// of simply applying them to the local notebook mode
+// ///// FIXME: The following section should likely remain here or be moved to notebook directive
+// ///// Everything around focusing/activating cells is purely client-side and does not effect the
+// ///// notebook in a persistent way. As such, could make more sense in directive.
+// /////
+// ///// Still need a hook here for appending a blank cell (of default type)
+// /////
+// ///// Everything below needs to be worksheet-scope as well
 
-  /// Each of the following is wired to a UI control for inserting the cell
-  _appendMarkdownCell () {
-    var id = this._generateUUID();
-    if (!this.notebook.cells[id]) { // only insert the cell once
-      this.notebook.cells[id] = {
-        id: id,
-        type: 'markdown',
-        source: '',
-        active: true
-      }
-      this.notebook.worksheet.push(id);
-    }
-  }
+//   /**
+//    * Updates the currently active cell whenever a given cell is executed
+//    *
+//    * Whenever a cell is executed, the subsequent cell will be made active. If the executed cell
+//    * is at the tail of the worksheet, a blank cell is appended and then made active.
+//    *
+//    * This behavior is consistent with IPython's and has the property of making it easy to execute
+//    * a contiguous group of cells without requiring the user to manually focus each cell.
+//    */
+//   _handleExecuteCellEvent (event: any, cell: app.notebook.Cell) {
+//     log.debug('[nb] cell.execute event for cell: ', cell);
+//     // Find the current index of the cell in the worksheet
+//     var currentIndex = this.notebook.worksheet.indexOf(cell.id);
+//     if (currentIndex === -1) {
+//       log.error('Attempted to insert a cell based upon a non-existent cell id');
+//     }
 
-  _appendCodeCell () {
-    var id = this._generateUUID();
-    if (!this.notebook.cells[id]) { // only insert the cell once
-      this.notebook.cells[id] = {
-        id: id,
-        type: 'code',
-        source: '',
-        active: true
-      }
-      this.notebook.worksheet.push(id);
-    }
-  }
+//     var nextIndex = currentIndex + 1;
+//     log.debug('setting active cell to index ' + nextIndex);
+//     if (nextIndex < this.notebook.worksheet.length) {
+//       // There's already a cell at the next index, make it active
+//       log.debug('found an existing cell to make active');
+//       this._makeCellActive(this._getCellByIndex(nextIndex));
+//     } else {
+//       // Otherwise, append blank cell
+//       log.debug('creating a blank cell to append');
+//       var newCell = this._insertBlankCell(nextIndex);
+//       this._makeCellActive(newCell);
+//     }
+//   }
 
-  _appendHeadingCell () {
-    var id = this._generateUUID();
-    if (!this.notebook.cells[id]) { // only insert the cell once
-      this.notebook.cells[id] = {
-        id: id,
-        type: 'heading',
-        source: '',
-        active: true,
-        metadata: {
-          // TODO(bryantd): implement a level selector UI element for configuring this attribute
-          level: 1
-        }
-      }
-      this.notebook.worksheet.push(id);
-    }
-  }
+//   /**
+//    * Look up a notebook cell by its index within the worksheet
+//    */
+//   _getCellByIndex (index: number) {
+//     var cellId = this.notebook.worksheet[index];
+//     return this.notebook.cells[cellId];
+//   }
 
-  // Called as a side-effect of executing the notebook's tail cell
-  _insertBlankCell (index: number) {
-    var newCell = this._createBlankCell();
-    this.notebook.worksheet.push(newCell.id);
-    this.notebook.cells[newCell.id] = newCell;
-    return newCell;
-  }
-  // FIXME: Mostly a dupe of the insertCodeCell content
-  _createBlankCell () {
-    return {
-      id: this._generateUUID(),
-      type: 'code', // FIXME: default cell type move to constant
-      executionCounter: '-', // FIXME CONSTANT (needs to be a nbsp, but that requires html trusting too), fix this
-      source: '' // a blank line
-    }
-  }
+//   /**
+//    * Programmatically focus a given cell by making it active
+//    */
+//   _makeCellActive (cell: app.notebook.Cell) {
+//     this._rootScope.$evalAsync(() => {
+//       cell.active = true;
+//     });
+//   }
 
-// FIXME: If all notebook modifications are handled server-side, can probably relocate/remove this
-  _insertCell (cell: any, index: number) {
-    this.notebook.worksheet.splice(index, /* num elements to remove */ 0, cell);
-  }
 
-///// FIXME Might be able to get rid of this or relocate to utils
-  // Light-weight uuid generation for cell ids
-  // Source: http://stackoverflow.com/a/8809472
-  _generateUUID (): string {
-    var d = new Date().getTime();
-    var uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-        var r = (d + Math.random()*16)%16 | 0;
-        d = Math.floor(d/16);
-        return (c=='x' ? r : (r&0x3|0x8)).toString(16);
-    });
-    return uuid;
-  }
+
+// /////////// Below methods should issue a server ws request for the operations instead
+// /// of simply applying them to the local notebook mode
+
+// /*
+//   _appendMarkdownCell () {
+//     var id = this._generateUUID();
+//     if (!this.notebook.cells[id]) { // only insert the cell once
+//       this.notebook.cells[id] = {
+//         id: id,
+//         type: 'markdown',
+//         source: '',
+//         active: true
+//       }
+//       this.notebook.worksheet.push(id);
+//     }
+//   }
+
+//   _appendCodeCell () {
+//     var id = this._generateUUID();
+//     if (!this.notebook.cells[id]) { // only insert the cell once
+//       this.notebook.cells[id] = {
+//         id: id,
+//         type: 'code',
+//         source: '',
+//         active: true
+//       }
+//       this.notebook.worksheet.push(id);
+//     }
+//   }
+
+//   _appendHeadingCell () {
+//     var id = this._generateUUID();
+//     if (!this.notebook.cells[id]) { // only insert the cell once
+//       this.notebook.cells[id] = {
+//         id: id,
+//         type: 'heading',
+//         source: '',
+//         active: true,
+//         metadata: {
+//           // TODO(bryantd): implement a level selector UI element for configuring this attribute
+//           level: 1
+//         }
+//       }
+//       this.notebook.worksheet.push(id);
+//     }
+//   }
+
+//   // Called as a side-effect of executing the notebook's tail cell
+//   _insertBlankCell (index: number) {
+//     var newCell = this._createBlankCell();
+//     this.notebook.worksheet.push(newCell.id);
+//     this.notebook.cells[newCell.id] = newCell;
+//     return newCell;
+//   }
+//   // FIXME: Mostly a dupe of the insertCodeCell content
+//   _createBlankCell () {
+//     return {
+//       id: this._generateUUID(),
+//       type: 'code', // FIXME: default cell type move to constant
+//       executionCounter: '-', // FIXME CONSTANT (needs to be a nbsp, but that requires html trusting too), fix this
+//       source: '' // a blank line
+//     }
+//   }
+
+// // FIXME: If all notebook modifications are handled server-side, can probably relocate/remove this
+//   _insertCell (cell: any, index: number) {
+//     this.notebook.worksheet.splice(index, 0, cell);
+//   }
+
+
+// ///// FIXME Might be able to get rid of this or relocate to utils
+//   // Light-weight uuid generation for cell ids
+//   // Source: http://stackoverflow.com/a/8809472
+//   _generateUUID (): string {
+//     var d = new Date().getTime();
+//     var uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+//         var r = (d + Math.random()*16)%16 | 0;
+//         d = Math.floor(d/16);
+//         return (c=='x' ? r : (r&0x3|0x8)).toString(16);
+//     });
+//     return uuid;
+//   }
+// */
 
 }
 
