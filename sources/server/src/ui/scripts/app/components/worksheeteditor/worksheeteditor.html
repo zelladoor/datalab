@@ -1,0 +1,20 @@
+<div class="datalab-worksheet-editor">
+
+    <!-- Create a cell rendering directive for each flavor of supported cell -->
+  <div ng-repeat="cell in worksheet.cells">
+    <div ng-switch="cell.type">
+        <datalab-code-cell
+            ng-switch-when="code"
+            cell="cell"></datalab-code-cell>
+
+        <datalab-markdown-cell
+            ng-switch-when="markdown"
+            cell="cell"></datalab-markdown-cell>
+
+        <datalab-heading-cell
+            ng-switch-when="heading"
+            cell="cell"></datalab-heading-cell>
+    </div>
+  </div>
+
+</div>

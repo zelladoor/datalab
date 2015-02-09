@@ -51,7 +51,7 @@ class EditorCellController {
 
   _scope: EditorCellScope;
 
-  static $inject: string[] = ['$scope'];
+  static $inject = ['$scope'];
   constructor (scope: EditorCellScope) {
     this._scope = scope;
 

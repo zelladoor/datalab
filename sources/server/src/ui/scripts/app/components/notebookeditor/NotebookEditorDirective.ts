@@ -25,9 +25,40 @@ import _app = require('app/App');
 
 var log = logging.getLogger(constants.scopes.notebookEditor);
 
-interface NotebookScope extends ng.IScope {
+interface NotebookEditorScope extends ng.IScope {
   notebook?: app.notebook.Notebook;
   activeWorksheet?: app.notebook.Worksheet;
+}
+
+class NotebookEditorController {
+
+  _scope: NotebookEditorScope;
+
+  static $inject = ['$scope'];
+  constructor (scope: NotebookEditorScope) {
+    this._scope = scope;
+    this.makeFirstWorksheetActive();
+  }
+
+  /**
+   * Makes the first worksheet active, if it exists
+   */
+  makeFirstWorksheetActive () {
+    if (this._scope.notebook.worksheetIds.length > 0) {
+      this.selectWorksheet(this._scope.notebook.worksheetIds[0]);
+    } else {
+      log.error('Notebook contains zero worksheets!');
+    }
+  }
+
+  selectWorksheet (worksheetId: string) {
+    var worksheet = this._scope.notebook.worksheets[worksheetId];
+    if (!worksheet) {
+      log.error('Attempted to select non-existent worksheet id: ', worksheetId);
+    }
+    this._scope.activeWorksheet = worksheet;
+  }
+
 }
 
 function notebookEditorDirective (): ng.IDirective {
@@ -38,6 +69,7 @@ function notebookEditorDirective (): ng.IDirective {
     },
     replace: true,
     templateUrl: constants.scriptPaths.app + '/components/notebookeditor/notebookeditor.html',
+    controller: NotebookEditorController
   }
 }
 

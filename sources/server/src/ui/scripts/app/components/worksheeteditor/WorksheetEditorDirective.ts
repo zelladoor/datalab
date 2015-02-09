@@ -35,7 +35,7 @@ function worksheetEditorDirective (): ng.IDirective {
   return {
     restrict: 'E',
     scope: {
-      notebook: '='
+      worksheet: '='
     },
     replace: true,
     templateUrl: constants.scriptPaths.app + '/components/worksheeteditor/worksheeteditor.html',
