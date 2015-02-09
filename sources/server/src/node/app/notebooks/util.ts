@@ -48,15 +48,14 @@ export function createEmptyNotebook (): app.notebook.Notebook {
     metadata: {},
     name: defaultNotebookName,
     worksheetIds: [worksheetId],
-    worksheets: {
-      worksheetId: {
-        id: worksheetId,
-        name: defaultWorksheetName,
-        metadata: {},
-        cells: cells
-      }
-    }
+    worksheets: {}
   };
+  notebook.worksheets[worksheetId] = {
+    id: worksheetId,
+    name: defaultWorksheetName,
+    metadata: {},
+    cells: cells
+  }
   return notebook;
 }
 

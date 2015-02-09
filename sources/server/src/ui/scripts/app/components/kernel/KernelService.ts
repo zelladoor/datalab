@@ -22,6 +22,7 @@ import logging = require('app/common/Logging');
 import constants = require('app/common/Constants');
 import app = require('app/App');
 import actions = require('app/shared/actions');
+import updates = require('app/shared/updates');
 
 
 var log = logging.getLogger(constants.scopes.kernel);
@@ -52,6 +53,9 @@ class Kernel { // FIXME RENAME this to "Session" or something like that
       log.debug('session status', message);
       rootScope.$emit('session-status', message);
     });
+    socket.on(updates.notebook.snapshot, function (socket: any, message: any) {
+      log.warn('NOTEBOOK SNAPSHOT message: ', message);
+    })
   }
 
   _handleNotebookUpdate (socket: any, notebookUpdate: any) {

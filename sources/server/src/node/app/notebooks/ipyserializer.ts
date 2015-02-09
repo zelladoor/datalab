@@ -45,8 +45,16 @@ export class IPyNotebookSerializer implements app.INotebookSerializer {
     // Get a reference to the first worksheet
     var worksheet = notebook.worksheets[notebook.worksheetIds[0]];
 
-    // Notebooks created by IPython in v3 format always have a single worksheet
-    ipynb.worksheets[0].cells.forEach(function (ipyCell: any) {
+    // Notebooks created by IPython in v3 format will have zero or one worksheet(s)
+    if (ipynb.worksheets.length === 0) {
+      // Nothing else to convert from ipynb format
+      return notebook;
+    }
+
+    // Notebook has a single worksheet
+    var ipynbWorksheet = ipynb.worksheets[0];
+
+    ipynbWorksheet.cells.forEach(function (ipyCell: any) {
       var cell: app.notebook.Cell;
       switch (ipyCell.cell_type) {
         case 'markdown':
