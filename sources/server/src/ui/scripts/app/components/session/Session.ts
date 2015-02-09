@@ -20,7 +20,7 @@
 /// <amd-dependency path="app/components/editorcell/socketio" />
 import logging = require('app/common/Logging');
 import constants = require('app/common/Constants');
-import app = require('app/App');
+import _app = require('app/App');
 import actions = require('app/shared/actions');
 import updates = require('app/shared/updates');
 import uuid = require('app/common/uuid');
@@ -35,23 +35,23 @@ var log = logging.getLogger(constants.scopes.session);
 //// FIXME REFACTOR this class also becomes the "session event publisher"
 /// listens for any incoming messages over websocket and translates them to events
 
-class Session implements ISession {
-  _socket: any; // FIXME TYPE
+class Session implements app.ISession {
+  _connection: app.ISessionConnection;
   _rootScope: ng.IRootScopeService;
 
   static $inject = ['$rootScope', constants.sessionConnection.name];
-  constructor (rootScope: ng.IRootScopeService, socket: any) {
-    this._socket = socket;
+  constructor (rootScope: ng.IRootScopeService, connection: app.ISessionConnection) {
+    this._connection = connection;
     this._rootScope = rootScope;
 
     var executeCellEvent = actions.cell.execute;
     this._rootScope.$on(executeCellEvent, this._handleExecuteCellEvent.bind(this));
-    socket.on('notebook-update', this._handleNotebookUpdate.bind(this));
-    socket.on('session-status', function (socket: any, message: any) {
+    connection.on('notebook-update', this._handleNotebookUpdate.bind(this));
+    connection.on('session-status', function (message: any) {
       log.debug('session status', message);
       rootScope.$emit('session-status', message);
     });
-    socket.on(updates.notebook.snapshot, function (socket: any, message: any) {
+    connection.on(updates.notebook.snapshot, function (message: any) {
       log.warn('NOTEBOOK SNAPSHOT message: ', message);
     })
   }
@@ -77,11 +77,11 @@ class Session implements ISession {
       cellId: cell.id,
       requestId: this._generateRequestId()
     };
-    this._socket.emit('execute', msg);
+    this._connection.emit('execute', msg);
     log.debug('sent execute', msg);
   }
 
 }
 
-app.registrar.service('session', Kernel);
+_app.registrar.service('session', Session);
 log.debug('Registered ', constants.scopes.session);

@@ -77,10 +77,10 @@ export class EditPageController {
       kernelStatus: 'starting'
     };
     var that = this;
-    rootScope.$on('session-status', (event: any, sessionStatus: any) => {
+    this._rootScope.$on('session-status', (event: any, sessionStatus: any) => {
       // FIXME: find other references of scope.$apply and see if they should be changed
       // to $evalAsync for digest loop conflict safety
-      rootScope.$evalAsync(() => {
+      that._rootScope.$evalAsync(() => {
         that.sessionStatus = sessionStatus;
       });
     });

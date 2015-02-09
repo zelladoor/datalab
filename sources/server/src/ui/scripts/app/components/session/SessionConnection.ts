@@ -18,7 +18,7 @@
 import socketio = require('socketio');
 import constants = require('app/common/Constants');
 import logging = require('app/common/Logging');
-import app = require('app/App');
+import _app = require('app/App');
 
 
 var log = logging.getLogger(constants.scopes.sessionConnection);
@@ -37,22 +37,22 @@ function socketConnectionFactory (
   });
 
   return {
-    on: function (event: string, callback: Function) {
-      socket.on(event, function (message: any) {
+    on: function (messageType: string, callback: app.SessionMessageHandler) {
+      socket.on(messageType, function (message: any) {
         // Execute the given callback within a scope.$apply so that angular will
         // know about any variable updates (that it can then propagate).
         rootScope.$apply(function () {
-          callback(socket, message);
+          callback(message);
         });
       });
     },
-    emit: function(event: string, message: any) {
-      socket.emit(event, message);
+    emit: function(messageType: string, message: any) {
+      socket.emit(messageType, message);
     }
   };
 }
 socketConnectionFactory.$inject = ['$rootScope', '$location', '$route'];
 
 
-app.registrar.factory(constants.sessionConnection.name, socketConnectionFactory);
+_app.registrar.factory(constants.sessionConnection.name, socketConnectionFactory);
 log.debug('Registered socket connection factory');

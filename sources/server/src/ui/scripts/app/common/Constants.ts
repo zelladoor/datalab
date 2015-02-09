@@ -98,6 +98,7 @@ export var scopes = {
   },
 
   // Other injectables (services, factories, providers, etc.)
+  session: 'session',
   sessionConnection: sessionConnection.name
 };
 

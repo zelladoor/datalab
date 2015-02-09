@@ -20,15 +20,19 @@
 // the ever present app module (app.App) (or change the app module name...)
 declare module app {
 
-  interface IRegistrar {
-    controller(name: string, constructor: Function): void;
-    directive (name: string, directiveFactory: Function): void;
-    service (name: string, constructor: Function): void;
-    factory (name: string, serviceFactory: Function): void;
-    constant (name: string, value: any): void;
-    value (name: string, value: any): void;
-    decorator (name: string, decorator: Function): void;
-    filter (name: string, filterFactory: Function): void;
+  interface CellScope extends ng.IScope {
+    cell: any;
+    // TODO(bryantd): see if possible to remove the optional flags from the following
+    // Issue is that when the scope is first created (by directive), these fields will not exist.
+    // These fields are created/populated within the controller.
+    keymap?: any;
+    ctrl?: ICellController;
+  }
+
+  interface ICellController {
+    showEditRegion: boolean;
+    showPreviewRegion: boolean;
+    switchToEditMode (): void;
   }
 
   interface ILogger {
@@ -38,19 +42,28 @@ declare module app {
     error (...objects: Object []): void;
   }
 
-  interface ICellController {
-    showEditRegion: boolean;
-    showPreviewRegion: boolean;
-    switchToEditMode (): void;
+  interface IRegistrar {
+    controller (name: string, constructor: Function): void;
+    directive (name: string, directiveFactory: Function): void;
+    service (name: string, constructor: Function): void;
+    factory (name: string, serviceFactory: Function): void;
+    constant (name: string, value: any): void;
+    value (name: string, value: any): void;
+    decorator (name: string, decorator: Function): void;
+    filter (name: string, filterFactory: Function): void;
   }
 
-  interface CellScope extends ng.IScope {
-    cell: any;
-    // TODO(bryantd): see if possible to remove the optional flags from the following
-    // Issue is that when the scope is first created (by directive), these fields will not exist.
-    // These fields are created/populated within the controller.
-    keymap?: any;
-    ctrl?: ICellController;
+  interface ISession {
+
+  }
+
+  interface ISessionConnection {
+    on (messageType: string, callback: SessionMessageHandler): void;
+    emit (messageType: string, message: any): void;
+  }
+
+  interface SessionMessageHandler {
+    (message: any): void;
   }
 
   // UI-specific extensions to the datalab notebook types
