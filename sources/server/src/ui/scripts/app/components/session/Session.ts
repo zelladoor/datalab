@@ -60,10 +60,6 @@ class Session implements app.ISession {
     this._rootScope.$emit(updates.notebook.snapshot, snapshot);
   }
 
-  _generateRequestId (): string {
-    return uuid.v4();
-  }
-
   _handleExecuteCellEvent (event: ng.IAngularEvent, cell: any) {
     log.debug('Processing cell.execute event', event, cell);
     this._rootScope.$apply(() => {
@@ -74,7 +70,7 @@ class Session implements app.ISession {
     var msg: any = {
       code: cell.source,
       cellId: cell.id,
-      requestId: this._generateRequestId()
+      requestId: uuid.v4()
     };
     this._connection.emit('execute', msg);
     log.debug('sent execute', msg);
