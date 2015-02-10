@@ -17,41 +17,35 @@
  * Top-level page controller for the notebook editing page
  */
 /// <reference path="../../../../../../../../externs/ts/angularjs/angular.d.ts" />
-/// <amd-dependency path="app/components/notebook/NotebookDirective" />
-/// <amd-dependency path="app/components/editorcell/socketio" />
+/// <amd-dependency path="app/components/notebookeditor/NotebookEditorDirective" />
 /// <amd-dependency path="app/components/session/Session" />
-/// <amd-dependency path="app/components/notebookData/NotebookDataService" />
+/// <amd-dependency path="app/components/notebookdata/NotebookData" />
 /// <amd-dependency path="app/components/markdowncell/MarkdownCellDirective" />
 import logging = require('app/common/Logging');
 import constants = require('app/common/Constants');
-import app = require('app/App');
+import _app = require('app/App');
 
 
 var log = logging.getLogger(constants.scopes.notebooks.edit.page);
 
 export class EditPageController {
-  notebookData: any; // FIXME: type
-
-  /**
-   * The ID of the notebook to edit
-   */
-  notebookId: string;
+  notebookData: app.INotebookData;
+  notebookId: string; // The ID of the notebook to edit
   sessionStatus: any; // FIXME: TYPE
 
   _rootScope: ng.IRootScopeService;
   _requestId: string;
-  _session: any;
+  _session: app.ISession;
 
   /**
    * Constructor and arguments for Angular to inject
    */
-  static $inject: string[] = ['$routeParams', '$rootScope', 'notebookData', 'Socket', 'session'];
+  static $inject: string[] = ['$routeParams', '$rootScope', constants.notebookData.name, constants.session.name];
   constructor (
       routeParams: ng.route.IRouteParamsService,
       rootScope: ng.IRootScopeService,
       notebookData: any,
-      socket: any,
-      session: any) { // FIXME: types here
+      session: app.ISession) {
     this._rootScope = rootScope;
     this.notebookData = notebookData;
     this._session = session;
@@ -71,22 +65,23 @@ export class EditPageController {
 
   // FIXME: relocate this into a sub-component? Seems noisy to have it top-level
   _configureSessionStatusHandlers () {
-    // FIXME: list out the different values for session status somewhere, probably in the interface
-    // file that defines the "datalab websocket api" between ui/node
-    this.sessionStatus = {
-      kernelStatus: 'starting'
-    };
-    var that = this;
-    this._rootScope.$on('session-status', (event: any, sessionStatus: any) => {
-      // FIXME: find other references of scope.$apply and see if they should be changed
-      // to $evalAsync for digest loop conflict safety
-      that._rootScope.$evalAsync(() => {
-        that.sessionStatus = sessionStatus;
-      });
-    });
+    // FIXME: re-enable and refactor once this message is being sent by server
+    //
+    // // FIXME: list out the different values for session status somewhere and replace string constant
+    // this.sessionStatus = {
+    //   kernelStatus: 'starting'
+    // };
+    // var that = this;
+    // this._rootScope.$on('session-status', (event: any, sessionStatus: any) => {
+    //   // FIXME: find other references of scope.$apply and see if they should be changed
+    //   // to $evalAsync for digest loop conflict safety
+    //   that._rootScope.$evalAsync(() => {
+    //     that.sessionStatus = sessionStatus;
+    //   });
+    // });
   }
 
 }
 
-app.registrar.controller(constants.notebooks.edit.pageControllerName, EditPageController);
+_app.registrar.controller(constants.notebooks.edit.pageControllerName, EditPageController);
 log.debug('Registered ', constants.notebooks.edit.pageControllerName);

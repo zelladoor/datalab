@@ -60,9 +60,18 @@ export var notebookEditor = {
 export var worksheetEditor = {
   directiveName: 'datalabWorksheetEditor'
 };
+
+
+export var notebookData = {
+  name: 'notebookData'
+};
+export var session = {
+  name: 'session'
+};
 export var sessionConnection = {
   name: 'sessionConnection'
 };
+
 
 // Route-specific angular component names used for dependency injection
 export var notebooks = {
@@ -86,7 +95,7 @@ export var scopes = {
   layouts: 'layouts',
   markdownViewer: 'markdownViewer',
   notebookEditor: 'notebookEditor',
-  notebookData: 'notebookData',
+
   worksheetEditor: 'worksheetEditor',
 
   // Route-specific components
@@ -98,7 +107,8 @@ export var scopes = {
   },
 
   // Other injectables (services, factories, providers, etc.)
-  session: 'session',
+  notebookData: notebookData.name,
+  session: session.name,
   sessionConnection: sessionConnection.name
 };
 

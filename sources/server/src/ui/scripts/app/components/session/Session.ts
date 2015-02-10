@@ -17,7 +17,7 @@
  * FIXME: docs here
  */
 /// <reference path="../../../../../../../../externs/ts/angularjs/angular.d.ts" />
-/// <amd-dependency path="app/components/editorcell/socketio" />
+/// <amd-dependency path="app/components/session/SessionConnection" />
 import logging = require('app/common/Logging');
 import constants = require('app/common/Constants');
 import _app = require('app/App');
@@ -46,19 +46,18 @@ class Session implements app.ISession {
 
     var executeCellEvent = actions.cell.execute;
     this._rootScope.$on(executeCellEvent, this._handleExecuteCellEvent.bind(this));
-    connection.on('notebook-update', this._handleNotebookUpdate.bind(this));
+
     connection.on('session-status', function (message: any) {
       log.debug('session status', message);
       rootScope.$emit('session-status', message);
     });
-    connection.on(updates.notebook.snapshot, function (message: any) {
-      log.warn('NOTEBOOK SNAPSHOT message: ', message);
-    })
+
+    connection.on(updates.notebook.snapshot, this._handleSnapshot.bind(this));
   }
 
-  _handleNotebookUpdate (socket: any, notebookUpdate: any) {
-    log.debug('notebook-update event received:', notebookUpdate);
-    this._rootScope.$emit('notebook-update', notebookUpdate);
+  _handleSnapshot (snapshot: app.notebook.update.Snapshot) {
+    log.debug('notebook snapshot received:', snapshot);
+    this._rootScope.$emit(updates.notebook.snapshot, snapshot);
   }
 
   _generateRequestId (): string {
@@ -83,5 +82,5 @@ class Session implements app.ISession {
 
 }
 
-_app.registrar.service('session', Session);
+_app.registrar.service(constants.session.name, Session);
 log.debug('Registered ', constants.scopes.session);

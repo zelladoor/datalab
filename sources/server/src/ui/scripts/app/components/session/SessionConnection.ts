@@ -39,14 +39,18 @@ function socketConnectionFactory (
   return {
     on: function (messageType: string, callback: app.SessionMessageHandler) {
       socket.on(messageType, function (message: any) {
+        log.debug('socket.io on "' + messageType + '":', message);
+
         // Execute the given callback within a scope.$apply so that angular will
         // know about any variable updates (that it can then propagate).
+        // TODO(bryantd): See if possible to do away with this forced digest cycle
         rootScope.$apply(function () {
           callback(message);
         });
       });
     },
     emit: function(messageType: string, message: any) {
+      log.debug('socket.io emit "' + messageType + '":', message);
       socket.emit(messageType, message);
     }
   };

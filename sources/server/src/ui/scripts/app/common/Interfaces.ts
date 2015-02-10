@@ -42,6 +42,14 @@ declare module app {
     error (...objects: Object []): void;
   }
 
+  interface INotebookData {
+    notebook: app.notebook.Notebook;
+    // FIXME: following methods should take an insertion point reference (prev cell id)
+    insertCodeCell (): void;
+    insertHeadingCell (): void;
+    insertMarkdownCell (): void;
+  }
+
   interface IRegistrar {
     controller (name: string, constructor: Function): void;
     directive (name: string, directiveFactory: Function): void;
