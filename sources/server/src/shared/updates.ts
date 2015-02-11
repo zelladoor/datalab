@@ -17,6 +17,9 @@
  * Constants used to label notebook updates
  */
 
+// Different update event/message types are bucketed under this label
+export var label = 'update'
+
 // Notebook-level update
 export var notebook = {
   snapshot: 'notebook.snapshot',

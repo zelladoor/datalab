@@ -16,6 +16,7 @@
 /// <reference path="../../../../../../externs/ts/node/socket.io.d.ts" />
 import socketio = require('socket.io');
 import updates = require('../shared/updates');
+import actions = require('../shared/actions');
 
 
 /**
@@ -45,6 +46,13 @@ export class UserConnection implements app.IUserConnection {
   }
 
   /**
+   * Registers a callback that is invoked whenever an action message is received
+   */
+  onAction (callback: app.EventHandler<app.notebook.action.Action>) {
+    this._delegateActionHandler = callback;
+  }
+
+  /**
    * Registers a callback that is invoked whenever the user disconnects
    */
   onDisconnect (callback: app.EventHandler<app.IUserConnection>) {
@@ -52,29 +60,22 @@ export class UserConnection implements app.IUserConnection {
   }
 
   /**
-   * Registers a callback to be invoked when a user sends a code execution request
+   * Sends an update message to the user
    */
-  onExecuteRequest (callback: app.EventHandler<app.ExecuteRequest>) {
-    this._delegateExecuteRequestHandler = callback;
+  sendUpdate (update: app.notebook.update.Update) {
+    this._send(updates.label, update);
   }
 
-  /**
-   * Sends a session status update message to the user
-   */
-  sendSessionStatus (status: app.notebook.update.SessionStatus) {
-    this._send(updates.notebook.sessionStatus, status);
-  }
-
-  /**
-   * Sends a notebook snapshot update message to the user
-   */
-  sendSnapshot (snapshot: app.notebook.update.Snapshot) {
-    this._send(updates.notebook.snapshot, snapshot);
-  }
-
-  _delegateExecuteRequestHandler (message: app.ExecuteRequest) {}
+  _delegateActionHandler (action: app.notebook.action.Action) {}
 
   _delegateDisconnectHandler (connection: app.IUserConnection) {}
+
+  /**
+   * Handles the received action request by delegating to the session for processing
+   */
+  _handleAction (action: app.notebook.action.Action) {
+    this._delegateActionHandler(action);
+  }
 
   /**
    * Handles connection cleanup and delegates to registered event handler
@@ -87,25 +88,11 @@ export class UserConnection implements app.IUserConnection {
   }
 
   /**
-   * Validates that the received message is an ExecuteRequest and delegates
-   */
-  _handleExecuteRequest (message: any) {
-    // Validate that the message is an ExecuteRequest (structurally)
-    if (!message.requestId || !message.code) {
-      // TODO(bryantd): make this an error-level message once logger supporting levels is added
-      console.log('Malformed request for the execute request message: ', message);
-      // TODO(bryantd): eventually emit some sort of error response to the front-end
-    } else {
-      this._delegateExecuteRequestHandler (<app.ExecuteRequest>message);
-    }
-  }
-
-  /**
    * Register callbacks to handle events/messages arriving via socket.io connection
    */
   _registerHandlers () {
     this._socket.on('disconnect', this._handleDisconnect.bind(this));
-    this._socket.on('execute', this._handleExecuteRequest.bind(this));
+    this._socket.on('action', this._handleAction.bind(this));
   }
 
   _send (type: string, message: any) {

@@ -23,6 +23,7 @@ import constants = require('app/common/Constants');
 import _app = require('app/App');
 import actions = require('app/shared/actions');
 
+
 var log = logging.getLogger(constants.scopes.codeCell);
 
 class CodeCellController implements app.ICellController {
@@ -52,11 +53,47 @@ class CodeCellController implements app.ICellController {
     };
   }
 
-  // FIXME: move event name string constants to constants file and put these particular constants
-  // somewhere that the node and ui-side code can access/build against. These event names and messages
-  // are effectively the "datalab websocket api" and should be well documented
+  /**
+   * Emits a 'cell.execute' action
+   *
+   * Event is actually a composite containing an update+execute to ensure that the server has the
+   * exact source code string the user sees when the execution is requested.
+   */
   _handleExecute () {
-    this._rootScope.$emit(actions.cell.execute, this._scope.cell);
+    // TODO(bryantd): apply a subset of the updates below as "predictive modifications" (e.g.,
+    // clear the cell output immediately)
+    // TODO(bryantd): apply a visual treatment to show that the cell is in an "executing" state
+
+    var cell = this._scope.cell;
+    var update: app.notebook.action.UpdateCell = {
+      action: actions.cell.update,
+      worksheetId: this._scope.worksheetId,
+      cellId: cell.id,
+      source: cell.source,
+      outputs: [],
+      replaceOutputs: true,
+      metadata: cell.metadata,
+      replaceMetadata: true
+    };
+
+    var execute: app.notebook.action.ExecuteCell = {
+      action: actions.cell.execute,
+      worksheetId: this._scope.worksheetId,
+      cellId: cell.id
+    };
+
+    var composite: app.notebook.action.Composite = {
+      action: actions.composite,
+      subActions: [update, execute]
+    }
+
+    // Emit the event as a 'cell.execute' event, since that is the primary action occurring and
+    // forcing all listeners to also subscribe to all "composite" events would be inefficient as
+    // the number of (non-execute) composite events grows.
+    //
+    // If needed, event listeners can disambiguate this event from a non-composite,
+    // execute-without-update by inspecting the action property of the event/message object
+    this._rootScope.$emit(actions.cell.execute, composite);
   }
 }
 
@@ -67,7 +104,8 @@ function codeCellDirective (): ng.IDirective {
   return {
     restrict: 'E',
     scope: {
-      cell: '='
+      cell: '=',
+      worksheetId: '='
     },
     templateUrl: constants.scriptPaths.app + '/components/codecell/codecell.html',
     replace: true,

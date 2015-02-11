@@ -5,15 +5,18 @@
     <div ng-switch="cell.type">
         <datalab-code-cell
             ng-switch-when="code"
-            cell="cell"></datalab-code-cell>
+            cell="cell"
+            worksheetId="worksheet.id"></datalab-code-cell>
 
         <datalab-markdown-cell
             ng-switch-when="markdown"
-            cell="cell"></datalab-markdown-cell>
+            cell="cell"
+            worksheetId="worksheet.id"></datalab-markdown-cell>
 
         <datalab-heading-cell
             ng-switch-when="heading"
-            cell="cell"></datalab-heading-cell>
+            cell="cell"
+            worksheetId="worksheet.id"></datalab-heading-cell>
     </div>
   </div>
 

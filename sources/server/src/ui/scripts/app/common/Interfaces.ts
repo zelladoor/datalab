@@ -22,6 +22,7 @@ declare module app {
 
   interface CellScope extends ng.IScope {
     cell: any;
+    worksheetId: string;
     // TODO(bryantd): see if possible to remove the optional flags from the following
     // Issue is that when the scope is first created (by directive), these fields will not exist.
     // These fields are created/populated within the controller.

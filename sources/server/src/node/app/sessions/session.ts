@@ -13,7 +13,10 @@
  */
 
 
+/// <reference path="../../../../../../externs/ts/node/node-uuid.d.ts" />
+import uuid = require('node-uuid');
 import updates = require('../shared/updates');
+import actions = require('../shared/actions');
 
 
 /**
@@ -29,7 +32,7 @@ export class Session implements app.ISession {
   _kernel: app.IKernel;
   _userconns: app.IUserConnection[];
   _notebook: app.IActiveNotebook;
-  _requestIdToCellId: app.Map<string>;
+  _requestIdToCellRef: app.Map<app.CellRef>;
 
   /**
    * All messages flowing in either direction between user<->kernel will pass through this handler
@@ -47,7 +50,7 @@ export class Session implements app.ISession {
     this._registerKernelEventHandlers();
     this._notebook = notebook;
     this._messageHandler = messageHandler;
-    this._requestIdToCellId = {};
+    this._requestIdToCellRef = {};
     this._userconns = [];
     this.updateUserConnection(userconn);
   }
@@ -71,27 +74,14 @@ export class Session implements app.ISession {
    * This method allows a user to reestablish connection with an existing/running kernel.
    */
   updateUserConnection (userconn: app.IUserConnection) {
-    this._userconns.push(userconn);
+    this._userconns.push(userconn); // FIXME: remove stale connections from this set on disconnect
     this._registerUserEventHandlers(userconn);
-    // Send the initial notebook state at the time of connection
-    this._sendSnapshot(userconn);
-  }
 
-  /**
-   * Gets the cell id that corresponds to the given request id
-   *
-   * Returns null if the given request id has no corresponding cell id recorded
-   */
-  _getCellId (requestId: string) {
-    var cellId = this._requestIdToCellId[requestId];
-    if (cellId) {
-      return cellId;
-    } else {
-      // TODO: should be an error-level message when levels are supported
-      console.log('ERROR: Request for unknown cell id arrived request='
-        + requestId + ', cellid=' + cellId + ': ignoring message...');
-      return null;
-    }
+    // Send the initial notebook state at the time of connection
+    userconn.sendUpdate({
+      update: updates.notebook.snapshot,
+      notebook: this._notebook.getSnapshot()
+    });
   }
 
   // Handlers for messages flowing in either direction between user<->kernel
@@ -108,24 +98,28 @@ export class Session implements app.ISession {
     this._messageHandler(reply, this, nextAction);
   }
   /**
-   * Forwards the execute reply to the user, post-middleware stack processing
+   * Applies execute reply data to the notebook model and broadcasts an update message
    */
   _handleExecuteReplyPostDelegate (message: any) {
-    var cellId = this._getCellId(message.requestId);
-    if (!cellId) {
+    var cellRef = this._getCellRefForRequestId(message.requestId);
+    if (!cellRef) {
       // Nothing to update
       return;
     }
 
-    var cellUpdate: app.notebook.Cell = {
-      id: cellId,
-      executionCounter: message.executionCounter.toString(),
-      outputs: []
+    // Convert the execution counter to a string to be used as a cell prompt
+    var prompt = message.executionCounter.toString();
+
+    var action: app.notebook.action.UpdateCell = {
+      action: actions.cell.update,
+      worksheetId: cellRef.worksheetId,
+      cellId: cellRef.cellId,
+      prompt: prompt
     };
 
     // Add the error messaging as an output if an error has occurred
     if (message.errorName) {
-      cellUpdate.outputs = [{
+      action.outputs = [{
         type: 'error',
         mimetypeBundle: {
           // TODO(bryantd): parse and present the traceback data as well
@@ -139,57 +133,89 @@ export class Session implements app.ISession {
       }];
     }
 
-
-    var notebookUpdate = this._notebook.updateCell(cellUpdate);
-    this._broadcastNotebookUpdate(notebookUpdate);
+    var update = this._notebook.apply(action);
+    this._broadcastUpdate(update);
   }
 
-  _broadcastNotebookUpdate (notebookUpdate: any) {
-    console.log('WARNING not broadcasting notebook update (TODO)');
+  _broadcastUpdate (update: app.notebook.update.Update) {
     this._userconns.forEach((userconn) => {
-      // FIXME: update to use new ws protocol msg/interface
-      // userconn.sendSnapshot(notebookUpdate);
-    });
-  }
-  _broadcastSessionStatus (status: app.SessionStatus) {
-    console.log('WARNING not broadcasting session status (TODO)');
-    this._userconns.forEach((userconn) => {
-      // FIXME: update for ws protocol
-      // userconn.sendSessionStatus(status);
+      userconn.sendUpdate(update);
     });
   }
 
   /**
-   * Delegates an incoming execute request (from user) to the middleware stack
+   * Delegates an incoming action request (from user) to the middleware stack
    */
-  _handleExecuteRequestPreDelegate (request: app.ExecuteRequest) {
-    var nextAction = this._handleExecuteRequestPostDelegate.bind(this);
+  _handleActionPreDelegate (request: app.ExecuteRequest) {
+    var nextAction = this._handleActionPostDelegate.bind(this);
     this._messageHandler(request, this, nextAction);
   }
   /**
-   * Forwards execute request to the kernel, post-middleware stack processing
+   * Handles the action request by updating the notebook model, issuing kernel requests, etc.
    */
-  _handleExecuteRequestPostDelegate (message: any) {
-    // Keep track of which cell id to map a given request id to
-    // The kernel doesn't know anything about cells/notebooks, just requests
-    //
-    // FIXME: need to implement some policy for removing request->cell mappings
-    // when they are no longer needed. Ideally there'd be a way to guarantee
-    // that a request will have no further messages.
-    // Worst case implement something like a fixed-size LRU cache to avoid growing without bound
-    this._requestIdToCellId[message.requestId] = message.cellId;
+  _handleActionPostDelegate (action: any) {
+    switch (action.action) {
+      case actions.composite:
+        this._handleActionComposite(action);
+      break;
 
-    // Note that the following will also clear the list of cell outputs implicitly
-    var notebookUpdate = this._notebook.putCell({
-      id: message.cellId,
-      type: 'code',
-      source: message.code
+      case actions.cell.execute:
+        this._handleActionExecuteCell(action);
+      break;
+
+      case actions.notebook.executeCells:
+        this._handleActionExecuteCells(action);
+      break;
+
+      case actions.cell.clearOutput:
+      case actions.cell.update:
+      case actions.worksheet.addCell:
+      case actions.worksheet.deleteCell:
+      case actions.worksheet.moveCell:
+        this._handleActionNotebookData(action);
+      break
+
+      default:
+        console.log('WARNING No handler for action message type "' + action.action + '"');
+    }
+  }
+
+  _handleActionComposite (action: app.notebook.action.Composite) {
+    // Process each of the sub-actions, in order
+    action.subActions.forEach(this._handleActionPostDelegate.bind(this));
+  }
+
+  _handleActionNotebookData (action: app.notebook.action.UpdateCell) {
+    var update = this._notebook.apply(action);
+    // Update all clients about the notebook data change
+    this._broadcastUpdate(update);
+  }
+
+  _handleActionExecuteCell (action: app.notebook.action.ExecuteCell) {
+    var requestId = uuid.v4();
+
+    // Store the mapping of request ID -> cellref for joining kernel response messages later
+    this._setCellRefForRequestId(requestId, {
+      cellId: action.cellId,
+      worksheetId: action.worksheetId
     });
 
-    // Update all clients about the notebook data change
-    this._broadcastNotebookUpdate(notebookUpdate);
+    var cell = this._notebook.getCell(action.cellId, action.worksheetId);
+    if (!cell) {
+      console.log('ERROR Attempted to execute non-existent cell with id: ' + action.cellId);
+      return;
+    }
+
     // Request that the kernel execute the code chunk
-    this._kernel.execute(message);
+    this._kernel.execute({
+      requestId: requestId,
+      cellId: action.cellId,
+      code: cell.source
+    });
+  }
+
+  _handleActionExecuteCells (action: app.notebook.action.ExecuteCells) {
+    console.log('TODO implement execute (all) cells action handler');
   }
 
   /**
@@ -203,9 +229,10 @@ export class Session implements app.ISession {
    * Forwards the kernel status to the user, post-middleware stack processing
    */
   _handleKernelStatusPostDelegate (message: any) {
-    this._broadcastSessionStatus({
+    this._broadcastUpdate({
+      update: updates.notebook.sessionStatus,
       // TODO: add other session metdata here such as connected users, etc. eventually
-      kernelStatus: message.status
+      kernelState: message.status
     });
   }
 
@@ -214,25 +241,29 @@ export class Session implements app.ISession {
     this._messageHandler(outputData, this, nextAction);
   }
   _handleOutputDataPostDelegate (message: any) {
-    var cellId = this._getCellId(message.requestId);
-    if (!cellId) {
+    var cellRef = this._getCellRefForRequestId(message.requestId);
+    if (!cellRef) {
       // Nothing to update
       return;
     }
 
-    // Publish the output data to the notebook model
-    var notebookUpdate = this._notebook.updateCell({
-      id: cellId,
+    // Apply the output data update to the notebook model
+    var update = this._notebook.apply({
+      action: actions.cell.update,
+      worksheetId: cellRef.worksheetId,
+      cellid: cellRef.cellId,
       outputs: [{
         type: message.type,
         mimetypeBundle: message.mimetypeBundle
       }]
     });
-    this._broadcastNotebookUpdate(notebookUpdate);
+
+    // Broadcast the update
+    this._broadcastUpdate(update);
   }
 
   _registerUserEventHandlers (userconn: app.IUserConnection) {
-    userconn.onExecuteRequest(this._handleExecuteRequestPreDelegate.bind(this));
+    userconn.onAction(this._handleActionPreDelegate.bind(this));
   }
 
   _registerKernelEventHandlers () {
@@ -241,13 +272,51 @@ export class Session implements app.ISession {
     this._kernel.onOutputData(this._handleOutputDataPreDelegate.bind(this));
   }
 
+  /* Methods for managing request <-> cell reference mappings */
+
   /**
-   * Sends a snapshot of this session's notebook to a single user
+   * Gets the cell id that corresponds to the given request id
+   *
+   * Returns null if the given request id has no corresponding cell id recorded
    */
-  _sendSnapshot (userconn: app.IUserConnection) {
-    userconn.sendSnapshot({
-      update: updates.notebook.snapshot,
-      notebook: this._notebook.getData()
-    });
+  _getCellRefForRequestId (requestId: string) {
+    var cellRef = this._requestIdToCellRef[requestId];
+    if (cellRef) {
+      return cellRef;
+    } else {
+      // TODO: should be an error-level message when levels are supported
+      console.log('ERROR: Request for unknown cell ref arrived request='
+        + requestId + ', cell ref=' + JSON.stringify(cellRef) + ': ignoring message...');
+      return null;
+    }
+  }
+
+  /**
+   * Stores the mapping of request ID to cellref
+   *
+   * The kernel doesn't know anything about cells or notebooks, just requests, so this mapping
+   * allows response/reply messages from the kernel to be mapped to the corresponding cell
+   * that should be updated.
+   */
+  _setCellRefForRequestId (requestId: string, cellRef: app.CellRef) {
+    // FIXME: need to implement some policy for removing request->cell mappings
+    // when they are no longer needed. Ideally there'd be a way to guarantee
+    // that a request will have no further messages.
+    //
+    // Worst case implement something like a fixed-size LRU cache to avoid growing without bound,
+    // or evict request IDs based upon a TTL value.
+    //
+    // Best case would be to somehow store the cell reference within the kernel request message
+    // and have the cell reference returned in all replies to that message. This would rely upon
+    // adding an extra field to the ipython message header, which is then returned as the
+    // "parent header" in all reply messages. If all kernels simply copy the header data to parent
+    // header in responses, this will work, but needs verification. Since a generic header metadata
+    // dict isn't part of the current message spec, there are likely no guarantees w.r.t.
+    // additional/non-standard header fields.
+    //
+    // Another option would be to serialize the cell reference to string and use that for the
+    // request id. All responses would include the parent request id, which could then be
+    // deserialized back into a cell reference.
+    this._requestIdToCellRef[requestId] = cellRef;
   }
 }

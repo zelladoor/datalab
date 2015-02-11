@@ -42,7 +42,8 @@ function markdownCellDirective (): ng.IDirective {
   return {
     restrict: 'E',
     scope: {
-      cell: '='
+      cell: '=',
+      worksheetId: '='
     },
     templateUrl: constants.scriptPaths.app + '/components/markdowncell/markdowncell.html',
     replace: true,

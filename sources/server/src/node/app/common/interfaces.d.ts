@@ -22,6 +22,11 @@ declare module app {
     httpPort: number;
   }
 
+  interface CellRef {
+    cellId: string;
+    worksheetId: string;
+  }
+
   interface EventHandler<T> {
     (event: T): void;
   }
@@ -32,11 +37,9 @@ declare module app {
   }
 
   interface IActiveNotebook { // FIXME: better name for this?
-    getData (): notebook.Notebook;
-    // TODO(bryantd): methods below will actually return a "Notebok changes"/delta eventually
-    // Returning a full notebook for the time being until notebook deltas are implemented
-    putCell (cell: notebook.Cell): notebook.Notebook;
-    updateCell (cell: notebook.Cell): notebook.Notebook;
+    apply (action: notebook.action.Action): notebook.update.Update;
+    getSnapshot (): notebook.Notebook;
+    getCell (cellId: string, worksheetId: string): notebook.Cell;
   }
 
   interface IKernel {
@@ -78,14 +81,12 @@ declare module app {
     // copy (sourcePath: string, destinationPath: string);
   }
 
-
   interface IUserConnection {
     id: string;
     getNotebookPath (): string;
     onDisconnect (callback: EventHandler<IUserConnection>): void;
-    onExecuteRequest (callback: EventHandler<ExecuteRequest>): void;
-    sendSessionStatus (status: notebook.update.SessionStatus): void;
-    sendSnapshot (snapshot: notebook.update.Snapshot): void;
+    onAction (callback: EventHandler<app.notebook.action.Action>): void;
+    sendUpdate (update: notebook.update.Update): void;
   }
 
   interface IUserConnectionManager {

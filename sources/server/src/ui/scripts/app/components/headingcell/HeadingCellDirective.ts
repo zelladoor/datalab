@@ -42,7 +42,8 @@ function headingCellDirective (): ng.IDirective {
   return {
     restrict: 'E',
     scope: {
-      cell: '='
+      cell: '=',
+      worksheetId: '='
     },
     templateUrl: constants.scriptPaths.app + '/components/headingcell/headingcell.html',
     replace: true,

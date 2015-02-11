@@ -28,6 +28,13 @@ declare module app {
         action: string; // the name/label for the action type
       }
 
+      /**
+       * action == 'composite'
+       */
+      interface Composite extends Action {
+        subActions: Action[];
+      }
+
       /* Notebook-level actions */
 
       /**
@@ -95,11 +102,18 @@ declare module app {
       interface UpdateCell extends Action {
         worksheetId: string;
         cellId: string;
-        source: string; // cell content string (e.g., code, markdown, etc.)
-        metadata: any;
+        source?: string; // cell content string (e.g., code, markdown, etc.)
+        prompt?: string;
+
+        metadata?: any;
         // Flag to indicate whether the metadata dict should be merged with existing metadata
         // on the server or fully replace it (false ⇒ merge; true ⇒ replace)
-        replaceMetadata: boolean;
+        replaceMetadata?: boolean;
+
+        outputs?: app.notebook.CellOutput[];
+        // Flag determines whether the above list of outputs is appended or replaces existing
+        // output list within the cell (false ⇒ append; true ⇒ replace)
+        replaceOutputs?: boolean;
       }
       /**
        * action == 'cell.execute'

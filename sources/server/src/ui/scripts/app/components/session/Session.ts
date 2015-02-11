@@ -28,14 +28,16 @@ import uuid = require('app/common/uuid');
 
 var log = logging.getLogger(constants.scopes.session);
 
-//// FIXME REFACTOR this class becomes the "session event subscriber"
-//// listens for any event that should be propagated to the server as a protocol msg over ws
-//// Handles converting events to protocol messages (via components or directly)
-
-//// FIXME REFACTOR this class also becomes the "session event publisher"
-/// listens for any incoming messages over websocket and translates them to events
-
+/**
+ * Manages the two-way connection between client and server and associated session message traffic
+ *
+ * Publishes incoming messages (from the server) as client-side events.
+ *
+ * Subscribes to client-side event types that map to session messages and forwards these
+ * messages to the server (with some transformation/message wrapping applied)
+ */
 class Session implements app.ISession {
+
   _connection: app.ISessionConnection;
   _rootScope: ng.IRootScopeService;
 
@@ -44,36 +46,30 @@ class Session implements app.ISession {
     this._connection = connection;
     this._rootScope = rootScope;
 
-    var executeCellEvent = actions.cell.execute;
-    this._rootScope.$on(executeCellEvent, this._handleExecuteCellEvent.bind(this));
-
-    connection.on('session-status', function (message: any) {
-      log.debug('session status', message);
-      rootScope.$emit('session-status', message);
-    });
-
-    connection.on(updates.notebook.snapshot, this._handleSnapshot.bind(this));
+    // Register server-side message handlers
+    connection.on(updates.label, this._handleUpdate.bind(this));
+    // Register client-side event handlers
+    this._rootScope.$on(actions.cell.execute, this._handleExecuteCellEvent.bind(this));
   }
 
-  _handleSnapshot (snapshot: app.notebook.update.Snapshot) {
-    log.debug('notebook snapshot received:', snapshot);
-    this._rootScope.$emit(updates.notebook.snapshot, snapshot);
+  /**
+   * Handles all incoming server updates by publishing them as client-side events
+   */
+  _handleUpdate (update: app.notebook.update.Update) {
+    log.debug('update message received:', update);
+    // Publish the update message
+    this._rootScope.$emit(update.update, update);
   }
 
-  _handleExecuteCellEvent (event: ng.IAngularEvent, cell: any) {
-    log.debug('Processing cell.execute event', event, cell);
-    this._rootScope.$apply(() => {
-      // FIXME: is this the best object to be modifying the cell-level notebook data?
-      // Feel like this could be better encapsulated somewhere else (maybe notebook data service?)
-      cell.executionCounter = '*';
-    });
-    var msg: any = {
-      code: cell.source,
-      cellId: cell.id,
-      requestId: uuid.v4()
-    };
-    this._connection.emit('execute', msg);
-    log.debug('sent execute', msg);
+  /**
+   * Constructs a cell.execute action and sends to the server for processing
+   */
+  _handleExecuteCellEvent (event: ng.IAngularEvent, action: app.notebook.action.Action) {
+    // TODO(bryantd): Either in this event handler or another, trigger an "executing" state
+    // visual treatment for the cell being executed
+
+    log.debug('Sending execute action', action);
+    this._connection.emit('action', action);
   }
 
 }

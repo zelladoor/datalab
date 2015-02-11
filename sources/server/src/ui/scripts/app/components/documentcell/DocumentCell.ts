@@ -17,6 +17,7 @@
  * Directive controller for document-based cells (markdown and heading)
  */
 /// <reference path="../../../../../../../../externs/ts/angularjs/angular.d.ts" />
+import actions = require('app/shared/actions');
 
 
 export class DocumentCellController implements app.ICellController {
@@ -45,16 +46,34 @@ export class DocumentCellController implements app.ICellController {
     });
   }
 
-  _createKeymap () {
-    return {
-      'Shift-Enter': this._handleSwitchToViewMode.bind(this)
-    }
-  }
-
-  _handleSwitchToViewMode () {
+  switchToViewMode () {
     var that = this;
     this._rootScope.$evalAsync(() => {
       that.showEditRegion = false;
     });
+  }
+
+  _createKeymap () {
+    return {
+      'Shift-Enter': this._handleFinishedEditing.bind(this)
+    }
+  }
+
+  /**
+   * Emits a 'cell.update' action
+   */
+  _handleFinishedEditing () {
+    var cell = this._scope.cell;
+    var update: app.notebook.action.UpdateCell = {
+      action: actions.cell.update,
+      worksheetId: this._scope.worksheetId,
+      cellId: cell.id,
+      source: cell.source,
+      metadata: cell.metadata,
+      replaceMetadata: true
+    }
+
+    this._rootScope.$emit(actions.cell.update, update);
+    this.switchToViewMode();
   }
 }

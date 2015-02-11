@@ -17,6 +17,12 @@
  * Constants used to label notebook actions
  */
 
+// The different action flavors are all bucketed under this event/message type label
+export var label = 'action'
+
+// Composite action (set of primitive actions)
+export var composite = 'composite';
+
 // Notebook-level actions
 export var notebook = {
   clearOutputs: 'notebook.clearOutputs',
@@ -26,7 +32,7 @@ export var notebook = {
 
 // Worksheet-level actions
 export var worksheet = {
-  createCell: 'worksheet.addCell',
+  addCell: 'worksheet.addCell',
   deleteCell: 'worksheet.deleteCell',
   moveCell: 'worksheet.moveCell'
 };

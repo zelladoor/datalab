@@ -34,15 +34,13 @@ import app = require('app/App');
 
 var log = logging.getLogger(constants.scopes.editorCell);
 
-interface EditorCellScope extends ng.IScope { // FIXME: naming convention for local scopes that are never externalized
-  // "input" scope attrs
+interface EditorCellScope extends ng.IScope {
   cell: any;
   getKeymap?: any;
   enableEditRegion?: boolean;
   enablePreviewRegion?: boolean;
   onPreviewRegionDoubleClick?: Function;
 
-  // "output" scope attrs
   keymap?: any;
   actions?: any;
 }
