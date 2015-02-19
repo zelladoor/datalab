@@ -30,11 +30,13 @@ export class ActiveNotebook implements app.IActiveNotebook {
   constructor (notebookPath: string, storage: app.IStorage) {
     this._notebookPath = notebookPath;
     this._storage = storage;
+
     // TODO(bryantd): make the set of serializers configurable
     // by specifying a map of extension -> serializer somewhere in configuration and
     // passing it to this constructor instead of creating a serializer per-notebook
     this._serializer = new serializer.IPyNotebookSerializer();
-    this._notebook = this._readOrCreateNotebook()
+
+    this._notebook = this._readOrCreateNotebook();
   }
 
   /**
@@ -48,6 +50,7 @@ export class ActiveNotebook implements app.IActiveNotebook {
     return <app.notebook.Cell>{id: 'todo'};
   }
 
+  // FIXME: define unit tests for (action + nb-state => update) instances and then writes this code
   apply (action: app.notebook.action.Action) {
     return <app.notebook.update.Update>{update: 'todo'};
   }

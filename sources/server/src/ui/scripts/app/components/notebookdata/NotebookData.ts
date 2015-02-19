@@ -47,6 +47,7 @@ var log = logging.getLogger(constants.scopes.notebookData);
  */
 class NotebookData implements app.INotebookData {
 
+  activeWorksheet: app.notebook.Worksheet;
   notebook: app.notebook.Notebook;
 
   _rootScope: ng.IRootScopeService;
@@ -95,11 +96,34 @@ class NotebookData implements app.INotebookData {
     console.debug('insert heading cell()');
   }
 
+  selectWorksheet (worksheetId: string) {
+    var worksheet = this.notebook.worksheets[worksheetId];
+    if (!worksheet) {
+      // TODO(bryantd): worksheet by given id is not loaded. request the worksheet from the server
+      throw new Error('Attempted to select non-existent worksheet id: '+ worksheetId);
+    }
+    this.activeWorksheet = worksheet;
+  }
+
+  /**
+   * Overwrites the notebook state with the given notebook snapshot
+   *
+   * Also sets the first worksheet to be active
+   */
   _setNotebook(snapshot: app.notebook.update.Snapshot) {
     log.debug('setting notebook to snapshot value');
+
     // Snapshots are used to fully init/overwrite the client-side notebook state
     this.notebook = snapshot.notebook;
+
+    // Makes the first worksheet active, if it exists
+    if (this.notebook.worksheetIds.length > 0) {
+      this.selectWorksheet(this.notebook.worksheetIds[0]);
+    } else {
+      log.error('Notebook snapshot update contains zero worksheets! snapshot:', snapshot);
+    }
   }
+
 
 // FIXME: get basic wiring for new ws protocol and then pull the following bits back
 // into the client/server side update pieces

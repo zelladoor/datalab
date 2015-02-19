@@ -27,7 +27,7 @@ var log = logging.getLogger(constants.scopes.notebookEditor);
 
 interface NotebookEditorScope extends ng.IScope {
   notebook?: app.notebook.Notebook;
-  activeWorksheet?: app.notebook.Worksheet;
+  activeWorksheet?: app.notebook.Worksheet; // FIXME: moves to the notebook data service
 }
 
 class NotebookEditorController {
@@ -37,26 +37,6 @@ class NotebookEditorController {
   static $inject = ['$scope'];
   constructor (scope: NotebookEditorScope) {
     this._scope = scope;
-    this.makeFirstWorksheetActive();
-  }
-
-  /**
-   * Makes the first worksheet active, if it exists
-   */
-  makeFirstWorksheetActive () {
-    if (this._scope.notebook.worksheetIds.length > 0) {
-      this.selectWorksheet(this._scope.notebook.worksheetIds[0]);
-    } else {
-      log.error('Notebook contains zero worksheets!');
-    }
-  }
-
-  selectWorksheet (worksheetId: string) {
-    var worksheet = this._scope.notebook.worksheets[worksheetId];
-    if (!worksheet) {
-      log.error('Attempted to select non-existent worksheet id: ', worksheetId);
-    }
-    this._scope.activeWorksheet = worksheet;
   }
 
 }
