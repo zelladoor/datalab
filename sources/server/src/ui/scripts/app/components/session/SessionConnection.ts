@@ -25,6 +25,9 @@ var log = logging.getLogger(constants.scopes.sessionConnection);
 
 /**
  * Creates a (singleton) socket.io connection with wrappers for triggering the Angular digest cycle
+ *
+ * TODO(bryantd): Add ability to spawn a new session connection on route/location change, or add
+ * the ability to disassociate this connection from the session and have it join a new session.
  */
 function socketConnectionFactory (
     rootScope: ng.IRootScopeService,

@@ -17,10 +17,9 @@
  * Top-level page controller for the notebook editing page
  */
 /// <reference path="../../../../../../../../externs/ts/angularjs/angular.d.ts" />
-/// <amd-dependency path="app/components/notebookeditor/NotebookEditorDirective" />
+/// <amd-dependency path="app/components/worksheeteditor/WorksheetEditorDirective" />
 /// <amd-dependency path="app/components/session/Session" />
 /// <amd-dependency path="app/components/notebookdata/NotebookData" />
-/// <amd-dependency path="app/components/markdowncell/MarkdownCellDirective" />
 import logging = require('app/common/Logging');
 import constants = require('app/common/Constants');
 import _app = require('app/App');
