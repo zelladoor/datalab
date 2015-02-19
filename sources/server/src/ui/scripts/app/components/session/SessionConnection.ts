@@ -28,8 +28,9 @@ var log = logging.getLogger(constants.scopes.sessionConnection);
  *
  * TODO(bryantd): Add ability to spawn a new session connection on route/location change, or add
  * the ability to disassociate this connection from the session and have it join a new session.
+ * For detecting, see the angular events: $locationChangeStart and $routeChangeStart
  */
-function socketConnectionFactory (
+function sessionConnectionFactory (
     rootScope: ng.IRootScopeService,
     location: ng.ILocationService,
     route: ng.route.IRouteService) {
@@ -58,8 +59,8 @@ function socketConnectionFactory (
     }
   };
 }
-socketConnectionFactory.$inject = ['$rootScope', '$location', '$route'];
+sessionConnectionFactory.$inject = ['$rootScope', '$location', '$route'];
 
 
-_app.registrar.factory(constants.sessionConnection.name, socketConnectionFactory);
+_app.registrar.factory(constants.sessionConnection.name, sessionConnectionFactory);
 log.debug('Registered socket connection factory');
