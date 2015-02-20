@@ -48,6 +48,28 @@ task tscNode(type: TypeScriptCompileTask) {
     moduleType = 'commonjs'
 }
 
+
+/**
+ * Copy over any non-TypeScript content
+ *
+ * For example, the symlinks pointing to the module under test
+ */
+task copyNodeTests(type: Copy) {
+    from './tests/node'
+    into new File(project.buildDir, '/tests/node')
+    exclude '**/*.ts'
+}
+/**
+ * Compile the NodeJS test modules into CommonJS modules
+ */
+task tscNodeTests(type: TypeScriptCompileTask) {
+    srcDir = 'server'
+    srcRelativePaths = ['/tests/node/']
+    outputRelativePath = '/tests/node/'
+    moduleType = 'commonjs'
+}
+
+
 /**
  * Copy files shared between the server/client into the respective source trees.
  *
@@ -90,4 +112,9 @@ task('buildUi') {
  */
 task('build') {
     dependsOn 'buildNode', 'buildUi'
+}
+
+task('testNode') {
+    // TODO(bryantd): Add a task for executing the unit tests and failing the build on failures
+    dependsOn 'buildNode', 'tscNodeTests', 'copyNodeTests'
 }
