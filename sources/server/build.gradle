@@ -48,28 +48,6 @@ task tscNode(type: TypeScriptCompileTask) {
     moduleType = 'commonjs'
 }
 
-
-/**
- * Copy over any non-TypeScript content
- *
- * For example, the symlinks pointing to the module under test
- */
-task copyNodeTests(type: Copy) {
-    from './tests/node'
-    into new File(project.buildDir, '/tests/node')
-    exclude '**/*.ts'
-}
-/**
- * Compile the NodeJS test modules into CommonJS modules
- */
-task tscNodeTests(type: TypeScriptCompileTask) {
-    srcDir = 'server'
-    srcRelativePaths = ['/tests/node/']
-    outputRelativePath = '/tests/node/'
-    moduleType = 'commonjs'
-}
-
-
 /**
  * Copy files shared between the server/client into the respective source trees.
  *
@@ -87,6 +65,16 @@ task tscNodeTests(type: TypeScriptCompileTask) {
  * Hopefully there's a simple fix for this issue that avoids having to cp the shared files into
  * the source trees. This is a stopgap solution that circumvents the issue.
  *
+ * There is not currently an equivalent for requirejs configurable paths on the NodeJS side, but
+ * there is some discussion around moving in that direction from the TypeScript community here:
+ * https://github.com/Microsoft/TypeScript/issues/247
+ *
+ * Some other workarounds for manipulating the search path used by require():
+ * https://gist.github.com/branneman/8048520
+ *
+ * More background on how require.resolve() works within NodeJS:
+ * http://nodejs.org/api/modules.html#modules_module_require_id
+ *
  */
 task embedSharedFilesNode(type: Copy) {
     from './src/shared'
@@ -95,6 +83,28 @@ task embedSharedFilesNode(type: Copy) {
 task embedSharedFilesUi(type: Copy) {
     from './src/shared'
     into './src/ui/scripts/app/shared'
+}
+
+/**
+ * Copy over any non-TypeScript content needed for executing the test suite
+ *
+ * For example, the symlinks pointing to the module under test. Symlinks are a non-ideal approach
+ * because they are not inherently cross-platform (will only work on a POSIX-compliant OS). See
+ * above discussion around nodejs module paths for alternative workarounds.
+ */
+task copyNodeTests(type: Copy) {
+    from './tests/node'
+    into new File(project.buildDir, '/tests/node')
+    exclude '**/*.ts'
+}
+/**
+ * Compile the NodeJS test modules into CommonJS modules
+ */
+task tscNodeTests(type: TypeScriptCompileTask) {
+    srcDir = 'server'
+    srcRelativePaths = ['/tests/node/']
+    outputRelativePath = '/tests/node/'
+    moduleType = 'commonjs'
 }
 
 task('buildNode') {
