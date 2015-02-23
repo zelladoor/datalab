@@ -19,7 +19,6 @@
 /// <reference path="../../../../../../externs/ts/node/node-uuid.d.ts" />
 import uuid = require('node-uuid');
 import cells = require('../shared/cells');
-import path = require('path');
 
 
 /**
@@ -37,21 +36,6 @@ var defaultCodeCellContent = '';
 var defaultHeadingCellLevel = 1;
 var defaultHeadingCellContent = 'This is a heading';
 var defaultMarkdownCellContent = 'You **can** write markdown here';
-
-
-// Notebook format names
-export var formats = {
-  ipynbV3: 'ipynb v3',
-  model: 'model'
-}
-// Mapping of notebook path extensions to notebook format names
-// Note: some formats (e.g., 'ipynb') are ambiguous and can imply multiple possible formats,
-// but this mapping assigns a default format for any given extension
-var extensionToFormat = {
-  '.ipynb': formats.ipynbV3,
-  '.modelnb': formats.model
-  // TODO(bryantd): define the format for .nb files here eventually
-};
 
 /**
  * Appends a code cell to the default worksheet within the notebook
@@ -140,13 +124,4 @@ function getDefaultWorksheet (notebook: app.notebook.Notebook): app.notebook.Wor
   // Return the first worksheet by default
   var worksheetId = notebook.worksheetIds[0];
   return notebook.worksheets[worksheetId];
-}
-
-export function selectNotebookFormat (notebookPath: string) {
-  var extension = path.extname(notebookPath);
-  var format = extensionToFormat[extension];
-  if (!format) {
-    throw new Error('Notebook extension ("'+extension+'") does not specify a supported format');
-  }
-  return format;
 }

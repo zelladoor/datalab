@@ -16,19 +16,15 @@
 /**
  * Define the public API of the notebooks module
  */
-
-// import serializer = require('./serializer');
 import notebook = require('./notebook');
-import util = require('./util');
-import ipy = require('./ipyserializer');
+import formats = require('./serializers/formats');
+import ipynb = require('./serializers/ipynb');
+import model = require('./serializers/model');
+import multiformat = require('./serializers/multiformat');
 
-// Notebook serialization formats
-export var formats = util.formats;
-
-export var ActiveNotebook = notebook.ActiveNotebook;
 
 // Create a serializer instance for handling all of the supported formats
-var formatToSerializer = {};
-formatToSerializer[notebooks.formats.ipynbV3] = ipy.IPySerializer;
-// formatToSerializer[notebooks.formats.model] = notebooks.ModelSerializer;
-export var serializer = new notebooks.MultiFormatSerializer(formatToSerializer);
+var formatToSerializer: app.Map<app.INotebookSerializer> = {};
+formatToSerializer[formats.names.ipynbV3] = new ipynb.IPySerializer();
+formatToSerializer[formats.names.model] = new model.ModelSerializer();
+export var serializer = new multiformat.MultiFormatSerializer(formatToSerializer);

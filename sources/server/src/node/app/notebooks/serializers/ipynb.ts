@@ -13,9 +13,10 @@
  */
 
 
-/// <reference path="../../../../../../externs/ts/node/node-uuid.d.ts" />
+/// <reference path="../../../../../../../externs/ts/node/node-uuid.d.ts" />
 import uuid = require('node-uuid');
-import util = require('./util');
+import formats = require('./formats');
+import util = require('../util');
 
 /**
  * Serializer for reading/writing the .ipynb (IPython) v3 format
@@ -86,7 +87,7 @@ export class IPySerializer implements app.INotebookSerializer {
    * Throws an exception if the format is unsupported by this serializer.
    */
   _validateFormatOrThrow (format: string) {
-    if (format != util.formats.ipynbV3) {
+    if (format != formats.names.ipynbV3) {
       throw new Error('Unsupported notebook format for serialization: "' + format + '"');
     }
   }

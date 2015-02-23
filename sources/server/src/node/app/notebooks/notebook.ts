@@ -13,8 +13,8 @@
  */
 
 
-import serializer = require('./ipyserializer');
 import util = require('./util');
+import formats = require('./serializers/formats');
 
 
 /**
@@ -68,7 +68,7 @@ export class ActiveNotebook implements app.IActiveNotebook {
 
   _setNotebookPath (notebookPath: string) {
     this._notebookPath = notebookPath;
-    this._serializedFormat = util.selectNotebookFormat(notebookPath);
+    this._serializedFormat = formats.selectNotebookFormat(notebookPath);
   }
 }
 

@@ -74,14 +74,6 @@ declare module app {
    * https://github.com/joyent/node/issues/7543
    */
   interface INotebookSerializer {
-
-    /**
-     * Serializes the notebook to the specified format
-     *
-     * Throws an exception if the serializer does not support writing the specified format
-     */
-    stringify (notebook: notebook.Notebook, format: string): string;
-
     /**
      * Deserializes the notebook from a string having the specified format
      *
@@ -89,6 +81,13 @@ declare module app {
      * or if the given notebook data string violates the specified format specifications.
      */
     parse (data: string, format: string): notebook.Notebook;
+
+    /**
+     * Serializes the notebook to the specified format
+     *
+     * Throws an exception if the serializer does not support writing the specified format
+     */
+    stringify (notebook: notebook.Notebook, format: string): string;
   }
 
   interface ISession {
