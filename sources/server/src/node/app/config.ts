@@ -19,6 +19,7 @@ import express = require('express');
 import mkdirp = require('mkdirp');
 import kernels = require('./kernels/index');
 import storage = require('./storage/local');
+import notebooks = require('./notebooks/index');
 
 /**
  * Default server configuration with support for environment variable overrides.
@@ -29,8 +30,16 @@ var settings: app.Settings = {
   httpPort: parseInt(process.env['SERVER_HTTP_PORT'] || 9000)
 };
 
-export function getSettings (): app.Settings {
-  return settings;
+/**
+ * Gets the set of HTTP API route handlers that should be enabled for the server.
+ */
+export function getApiRouter (): express.Router {
+  var kernelApi = new kernels.Api(kernelManager);
+  var apiRouter: express.Router = express.Router();
+  kernelApi.register(apiRouter);
+  // TODO(bryantd): register notebooks/datasets/other APIs here eventually
+
+  return apiRouter;
 }
 
 /**
@@ -46,18 +55,6 @@ export function getKernelManager (): app.IKernelManager {
 }
 
 /**
- * Gets the set of HTTP API route handlers that should be enabled for the server.
- */
-export function getApiRouter (): express.Router {
-  var kernelApi = new kernels.Api(kernelManager);
-  var apiRouter: express.Router = express.Router();
-  kernelApi.register(apiRouter);
-  // TODO(bryantd): register notebooks/datasets/other APIs here eventually
-
-  return apiRouter;
-}
-
-/**
  * Logs all messages to the console
  */
 function logMessage (message: any, session: app.ISession): any {
@@ -70,6 +67,22 @@ function logMessage (message: any, session: app.ISession): any {
  */
 export function getMessageProcessors (): app.MessageProcessor[] {
   return [logMessage];
+}
+
+export function getSettings (): app.Settings {
+  return settings;
+}
+
+/**
+ * A single, server-wide notebook serializer
+ */
+var notebookSerializer = new notebooks.MultiFormatSerializer();
+
+/**
+ * Gets a notebook serializer instance
+ */
+export function getNotebookSerializer (): app.INotebookSerializer {
+  return notebookSerializer;
 }
 
 /**

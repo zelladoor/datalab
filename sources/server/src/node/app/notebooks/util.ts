@@ -19,6 +19,7 @@
 /// <reference path="../../../../../../externs/ts/node/node-uuid.d.ts" />
 import uuid = require('node-uuid');
 import cells = require('../shared/cells');
+import path = require('path');
 
 
 /**
@@ -37,44 +38,20 @@ var defaultHeadingCellLevel = 1;
 var defaultHeadingCellContent = 'This is a heading';
 var defaultMarkdownCellContent = 'You **can** write markdown here';
 
-/**
- * Creates an empty notebook with no cells
- */
-export function createEmptyNotebook (): app.notebook.Notebook {
-  var cells: app.notebook.Cell[] = [];
-  var worksheetId = uuid.v4();
-  var notebook: app.notebook.Notebook = {
-    id: uuid.v4(),
-    metadata: {},
-    name: defaultNotebookName,
-    worksheetIds: [worksheetId],
-    worksheets: {}
-  };
-  notebook.worksheets[worksheetId] = {
-    id: worksheetId,
-    name: defaultWorksheetName,
-    metadata: {},
-    cells: cells
-  }
-  return notebook;
-}
 
-/**
- * Creates a new notebook with an initial (non-empty) set of cells
- *
- * The purpose of the initial set of cells is to provide the user with some fill-in-the-blank
- * bits to aid in getting started.
- *
- * Since most notebooks follow a similar initial cell pattern (title cell, summary text cell,
- * code), prepopulate a set of cells that matches this common pattern.
- */
-export function createStarterNotebook (): app.notebook.Notebook {
-  var notebook = createEmptyNotebook();
-  appendHeadingCell(notebook);
-  appendMarkdownCell(notebook);
-  appendCodeCell(notebook);
-  return notebook;
+// Notebook format names
+export var formats = {
+  ipynbV3: 'ipynb v3',
+  inMemory: 'in-memory'
 }
+// Mapping of notebook path extensions to notebook format names
+// Note: some formats (e.g., 'ipynb') are ambiguous and can imply multiple possible formats,
+// but this mapping assigns a default format for any given extension
+var extensionToFormat = {
+  '.ipynb': formats.ipynbV3,
+  '.memnb': formats.inMemory
+  // TODO(bryantd): define the format for .nb files here eventually
+};
 
 /**
  * Appends a code cell to the default worksheet within the notebook
@@ -118,10 +95,58 @@ function appendMarkdownCell (notebook: app.notebook.Notebook) {
 }
 
 /**
+ * Creates an empty notebook with no cells
+ */
+export function createEmptyNotebook (): app.notebook.Notebook {
+  var cells: app.notebook.Cell[] = [];
+  var worksheetId = uuid.v4();
+  var notebook: app.notebook.Notebook = {
+    id: uuid.v4(),
+    metadata: {},
+    name: defaultNotebookName,
+    worksheetIds: [worksheetId],
+    worksheets: {}
+  };
+  notebook.worksheets[worksheetId] = {
+    id: worksheetId,
+    name: defaultWorksheetName,
+    metadata: {},
+    cells: cells
+  }
+  return notebook;
+}
+
+/**
+ * Creates a new notebook with an initial (non-empty) set of cells
+ *
+ * The purpose of the initial set of cells is to provide the user with some fill-in-the-blank
+ * bits to aid in getting started.
+ *
+ * Since most notebooks follow a similar initial cell pattern (title cell, summary text cell,
+ * code), prepopulate a set of cells that matches this common pattern.
+ */
+export function createStarterNotebook (): app.notebook.Notebook {
+  var notebook = createEmptyNotebook();
+  appendHeadingCell(notebook);
+  appendMarkdownCell(notebook);
+  appendCodeCell(notebook);
+  return notebook;
+}
+
+/**
  * Gets the default worksheet from the notebook for appending cells
  */
 function getDefaultWorksheet (notebook: app.notebook.Notebook): app.notebook.Worksheet {
   // Return the first worksheet by default
   var worksheetId = notebook.worksheetIds[0];
   return notebook.worksheets[worksheetId];
+}
+
+export function selectNotebookFormat (notebookPath: string) {
+  var extension = path.extname(notebookPath);
+  var format = extensionToFormat[extension];
+  if (!format) {
+    throw new Error('Notebook extension ("'+extension+'") does not specify a supported format');
+  }
+  return format;
 }

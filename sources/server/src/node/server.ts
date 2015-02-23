@@ -43,10 +43,11 @@ export function start (settings: app.Settings, apiRouter: express.Router) {
   httpServer.listen(settings.httpPort);
 
   var sessionManager = new sessions.SessionManager(
-    new wsServer.UserConnectionManager(socketio.listen(httpServer)),
     config.getKernelManager(),
+    config.getMessageProcessors(),
+    config.getNotebookSerializer(),
     config.getStorage(),
-    config.getMessageProcessors());
+    new wsServer.UserConnectionManager(socketio.listen(httpServer)));
 }
 
 // Ensure that the notebook storage system is fully initialized

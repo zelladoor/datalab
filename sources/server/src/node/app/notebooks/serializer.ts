@@ -13,6 +13,9 @@
  */
 
 
+import util = require('./util');
+
+
 /**
  * Simplest possible serializaton/deserialization of an in-memory notebook to/from a string
  *
@@ -29,17 +32,30 @@
 export class NotebookSerializer implements app.INotebookSerializer {
 
   /**
+   * Deserialize an in-memory notebook model from a JSON string
+   */
+  parse (notebookData: string, format: string) {
+    this._validateFormatOrThrow(format);
+    return JSON.parse(notebookData);
+  }
+
+  /**
    * Serialize the in-memory notebook model as-is to a JSON string
    */
-  toString (notebook: app.notebook.Notebook) {
+  stringify (notebook: app.notebook.Notebook, format: string) {
+    this._validateFormatOrThrow(format);
     return JSON.stringify(notebook, null, 2);
   }
 
   /**
-   * Deserialize an in-memory notebook model from a JSON string
+   * Validate that this serializer can parse the notebook specified format.
+   *
+   * Throws an exception if the format is unsupported by this serializer.
    */
-  fromString (notebookData: string) {
-    return JSON.parse(notebookData);
+  _validateFormatOrThrow (format: string) {
+    if (format != util.formats.inMemory) {
+      throw new Error('Unsupported notebook format for deserialization: "' + format + '"');
+    }
   }
 
 }

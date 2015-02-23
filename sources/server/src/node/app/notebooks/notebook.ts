@@ -24,18 +24,15 @@ export class ActiveNotebook implements app.IActiveNotebook {
 
   _notebook: app.notebook.Notebook;
   _notebookPath: string;
-  _storage: app.IStorage;
+  _serializedFormat: string;
   _serializer: app.INotebookSerializer;
+  _storage: app.IStorage;
 
-  constructor (notebookPath: string, storage: app.IStorage) {
-    this._notebookPath = notebookPath;
+  constructor (notebookPath: string, storage: app.IStorage, serializer: app.INotebookSerializer) {
     this._storage = storage;
+    this._serializer = serializer;
 
-    // TODO(bryantd): make the set of serializers configurable
-    // by specifying a map of extension -> serializer somewhere in configuration and
-    // passing it to this constructor instead of creating a serializer per-notebook
-    this._serializer = new serializer.IPyNotebookSerializer();
-
+    this._setNotebookPath(notebookPath);
     this._notebook = this._readOrCreateNotebook();
   }
 
@@ -64,9 +61,14 @@ export class ActiveNotebook implements app.IActiveNotebook {
       notebook = util.createStarterNotebook();
     } else {
       // Deserialize the notebook data
-      notebook = this._serializer.fromString(notebookData);
+      notebook = this._serializer.parse(notebookData, 'todo');
     }
     return notebook;
+  }
+
+  _setNotebookPath (notebookPath: string) {
+    this._notebookPath = notebookPath;
+    this._serializedFormat = util.selectNotebookFormat(notebookPath);
   }
 }
 

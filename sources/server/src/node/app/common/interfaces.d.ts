@@ -61,9 +61,34 @@ declare module app {
     shutdownAll (): void;
   }
 
+  /**
+   * Synchronous serialization of notebooks to/from data strings
+   *
+   * These methods throw exceptions for ill-formed inputs or unsupported notebook formats,
+   * which is consistent with the behavior of JSON.parse/stringify, which this interface mirrors
+   * (also see https://www.joyent.com/developers/node/design/errors).
+   *
+   * Because notebooks can grow to be quite large, especially when data and media have been
+   * embedded, it may be worthwhile to move to an async approach eventually. Some relevant
+   * discussion around async JSON serialization in NodeJS here:
+   * https://github.com/joyent/node/issues/7543
+   */
   interface INotebookSerializer {
-    toString (notebook: notebook.Notebook): string;
-    fromString (data: string): notebook.Notebook;
+
+    /**
+     * Serializes the notebook to the specified format
+     *
+     * Throws an exception if the serializer does not support writing the specified format
+     */
+    stringify (notebook: notebook.Notebook, format: string): string;
+
+    /**
+     * Deserializes the notebook from a string having the specified format
+     *
+     * Throws an exception if the deserializer does not support reading the specified format
+     * or if the given notebook data string violates the specified format specifications.
+     */
+    parse (data: string, format: string): notebook.Notebook;
   }
 
   interface ISession {

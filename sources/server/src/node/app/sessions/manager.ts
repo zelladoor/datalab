@@ -33,18 +33,22 @@ export class SessionManager {
   _idToSession: app.Map<app.ISession>;
   _kernelManager: app.IKernelManager;
   _messageProcessors: app.MessageProcessor[];
+  _notebookSerializer: app.INotebookSerializer;
   _storage: app.IStorage;
   _userconnManager: app.IUserConnectionManager;
 
   constructor (
-      userconnManager: app.IUserConnectionManager,
       kernelManager: app.IKernelManager,
+      messageProcessors: app.MessageProcessor[],
+      notebookSerializer: app.INotebookSerializer,
       storage: app.IStorage,
-      messageProcessors: app.MessageProcessor[]) {
-    this._userconnManager = userconnManager;
+      userconnManager: app.IUserConnectionManager) {
+
     this._kernelManager = kernelManager;
-    this._storage = storage;
     this._messageProcessors = messageProcessors;
+    this._notebookSerializer = notebookSerializer;
+    this._storage = storage;
+    this._userconnManager = userconnManager;
 
     this._idToSession = {};
     this._registerHandlers();
@@ -67,7 +71,10 @@ export class SessionManager {
       shellPort: utils.getAvailablePort()
     });
 
-    var notebook = new notebooks.ActiveNotebook(connection.getNotebookPath(), this._storage);
+    var notebook = new notebooks.ActiveNotebook(
+        connection.getNotebookPath(),
+        this._storage,
+        this._notebookSerializer);
 
     return new sessions.Session(
       sessionId,
