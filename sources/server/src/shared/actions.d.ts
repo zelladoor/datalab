@@ -65,7 +65,8 @@ declare module app {
         // Fields for specifying the cell insertion point within the notebook
         worksheetId: string;
         cellId: string;
-        insertAfter: string; // the cell ID after which to insert the added cell
+        // Insert the new cell immediately after this cell ID. Append to worksheet if falsey
+        insertAfter?: string;
         // Configuration for the cell to add
         type: string; // 'code' | 'md' | 'heading' | 'etc'
         source: string; // cell content string (e.g., code, markdown, etc.)
