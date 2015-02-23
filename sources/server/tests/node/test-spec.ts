@@ -1,5 +1,5 @@
 /// <reference path="../../../../externs/ts/jasmine.d.ts"/>
-import nb = require('./app/notebooks/index');
+import nb = require('./app/notebooks/notebook');
 
 var notebook = {
   name: 'foo',
