@@ -13,49 +13,41 @@
  */
 
 
-import util = require('./util');
+export class MultiFormatSerializer implements app.INotebookSerializer {
 
+  _formatToSerializer: app.Map<app.INotebookSerializer>;
 
-/**
- * Simplest possible serializaton/deserialization of an in-memory notebook to/from a string
- *
- * TODO(bryantd): If we end up wanting to keep an (effectively) no-op ser/de implementation
- * in addition to proper .nb and .ipynb versions, then we need a better name for this module.
- *
- * Note: would be simpler to have this module just export the static functions as top-level
- * entities, but module interface typedefs are not well-baked yet. Re-evaluate down the road
- * and for context see: http://stackoverflow.com/questions/16072471
- * Given the akwardness of module interface typedefs at the moment, fully static classes seem
- * simpler/cleaner at the moment.
- *
- */
-export class NotebookSerializer implements app.INotebookSerializer {
+  constructor (formatToSerializer: app.Map<app.INotebookSerializer>) {
+    this._formatToSerializer = formatToSerializer;
+  }
 
   /**
-   * Deserialize an in-memory notebook model from a JSON string
+   * Deserialize a notebook in the specified format from a data string
    */
   parse (notebookData: string, format: string) {
-    this._validateFormatOrThrow(format);
-    return JSON.parse(notebookData);
+    var serializer = this._getSerializerForFormatOrThrow(format);
+    return serializer.parse(notebookData, format);
   }
 
   /**
-   * Serialize the in-memory notebook model as-is to a JSON string
+   * Serialize the notebook to a string in the specified format
    */
   stringify (notebook: app.notebook.Notebook, format: string) {
-    this._validateFormatOrThrow(format);
-    return JSON.stringify(notebook, null, 2);
+    var serializer = this._getSerializerForFormatOrThrow(format);
+    return serializer.stringify(notebook, format);
   }
 
   /**
-   * Validate that this serializer can parse the notebook specified format.
+   * Gets a serializer that supports the specified notebook format.
    *
-   * Throws an exception if the format is unsupported by this serializer.
+   * Throws an exception if the format is unsupported
    */
-  _validateFormatOrThrow (format: string) {
-    if (format != util.formats.inMemory) {
-      throw new Error('Unsupported notebook format for deserialization: "' + format + '"');
+  _getSerializerForFormatOrThrow (format: string) {
+    var serializer = this._formatToSerializer[format];
+    if (!serializer) {
+      throw new Error('Unsupported notebook format for serialization: "' + format + '"');
     }
+    return serializer;
   }
 
 }

@@ -42,14 +42,14 @@ var defaultMarkdownCellContent = 'You **can** write markdown here';
 // Notebook format names
 export var formats = {
   ipynbV3: 'ipynb v3',
-  inMemory: 'in-memory'
+  model: 'model'
 }
 // Mapping of notebook path extensions to notebook format names
 // Note: some formats (e.g., 'ipynb') are ambiguous and can imply multiple possible formats,
 // but this mapping assigns a default format for any given extension
 var extensionToFormat = {
   '.ipynb': formats.ipynbV3,
-  '.memnb': formats.inMemory
+  '.modelnb': formats.model
   // TODO(bryantd): define the format for .nb files here eventually
 };
 

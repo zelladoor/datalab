@@ -20,7 +20,7 @@ import util = require('./util');
 /**
  * Serializer for reading/writing the .ipynb (IPython) v3 format
  */
-export class IPyNotebookSerializer implements app.INotebookSerializer {
+export class IPySerializer implements app.INotebookSerializer {
 
   /**
    * Deserialize an in-memory notebook model from a JSON string
@@ -87,7 +87,7 @@ export class IPyNotebookSerializer implements app.INotebookSerializer {
    */
   _validateFormatOrThrow (format: string) {
     if (format != util.formats.ipynbV3) {
-      throw new Error('Unsupported notebook format for deserialization: "' + format + '"');
+      throw new Error('Unsupported notebook format for serialization: "' + format + '"');
     }
   }
 

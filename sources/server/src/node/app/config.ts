@@ -74,15 +74,10 @@ export function getSettings (): app.Settings {
 }
 
 /**
- * A single, server-wide notebook serializer
- */
-var notebookSerializer = new notebooks.MultiFormatSerializer();
-
-/**
  * Gets a notebook serializer instance
  */
 export function getNotebookSerializer (): app.INotebookSerializer {
-  return notebookSerializer;
+  return notebooks.serializer;
 }
 
 /**
