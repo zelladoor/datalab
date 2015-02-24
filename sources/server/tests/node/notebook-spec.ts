@@ -316,19 +316,18 @@ describe('Notebook model state', () => {
       expect(cell.source).toBe('some code here');
     });
 
-    // FIXME: enable following tests after finishing the add cell implementation
-    // it('should throw an error due to bad insertAfter cell id', () => {
-    //   addCellAction.insertAfter = 'does-not-exist';
-    //   expect(() => {
-    //     notebook.apply(addCellAction);
-    //   }).toThrow();
-    // });
+    // Note: skipped currently as insertAfter is not yet implemented
+    xit('should throw an error due to bad insertAfter cell id', () => {
+      addCellAction.insertAfter = 'does-not-exist';
+      expect(() => {
+        notebook.apply(addCellAction);
+      }).toThrow();
+    });
 
-    // it('should insert a cell after the cell with id foo', () => {
-    //   addCellAction.insertAfter = 'cell-to-insert-after';
-    //   notebook.apply(addCellAction);
-    // });
-
+    xit('should insert a cell after the cell with id foo', () => {
+      addCellAction.insertAfter = 'cell-to-insert-after';
+      notebook.apply(addCellAction);
+    });
   });
 
 });
