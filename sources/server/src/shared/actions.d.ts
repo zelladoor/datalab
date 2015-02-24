@@ -65,11 +65,15 @@ declare module app {
         // Fields for specifying the cell insertion point within the notebook
         worksheetId: string;
         cellId: string;
-        // Insert the new cell immediately after this cell ID. Append to worksheet if falsey
-        insertAfter?: string;
+
         // Configuration for the cell to add
         type: string; // 'code' | 'md' | 'heading' | 'etc'
         source: string; // cell content string (e.g., code, markdown, etc.)
+
+        // Insert the new cell immediately after this cell ID.
+        //
+        // If the property is undefined, insert the cell at top/head of cells list
+        insertAfter?: string;
       }
       /**
        * action == 'worksheet.deleteCell'

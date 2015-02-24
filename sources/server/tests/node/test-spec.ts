@@ -1,47 +1,53 @@
+/*
+ * Copyright 2014 Google Inc. All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under the License
+ * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
+
 /// <reference path="../../../../externs/ts/jasmine.d.ts"/>
-import nb = require('./app/notebooks/index');
-import nbutil = require('./app/notebooks/util');
 import actions = require('./app/shared/actions');
+import nb = require('./app/notebooks/index');
 import updates = require('./app/shared/updates');
-
-// FIXME: move mocks and test data generators to some "test utils" module
-// Create a template empty notebook and then create deep copies of the template as needed
-var emptyNotebook = nbutil.createEmptyNotebook();
-var emptyNotebookData = JSON.stringify(emptyNotebook);
-function createEmptyNotebook () {
-  // One simple approach to deep copy.
-  //
-  // Not the most performant, but simple, and works for data-only objects as is the case here
-  return JSON.parse(emptyNotebookData);
-}
-
-var mockStorage = {
-  read: (path: string) => {return 'fake-nb-string-1';},
-  write: (path: string, data: string) => {},
-  delete: (path: string) => {return true;}
-};
-
-// Mock serializer always returns a copy of the empty notebook
-var mockSerializer = {
-  stringify: (notebook: app.notebook.Notebook) => { return 'fake-nb-string-2'; },
-  parse: (data: string, format: string) => {return createEmptyNotebook();}
-};
-
-function getFirstWorksheet(notebook: app.IActiveNotebook): app.notebook.Worksheet {
-  var notebookData = notebook.getSnapshot();
-  var worksheetId = notebookData.worksheetIds[0];
-  return notebookData.worksheets[worksheetId];
-}
+import testutil = require('./testutil');
 
 
 describe("Notebook model state", () => {
 
-  it("should be an empty notebook with one worksheet and zero cells", () => {
-    var notebook: app.IActiveNotebook = new nb.ActiveNotebook(
-        'foo.ipynb', mockStorage, mockSerializer);
-    var notebookData: app.notebook.Notebook = notebook.getSnapshot()
+  var notebook: app.IActiveNotebook;
+  var worksheetId: string;
+  var addCellAction: app.notebook.action.AddCell;
+  var addCellUpdate: app.notebook.update.AddCell;
 
-    // Validate empty notebook expectations
+  beforeEach(() => {
+    notebook = new nb.ActiveNotebook('foo.ipynb', testutil.mockStorage, testutil.mockSerializer);
+    worksheetId = testutil.getFirstWorksheet(notebook).id;
+    addCellAction = {
+      action: actions.worksheet.addCell,
+      worksheetId: worksheetId,
+      cellId: 'new-cell-id',
+      type: 'code',
+      source: 'some code here'
+    };
+  });
+
+  afterEach(() => {
+    notebook = undefined;
+    worksheetId = undefined;
+    addCellAction = undefined;
+    addCellUpdate = undefined;
+  });
+
+  it("should be an empty notebook with one worksheet and zero cells", () => {
+    var notebookData: app.notebook.Notebook = notebook.getSnapshot()
     expect(notebookData.worksheetIds.length).toBe(1);
     var worksheetId = notebookData.worksheetIds[0];
     expect(notebookData.worksheets[worksheetId]).toBeDefined();
@@ -50,21 +56,7 @@ describe("Notebook model state", () => {
   });
 
   it("should add a cell after applying the worksheet.addCell action", () => {
-    var notebook: app.IActiveNotebook = new nb.ActiveNotebook(
-        'foo.ipynb', mockStorage, mockSerializer);
-
-    var worksheetId = getFirstWorksheet(notebook).id;
-    var addCellAction: app.notebook.action.AddCell = {
-      action: actions.worksheet.addCell,
-      worksheetId: worksheetId,
-      cellId: 'new-cell-id',
-      type: 'code',
-      source: 'some code here'
-    };
-
     var addCellUpdate = <app.notebook.update.AddCell>notebook.apply(addCellAction);
-    console.log('notebook: ', notebook.getSnapshot());
-    console.log('update', addCellUpdate);
 
     // Validate the update message content
     expect(addCellUpdate.update).toBe(updates.worksheet.addCell);
@@ -77,7 +69,7 @@ describe("Notebook model state", () => {
     expect(addCellUpdate.cell.source).toBe('some code here');
 
     // Validate that the notebook model was also updated to have the new cell
-    var worksheet = getFirstWorksheet(notebook);
+    var worksheet = testutil.getFirstWorksheet(notebook);
     expect(worksheet.cells.length).toBe(1);
     var cell = worksheet.cells[0];
     expect(cell.id).toBe('new-cell-id');
@@ -85,4 +77,15 @@ describe("Notebook model state", () => {
     expect(cell.source).toBe('some code here');
   });
 
+  it("should throw an error due to bad insertAfter cell id", () => {
+    addCellAction.insertAfter = 'does-not-exist';
+    expect(() => {
+      notebook.apply(addCellAction);
+    }).toThrow();
+  });
+
+  it("should insert a cell after the cell with id foo", () => {
+    addCellAction.insertAfter = 'does-not-exist';
+    notebook.apply(addCellAction);
+  });
 });

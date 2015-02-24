@@ -13,8 +13,10 @@
  */
 
 
-import util = require('./util');
+import actions = require('../shared/actions');
 import formats = require('./serializers/formats');
+import updates = require('../shared/updates');
+import util = require('./util');
 
 
 /**
@@ -49,7 +51,38 @@ export class ActiveNotebook implements app.IActiveNotebook {
 
   // FIXME: define unit tests for (action + nb-state => update) instances and then writes this code
   apply (action: app.notebook.action.Action) {
-    return <app.notebook.update.Update>{update: 'todo'};
+    switch (action.action) {
+      case actions.worksheet.addCell:
+        return this._applyAddCell(<app.notebook.action.AddCell>action);
+
+      default:
+        throw new Error('Unsupported action "'+action.action+'" cannot be applied');
+    }
+  }
+
+  _applyAddCell (action: app.notebook.action.AddCell): app.notebook.update.AddCell {
+    // Get the worksheet where the cell should be added
+    var worksheet = this._notebook.worksheets[action.worksheetId];
+    if (worksheet === undefined) {
+      throw new Error('Cannot add cell to non-existent worksheet id: "'+action.worksheetId+'"');
+    }
+
+    var cell = util.createCell(action.type, action.cellId, action.source);
+
+    if (action.insertAfter) {
+      // If an insertion point was defined, verify the given cell id exists within the worksheet
+      throw new Error('TODO(bryantd): add support for insertAfter property');
+    } else {
+      // Append the cell to the tail of the worksheet
+      worksheet.cells.push(cell);
+    }
+
+    // Create and return the update message
+    return {
+      update: updates.worksheet.addCell,
+      worksheetId: worksheet.id,
+      cell: cell
+    }
   }
 
   // Reads in the notebook if it exists or creates a blank notebook if not.

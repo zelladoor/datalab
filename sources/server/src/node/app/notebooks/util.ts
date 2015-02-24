@@ -41,12 +41,7 @@ var defaultMarkdownCellContent = 'You **can** write markdown here';
  * Appends a code cell to the default worksheet within the notebook
  */
 function appendCodeCell (notebook: app.notebook.Notebook) {
-  var cell = {
-    id: uuid.v4(),
-    type: cells.code,
-    source: defaultCodeCellContent,
-    metadata: {}
-  }
+  var cell = createCodeCell(uuid.v4(), defaultCodeCellContent);
   getDefaultWorksheet(notebook).cells.push(cell);
 }
 
@@ -54,14 +49,7 @@ function appendCodeCell (notebook: app.notebook.Notebook) {
  * Appends a heading cell to the default worksheet within the notebook
  */
 function appendHeadingCell (notebook: app.notebook.Notebook) {
-  var cell = {
-    id: uuid.v4(),
-    type: cells.heading,
-    source: defaultHeadingCellContent,
-    metadata: {
-      level: defaultHeadingCellLevel
-    }
-  }
+  var cell = createHeadingCell(uuid.v4(), defaultHeadingCellContent);
   getDefaultWorksheet(notebook).cells.push(cell);
 }
 
@@ -69,13 +57,51 @@ function appendHeadingCell (notebook: app.notebook.Notebook) {
  * Appends a markdown cell to the default worksheet within the notebook
  */
 function appendMarkdownCell (notebook: app.notebook.Notebook) {
-  var cell = {
-    id: uuid.v4(),
-    type: cells.markdown,
-    source: defaultMarkdownCellContent,
-    metadata: {}
-  }
+  var cell = createMarkdownCell(uuid.v4(), defaultMarkdownCellContent);
   getDefaultWorksheet(notebook).cells.push(cell);
+}
+
+function createCodeCell (id: string, source: string) {
+  return {
+    id: id,
+    type: cells.code,
+    source: source,
+    metadata: {}
+  };
+}
+
+function createHeadingCell (id: string, source: string) {
+  return {
+    id: id,
+    type: cells.heading,
+    source: source,
+    metadata: {
+      level: defaultHeadingCellLevel
+    }
+  };
+}
+
+function createMarkdownCell (id: string, source: string) {
+  return {
+    id: id,
+    type: cells.markdown,
+    source: source,
+    metadata: {}
+  };
+}
+
+/**
+ * Create a cell of the specified type with given content.
+ *
+ * Throws an Error if the given cell type is unsupported.
+ */
+export function createCell (type: string, id: string, source: string) {
+  switch (type) {
+    case cells.code: return createCodeCell(id, source);
+    case cells.heading: return createHeadingCell(id, source);
+    case cells.markdown: return createMarkdownCell(id, source);
+    default: throw new Error('Cannot create cell with unsupported type "'+type+'"');
+  }
 }
 
 /**
