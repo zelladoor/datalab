@@ -228,63 +228,11 @@ export class ActiveNotebook implements app.IActiveNotebook {
     this._notebookPath = notebookPath;
     this._serializedFormat = formats.selectNotebookFormat(notebookPath);
   }
-}
 
-
-// FIXME: get rid of anything below that isn't re-intergrated with ws protocol update
-
-  // putCell (cell: app.notebook.Cell): app.notebook.Notebook {
-  //   this._notebook.cells[cell.id] = cell;
-  //   this._updateWorksheet(cell);
-  //   this._persistNotebook();
-  //   return this.getData();
-  // }
-
-  // updateCell (cell: app.notebook.Cell): app.notebook.Notebook {
-  //   var mergedCell: app.notebook.Cell = this._notebook.cells[cell.id];
-  //   if (!mergedCell) {
-  //     // Nothing to merge with, simple case
-  //     return this.putCell(cell);
-  //   }
-
-  //   // Copy over any keys from the given partial/whole cell update
-  //   Object.keys(cell).forEach((property) => {
-  //     if (property == 'outputs') {
-  //       // Output values need to be appended rather than overwritten
-  //       this._appendCellOutputs(mergedCell, cell);
-  //     } else {
-  //       // Updated properties overwrite (even nested) existing properties
-  //       mergedCell[property] = cell[property];
-  //     }
-  //   });
-
-  //   return this.putCell(mergedCell);
-  // }
-
-
-  // // Given a "changes"/delta cell, append the outputs of the delta to the given "merged" cell
-  // _appendCellOutputs (mergedCell: app.notebook.Cell, deltaCell: app.notebook.Cell) {
-  //   // Update should be called with only the new data (i.e., not pre-merged/pre-combined)
-  //   // so append any new outputs to the tail of the current set of outputs
-  //   if (mergedCell.outputs) {
-  //     // Append new outputs to the end of the list
-  //     mergedCell.outputs = mergedCell.outputs.concat(deltaCell.outputs);
-  //   } else {
-  //     // Nothing to merge with, write the full set of outputs
-  //     mergedCell.outputs = deltaCell.outputs;
-  //   }
-  // }
-
+  // FIXME: get rid of anything below that isn't re-intergrated with ws protocol update
   // _persistNotebook () {
   //   // TODO(bryantd): re-enable this once ipynb serialization is implemented
   //   // console.log('Saving notebook ' + this._notebookPath + ' ...');
   //   // this._storage.write(this._notebookPath, this._serializer.toString(this.getData()));
   // }
-
-  // _updateWorksheet (cell: app.notebook.Cell) {
-  //   // append the cell to the end of the worksheet if it isn't alread on the worksheet
-  //   if (-1 === this._notebook.worksheet.indexOf(cell.id)) {
-  //     // Then the cell isn't on the worksheet currently, append it
-  //     this._notebook.worksheet.push(cell.id);
-  //   }
-  // }
+}
