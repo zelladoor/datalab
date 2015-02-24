@@ -49,28 +49,32 @@ export class ActiveNotebook implements app.IActiveNotebook {
     return <app.notebook.Cell>{id: 'todo'};
   }
 
-  // FIXME: define unit tests for (action + nb-state => update) instances and then writes this code
-  apply (action: app.notebook.action.Action) {
+  apply (action: app.notebook.action.Action): app.notebook.update.Update {
     switch (action.action) {
       case actions.worksheet.addCell:
         return this._applyAddCell(<app.notebook.action.AddCell>action);
-
+      case actions.cell.clearOutput:
+        return this._applyClearOutput(<app.notebook.action.ClearOutput>action);
+      case actions.cell.update:
+        return this._applyUpdateCell(<app.notebook.action.UpdateCell>action);
       default:
         throw new Error('Unsupported action "'+action.action+'" cannot be applied');
     }
   }
 
+  /* Notebook-level actions */
+
+
+  /* Worksheet-level actions */
+
   _applyAddCell (action: app.notebook.action.AddCell): app.notebook.update.AddCell {
     // Get the worksheet where the cell should be added
-    var worksheet = this._notebook.worksheets[action.worksheetId];
-    if (worksheet === undefined) {
-      throw new Error('Cannot add cell to non-existent worksheet id: "'+action.worksheetId+'"');
-    }
-
+    var worksheet = this._getWorksheetOrThrow(action.worksheetId);
+    // Create a cell to insert
     var cell = util.createCell(action.type, action.cellId, action.source);
 
+    // If an insertion point was defined, verify the given cell id exists within the worksheet
     if (action.insertAfter) {
-      // If an insertion point was defined, verify the given cell id exists within the worksheet
       throw new Error('TODO(bryantd): add support for insertAfter property');
     } else {
       // Append the cell to the tail of the worksheet
@@ -85,7 +89,108 @@ export class ActiveNotebook implements app.IActiveNotebook {
     }
   }
 
-  // Reads in the notebook if it exists or creates a blank notebook if not.
+  /* Cell-level actions */
+
+  _applyClearOutput(action: app.notebook.action.ClearOutput): app.notebook.update.CellUpdate {
+    // Get the cell where the outputs should be cleared
+    var cell = this._getCellOrThrow(action.cellId, action.worksheetId);
+    // Clear the outputs
+    cell.outputs = [];
+    // Create and return the update message
+    return {
+      update: updates.cell.update,
+      worksheetId: action.worksheetId,
+      cellId: action.cellId,
+      outputs: cell.outputs,
+      replaceOutputs: true
+    }
+  }
+
+  _applyUpdateCell(action: app.notebook.action.UpdateCell): app.notebook.update.CellUpdate {
+    // Get the cell where the update should be applied
+    var cell = this._getCellOrThrow(action.cellId, action.worksheetId);
+
+    // Create the base cell update and add to it as modifications are made to the notebook model
+    var cellUpdate: app.notebook.update.CellUpdate = {
+      update: updates.cell.update,
+      worksheetId: action.worksheetId,
+      cellId: action.cellId,
+    };
+
+    // Enumerate the attributes that should be updated on the cell and apply the modifications
+    if (action.source) {
+      // Then update the cell source attribute and the update message
+      cell.source = cellUpdate.source = action.source;
+    }
+
+    if (action.metadata) {
+      if (action.replaceMetadata) {
+        // Simple case, use the action message's metadata to replace the cell's
+        cell.metadata = cellUpdate.metadata = action.metadata;
+      } else {
+        // Merge the metadata objects, with the action overwriting existing fields on the cell
+        cellUpdate.metadata = {};
+        Object.keys(action.metadata).forEach((property: string) => {
+          cell.metadata[property] = cellUpdate.metadata[property] = action.metadata[property];
+        });
+      }
+      cellUpdate.replaceMetadata = action.replaceMetadata;
+    }
+
+    if (action.outputs) {
+      if (action.replaceOutputs) {
+        // Simple case, replace the cell's outputs with the output list in the action message
+        cell.outputs = cellUpdate.outputs = action.outputs;
+      } else {
+        // Append the outputs in the action message to the cell's outputs
+        cell.outputs = cell.outputs.concat(action.outputs);
+        // The update message will only carry the outputs to be appended
+        cellUpdate.outputs = action.outputs;
+      }
+      cellUpdate.replaceOutputs = action.replaceOutputs;
+    }
+
+    return cellUpdate;
+  }
+
+  _getCellOrThrow (cellId: string, worksheetId: string): app.notebook.Cell {
+    // Get the worksheet where the cell is expected to exist
+    var worksheet = this._getWorksheetOrThrow(worksheetId);
+
+    // Find the cell in the worksheet
+    //
+    // Note: may be worthwhile to maintain a {cellId: cell} index if this gets expensive, or
+    // mirror the worksheet structure with a cells + cellIds field to capture both an index and the
+    // ordering of cells within the worksheet
+    //
+    // As opposed to the current direct list-based cell storage approach
+    // (cells: [<cell1>, <cell2>, ...]).
+    var cell: app.notebook.Cell;
+    for (var i = 0; i < worksheet.cells.length; ++i) {
+      if (worksheet.cells[i].id == cellId) {
+        cell = worksheet.cells[i];
+        break; // Found the cell of interest
+      }
+    }
+    // Verify that the cell was actually found within the worksheet
+    if (cell === undefined) {
+      throw new Error('Specified cell id "' + cellId
+        + '" does not exist within worksheet with id "' + worksheetId + '"');
+    }
+    return cell;
+  }
+
+  _getWorksheetOrThrow (worksheetId: string): app.notebook.Worksheet {
+    var worksheet = this._notebook.worksheets[worksheetId];
+    if (worksheet === undefined) {
+      throw new Error('Specified worksheet id "'+worksheetId+'" does not exist');
+    }
+    return worksheet;
+  }
+
+  /**
+   * Reads in the notebook if it exists or creates a blank notebook if not.
+   */
   _readOrCreateNotebook (): app.notebook.Notebook {
     var notebook: app.notebook.Notebook;
     // First, attempt to read in the notebook if it already exists at the defined path

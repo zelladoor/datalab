@@ -87,9 +87,10 @@ declare module app {
        * update == 'cell.update'
        */
       interface CellUpdate extends Update {
+        worksheetId: string;
         cellId: string;
-        cellType: string; // 'md' | 'code' | 'heading' | 'etc'
-        source: string; // new source string value
+
+        source?: string; // new source string value
 
         outputs?: CellOutput[];
         // Flag determines whether the above list of outputs is appended or replaces existing
