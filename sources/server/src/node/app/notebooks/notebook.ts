@@ -51,21 +51,18 @@ export class ActiveNotebook implements app.IActiveNotebook {
 
   apply (action: app.notebook.action.Action): app.notebook.update.Update {
     switch (action.action) {
-      case actions.worksheet.addCell:
-        return this._applyAddCell(<app.notebook.action.AddCell>action);
       case actions.cell.clearOutput:
         return this._applyClearOutput(<app.notebook.action.ClearOutput>action);
       case actions.cell.update:
         return this._applyUpdateCell(<app.notebook.action.UpdateCell>action);
+      case actions.notebook.clearOutputs:
+        return this._applyClearOutputs(<app.notebook.action.ClearOutputs>action);
+      case actions.worksheet.addCell:
+        return this._applyAddCell(<app.notebook.action.AddCell>action);
       default:
         throw new Error('Unsupported action "'+action.action+'" cannot be applied');
     }
   }
-
-  /* Notebook-level actions */
-
-
-  /* Worksheet-level actions */
 
   _applyAddCell (action: app.notebook.action.AddCell): app.notebook.update.AddCell {
     // Get the worksheet where the cell should be added
@@ -89,21 +86,29 @@ export class ActiveNotebook implements app.IActiveNotebook {
     }
   }
 
-  /* Cell-level actions */
-
   _applyClearOutput(action: app.notebook.action.ClearOutput): app.notebook.update.CellUpdate {
-    // Get the cell where the outputs should be cleared
-    var cell = this._getCellOrThrow(action.cellId, action.worksheetId);
-    // Clear the outputs
-    cell.outputs = [];
-    // Create and return the update message
-    return {
-      update: updates.cell.update,
-      worksheetId: action.worksheetId,
-      cellId: action.cellId,
-      outputs: cell.outputs,
-      replaceOutputs: true
+    return this._clearCellOutput(action.cellId, action.worksheetId);
+  }
+
+  _applyClearOutputs (action: app.notebook.action.ClearOutputs): app.notebook.update.Composite {
+    // Create a composite update message in which the per-cell updates will be bundled
+    var update: app.notebook.update.Composite = {
+      update: updates.composite,
+      subUpdates: []
     }
+
+    var nb = this._notebook;
+    // Iterate through each worksheet within the notebook
+    nb.worksheetIds.forEach((worksheetId: string) => {
+      // Clear each cell within the worksheet
+      nb.worksheets[worksheetId].cells.forEach((cell: app.notebook.Cell) => {
+        var cellUpdate = this._clearCellOutput(cell.id, worksheetId);
+        // Add an update for the cleared cell
+        update.subUpdates.push(cellUpdate);
+      }, this);
+    }, this);
+
+    return update;
   }
 
   _applyUpdateCell(action: app.notebook.action.UpdateCell): app.notebook.update.CellUpdate {
@@ -151,6 +156,21 @@ export class ActiveNotebook implements app.IActiveNotebook {
     }
 
     return cellUpdate;
+  }
+
+  _clearCellOutput (cellId: string, worksheetId: string): app.notebook.update.CellUpdate {
+    // Get the cell where the outputs should be cleared
+    var cell = this._getCellOrThrow(cellId, worksheetId);
+    // Clear the outputs
+    cell.outputs = [];
+    // Create and return the update message
+    return {
+      update: updates.cell.update,
+      worksheetId: worksheetId,
+      cellId: cellId,
+      outputs: cell.outputs,
+      replaceOutputs: true
+    };
   }
 
   _getCellOrThrow (cellId: string, worksheetId: string): app.notebook.Cell {

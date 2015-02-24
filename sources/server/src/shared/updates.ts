@@ -20,6 +20,9 @@
 // Different update event/message types are bucketed under this label
 export var label = 'update'
 
+// Composite update (sequence of updates)
+export var composite = 'composite';
+
 // Notebook-level update
 export var notebook = {
   snapshot: 'notebook.snapshot',

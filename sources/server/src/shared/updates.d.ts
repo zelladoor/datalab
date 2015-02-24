@@ -30,6 +30,13 @@ declare module app {
       }
 
       /**
+       * update == 'composite'
+       */
+      interface Composite extends Update {
+        subUpdates: Update[];
+      }
+
+      /**
        * A snapshot of the notebook data
        *
        * Note that the server may send the full data for only a subset of all worksheets.

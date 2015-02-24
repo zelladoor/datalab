@@ -43,6 +43,72 @@ describe('Notebook model state', () => {
     expect(worksheet.cells.length).toBe(0);
   });
 
+  // action = notebook.clearOutputs
+  describe('after notebook.clearOutputs action', () => {
+    var notebookData: app.notebook.Notebook;
+
+    beforeEach(() => {
+      var output: app.notebook.CellOutput = {
+        type: 'stdout',
+        mimetypeBundle: {'text/plain': 'some stdout here'}
+      };
+
+      notebookData = notebook.getSnapshot();
+
+      // Add a second worksheet
+      var worksheetId2 = 'another-worksheet';
+      notebookData.worksheets[worksheetId2] = {
+        id: 'worksheet-2',
+        name: 'Worksheet2',
+        metadata: {},
+        cells: []
+      };
+      notebookData.worksheetIds.push(worksheetId2);
+
+      // Add some cells with outputs to each worksheet
+      Object.keys(notebookData.worksheets).forEach((worksheetId: string) => {
+        notebookData.worksheets[worksheetId].cells.push({
+          id: worksheetId + '-cell-1',
+          type: 'code',
+          outputs: [output, output]
+        });
+        notebookData.worksheets[worksheetId].cells.push({
+          id: worksheetId + '-cell-2',
+          type: 'code',
+          outputs: [output, output]
+        });
+      });
+    });
+
+    afterEach(() => {
+      notebookData = undefined;
+    });
+
+    it('should remove all of the outputs from every cell, in every worksheet', () => {
+      // Validate there are two worksheets, each with two cells, each with two outputs
+      expect(Object.keys(notebookData.worksheets).length).toBe(2);
+      notebookData.worksheetIds.forEach((worksheetId: string) => {
+        var cells = notebookData.worksheets[worksheetId].cells;
+        expect(cells.length).toBe(2);
+        cells.forEach((cell: app.notebook.Cell) => {
+          expect(cell.outputs.length).toBe(2);
+        });
+      });
+
+      var action = {action: 'notebook.clearOutputs'};
+      var update = <app.notebook.update.Composite>notebook.apply(action);
+
+      // Now each worksheet should still have two cells, each with zero outputs
+      notebookData.worksheetIds.forEach((worksheetId: string) => {
+        var cells = notebookData.worksheets[worksheetId].cells;
+        expect(cells.length).toBe(2);
+        cells.forEach((cell: app.notebook.Cell) => {
+          expect(cell.outputs.length).toBe(0);
+        });
+      });
+    });
+  });
+
   // action = cell.update
   describe('after cell.update action', () => {
     var cellUpdateAction: app.notebook.action.UpdateCell;
