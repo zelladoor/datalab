@@ -39,16 +39,8 @@ export class ActiveNotebook implements app.IActiveNotebook {
   }
 
   /**
-   * Creates a data-only object suitable for JSON serialization
+   * Applies the given action to the notebook and returns and notebook model updates generated
    */
-  getSnapshot (): app.notebook.Notebook {
-    return this._notebook;
-  }
-
-  getCell (cellId: string, worksheetId: string) {
-    return <app.notebook.Cell>{id: 'todo'};
-  }
-
   apply (action: app.notebook.action.Action): app.notebook.update.Update {
     switch (action.action) {
       case actions.cell.clearOutput:
@@ -66,6 +58,17 @@ export class ActiveNotebook implements app.IActiveNotebook {
       default:
         throw new Error('Unsupported action "'+action.action+'" cannot be applied');
     }
+  }
+
+  /**
+   * Creates a data-only object suitable for JSON serialization
+   */
+  getSnapshot (): app.notebook.Notebook {
+    return this._notebook;
+  }
+
+  getCell (cellId: string, worksheetId: string) {
+    return <app.notebook.Cell>{id: 'todo'};
   }
 
   _applyAddCell (action: app.notebook.action.AddCell): app.notebook.update.AddCell {

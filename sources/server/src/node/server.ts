@@ -48,7 +48,8 @@ export function start (settings: app.Settings, apiRouter: express.Router) {
     msgproc.getMessageProcessors(),
     config.getNotebookSerializer(),
     config.getStorage(),
-    new wsServer.UserConnectionManager(socketio.listen(httpServer)));
+    new wsServer.UserConnectionManager(socketio.listen(httpServer))
+  );
 }
 
 // Ensure that the notebook storage system is fully initialized
