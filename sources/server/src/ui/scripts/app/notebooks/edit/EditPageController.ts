@@ -23,6 +23,7 @@
 import logging = require('app/common/Logging');
 import constants = require('app/common/Constants');
 import _app = require('app/App');
+import actions = require('app/shared/actions');
 
 
 var log = logging.getLogger(constants.scopes.notebooks.edit.page);
@@ -55,10 +56,16 @@ export class EditPageController {
   // FIXME: move these to some "notebook toolbar" directive to avoid cluttering the page-level directive
   // FIXME: they should also delegate to notebook data service
   clearAllOutputs () {
-    log.debug('TODO: clear all outputs');
+    var clearOutputsAction: app.notebook.action.ClearOutputs = {
+      action: actions.notebook.clearOutputs
+    };
+    this._rootScope.$emit(actions.notebook.clearOutputs, clearOutputsAction);
   }
-  executeNotebook () {
-    log.debug('TODO: execute notebook');
+  executeCells () {
+    var executeCellsAction: app.notebook.action.ExecuteCells = {
+      action: actions.notebook.executeCells
+    };
+    this._rootScope.$emit(actions.notebook.executeCells, executeCellsAction);
   }
 
 

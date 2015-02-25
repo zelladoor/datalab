@@ -17,6 +17,7 @@
 import uuid = require('node-uuid');
 import updates = require('../shared/updates');
 import actions = require('../shared/actions');
+import cells = require('../shared/cells');
 
 
 /**
@@ -224,11 +225,13 @@ export class Session implements app.ISession {
     // Execute all cells in each worksheet
     notebookData.worksheetIds.forEach((worksheetId) => {
       notebookData.worksheets[worksheetId].cells.forEach((cell) => {
-        this._handleActionExecuteCell({
-          action: actions.cell.execute,
-          worksheetId: worksheetId,
-          cellId: cell.id
-        });
+        if (cell.type == cells.code) {
+          this._handleActionExecuteCell({
+            action: actions.cell.execute,
+            worksheetId: worksheetId,
+            cellId: cell.id
+          });
+        }
       });
     });
   }

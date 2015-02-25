@@ -49,11 +49,13 @@ class Session implements app.ISession {
     // Register server-side message handlers
     connection.on(updates.label, this._handleUpdate.bind(this));
 
-    // Register client-side event handlers
-    this._rootScope.$on(actions.cell.execute, this._handleAction.bind(this));
-    this._rootScope.$on(actions.cell.clearOutput, this._handleAction.bind(this));
-    this._rootScope.$on(actions.worksheet.addCell, this._handleAction.bind(this));
-    this._rootScope.$on(actions.notebook.clearOutputs, this._handleAction.bind(this));
+    // Register client-side event handlers for each action scope
+    [actions.cell, actions.notebook, actions.worksheet].forEach((actionScope) => {
+      Object.keys(actionScope).forEach((action) => {
+        // Add an event listener for each action type
+        this._rootScope.$on(actionScope[action], this._handleAction.bind(this));
+      }, this);
+    }, this);
   }
 
   /**
