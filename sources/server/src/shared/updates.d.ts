@@ -53,7 +53,7 @@ declare module app {
        * update == 'notebook.metadata'
        */
       interface NotebookMetadata extends Update {
-        name: string; // notebook name
+        path: string; // notebook path
       }
       /**
        * update == 'notebook.sessionStatus'

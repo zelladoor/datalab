@@ -28,7 +28,7 @@ import notebooks = require('../notebooks/index');
  * In short, the session manager contains all of the business logic for how to bind together
  * users and kernels into session objects.
  */
-export class SessionManager {
+export class SessionManager implements ISessionManager {
 
   _idToSession: app.Map<app.ISession>;
   _kernelManager: app.IKernelManager;
@@ -52,6 +52,15 @@ export class SessionManager {
 
     this._idToSession = {};
     this._registerHandlers();
+  }
+
+  /**
+   * Rename a session by modifying its id to be the new session id
+   * @type {[type]}
+   */
+  renameSession (oldId: string, newId: string) {
+    this._idToSession[newId] = this._idToSession[oldId];
+    delete this._idToSession[oldId];
   }
 
   /**
@@ -117,7 +126,7 @@ export class SessionManager {
     // of the message stops.
     var processedMessage = message;
     for (var i = 0; i < this._messageProcessors.length; ++i) {
-      processedMessage = this._messageProcessors[i](processedMessage, session);
+      processedMessage = this._messageProcessors[i](processedMessage, session, this);
       if (processedMessage === null) {
         // Then this message has been filtered, no further processing
         console.log('Filtered: ', JSON.stringify(message));

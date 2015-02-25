@@ -62,11 +62,28 @@ function logMessage (message: any, session: app.ISession): any {
   return message;
 }
 
+function processSessionRename (
+    message: any,
+    session: app.ISession,
+    sessionManager: app.ISessionManager): any {
+  // For any notebook rename messages, also update the session id to match
+  if (message.action == actions.notebook.rename) {
+    if (!message.path) {
+      throw new Error('Invalid session id for renaming "'+message.path+'"');
+    }
+    sessionManager.rename(session.id, message.path);
+  }
+  return message;
+}
+
 /**
  * Gets the ordered list of message processors
  */
 export function getMessageProcessors (): app.MessageProcessor[] {
-  return [logMessage];
+  return [
+    logMessage,
+    processSessionRename
+  ];
 }
 
 export function getSettings (): app.Settings {

@@ -34,7 +34,7 @@ export class ActiveNotebook implements app.IActiveNotebook {
     this._storage = storage;
     this._serializer = serializer;
 
-    this._setNotebookPath(notebookPath);
+    this.setNotebookPath(notebookPath);
     this._notebook = this._readOrCreateNotebook();
   }
 
@@ -316,7 +316,7 @@ export class ActiveNotebook implements app.IActiveNotebook {
     return notebook;
   }
 
-  _setNotebookPath (notebookPath: string) {
+  setNotebookPath (notebookPath: string) {
     this._notebookPath = notebookPath;
     this._serializedFormat = formats.selectNotebookFormat(notebookPath);
   }

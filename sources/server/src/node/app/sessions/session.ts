@@ -174,7 +174,11 @@ export class Session implements app.ISession {
       case actions.worksheet.moveCell:
       case actions.notebook.clearOutputs:
         this._handleActionNotebookData(action);
-      break
+      break;
+
+      case actions.notebook.rename:
+        this._handleActionRenameNotebook(action);
+      break;
 
       default:
         console.log('WARNING No handler for action message type "' + action.action + '"');
@@ -219,13 +223,21 @@ export class Session implements app.ISession {
     var notebookData = this._notebook.getSnapshot();
     // Execute all cells in each worksheet
     notebookData.worksheetIds.forEach((worksheetId) => {
-      notebookData.worksheets[worksheetId.cells.forEach((cell) => {
+      notebookData.worksheets[worksheetId].cells.forEach((cell) => {
           this._handleActionExecuteCell({
           worksheetId: worksheetId,
           cellId: cell.id
         });
       });
     });
+  }
+
+  _handleActionRenameNotebook (action: app.notebook.action.Rename) {
+    this._notebook.setNotebookPath(action.path);
+    this._broadcastUpdate({
+      update: updates.notebook.metadata,
+      path: action.path
+    })
   }
 
   /**

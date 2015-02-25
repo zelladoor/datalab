@@ -53,7 +53,7 @@ declare module app {
        * action == 'notebook.rename'
        */
       interface Rename extends Action {
-        name: string; // 'New name for the notebook'
+        path: string; // New path for the notebook'
       }
 
       /* Worksheet-level actions */

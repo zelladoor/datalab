@@ -97,6 +97,10 @@ declare module app {
     updateUserConnection (connection: IUserConnection): void;
   }
 
+  interface ISessionManager {
+    renameSession (oldId: string, newId: string): void;
+  }
+
   interface IStorage {
     read (path: string): string;
     write (path: string, data: string): void;

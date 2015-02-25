@@ -29,7 +29,7 @@ declare module app {
      * @param session session object from which the message originated
      * @return the processed message or null to indicate message should be filtered
      */
-    (message: any, session: app.ISession): any;
+    (message: any, session: app.ISession, manager: app.ISessionManager): any;
   }
 
   interface MessageHandler {
