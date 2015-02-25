@@ -215,7 +215,16 @@ export class Session implements app.ISession {
   }
 
   _handleActionExecuteCells (action: app.notebook.action.ExecuteCells) {
-    console.log('TODO implement execute (all) cells action handler');
+    var notebookData = this._notebook.getSnapshot();
+    // Execute all cells in each worksheet
+    notebookData.worksheetIds.forEach((worksheetId) => {
+      notebookData.worksheets[worksheetId.cells.forEach((cell) => {
+          this._handleActionExecuteCell({
+          worksheetId: worksheetId,
+          cellId: cell.id
+        });
+      });
+    });
   }
 
   /**
