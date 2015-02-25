@@ -28,7 +28,7 @@ import notebooks = require('../notebooks/index');
  * In short, the session manager contains all of the business logic for how to bind together
  * users and kernels into session objects.
  */
-export class SessionManager implements ISessionManager {
+export class SessionManager implements app.ISessionManager {
 
   _idToSession: app.Map<app.ISession>;
   _kernelManager: app.IKernelManager;

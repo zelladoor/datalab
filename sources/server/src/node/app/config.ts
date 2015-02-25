@@ -54,38 +54,6 @@ export function getKernelManager (): app.IKernelManager {
   return kernelManager;
 }
 
-/**
- * Logs all messages to the console
- */
-function logMessage (message: any, session: app.ISession): any {
-  console.log('Message: ', JSON.stringify(message));
-  return message;
-}
-
-function processSessionRename (
-    message: any,
-    session: app.ISession,
-    sessionManager: app.ISessionManager): any {
-  // For any notebook rename messages, also update the session id to match
-  if (message.action == actions.notebook.rename) {
-    if (!message.path) {
-      throw new Error('Invalid session id for renaming "'+message.path+'"');
-    }
-    sessionManager.rename(session.id, message.path);
-  }
-  return message;
-}
-
-/**
- * Gets the ordered list of message processors
- */
-export function getMessageProcessors (): app.MessageProcessor[] {
-  return [
-    logMessage,
-    processSessionRename
-  ];
-}
-
 export function getSettings (): app.Settings {
   return settings;
 }
