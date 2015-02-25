@@ -83,6 +83,7 @@ declare module app {
        * update == 'worksheet.reorderCells'
        */
       interface ReorderCells extends Update {
+        worksheetId: string;
         cellIds: string[]; // the new cell order for the worksheet
       }
 

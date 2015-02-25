@@ -275,6 +275,10 @@ describe('Notebook model state', () => {
     });
   });
 
+  describe('after worksheet.moveCell action', () => {
+
+  });
+
   describe('after worksheet.deleteCell action', () => {
     var deleteCellAction: app.notebook.action.DeleteCell;
     var update: app.notebook.update.DeleteCell;
@@ -312,7 +316,7 @@ describe('Notebook model state', () => {
       expect(update.cellId).toBe('first');
       // Validate that the specified cell was removed from the notebook model
       expect(worksheet.cells.length).toBe(2);
-      expect(worksheet.cells.map((cell) => {cell.id})).toEqual(['middle', 'last']);
+      expect(worksheet.cells.map((cell) => {return cell.id})).toEqual(['middle', 'last']);
     });
 
     it('should delete the middle cell', () => {
@@ -323,7 +327,7 @@ describe('Notebook model state', () => {
       expect(update.cellId).toBe('middle');
       // Validate that the specified cell was removed from the notebook model
       expect(worksheet.cells.length).toBe(2);
-      expect(worksheet.cells.map((cell) => {cell.id})).toEqual(['first', 'last']);
+      expect(worksheet.cells.map((cell) => {return cell.id})).toEqual(['first', 'last']);
     });
 
     it('should delete the last cell', () => {
@@ -334,7 +338,7 @@ describe('Notebook model state', () => {
       expect(update.cellId).toBe('last');
       // Validate that the specified cell was removed from the notebook model
       expect(worksheet.cells.length).toBe(2);
-      expect(worksheet.cells.map((cell) => {cell.id})).toEqual(['first', 'middle']);
+      expect(worksheet.cells.map((cell) => {return cell.id})).toEqual(['first', 'middle']);
     });
 
     it('should delete all cells', () => {
@@ -350,6 +354,77 @@ describe('Notebook model state', () => {
     });
   });
 
+///////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////
+
+  describe('after worksheet.moveCell action', () => {
+    var moveCellAction: app.notebook.action.MoveCell;
+    var worksheet: app.notebook.Worksheet;
+    beforeEach(() => {
+      worksheet = testutil.getFirstWorksheet(notebook);
+      moveCellAction = {
+        action: actions.worksheet.moveCell,
+        sourceWorksheetId: worksheet.id,
+        destinationWorksheetId: worksheet.id,
+        cellId: null,
+        insertAfter: null
+      };
+      // Add 3 cells to the worksheet
+      worksheet.cells.push({
+        id: 'A',
+        type: 'code',
+        metadata: {},
+        source: 'some code',
+        outputs: []
+      });
+      worksheet.cells.push({
+        id: 'B',
+        type: 'code',
+        metadata: {},
+        source: 'some other code',
+        outputs: []
+      });
+      worksheet.cells.push({
+        id: 'C',
+        type: 'code',
+        metadata: {},
+        source: 'yet another code',
+        outputs: []
+      });
+    });
+
+    afterEach(() => {
+      moveCellAction = undefined;
+      worksheet = undefined;
+    });
+
+    it('should move the last cell to be first', () => {
+      moveCellAction.cellId = 'C';
+      moveCellAction.insertAfter = null;
+      var update = <app.notebook.update.ReorderCells>notebook.apply(moveCellAction);
+      expect(update.cellIds).toEqual(['C', 'A', 'B']);
+      expect(worksheet.cells.map((cell) => {return cell.id;})).toEqual(['C', 'A', 'B']);
+    });
+
+    it('should leave the cell order unchanged', () => {
+      moveCellAction.cellId = 'A';
+      moveCellAction.insertAfter = null;
+      var update = <app.notebook.update.ReorderCells>notebook.apply(moveCellAction);
+      expect(update.cellIds).toEqual(['A', 'B', 'C']);
+      expect(worksheet.cells.map((cell) => {return cell.id;})).toEqual(['A', 'B', 'C']);
+    });
+
+    it('should move the first cell to the middle', () => {
+      moveCellAction.cellId = 'A';
+      moveCellAction.insertAfter = 'B';
+      var update = <app.notebook.update.ReorderCells>notebook.apply(moveCellAction);
+      expect(update.cellIds).toEqual(['B', 'A', 'C']);
+      expect(worksheet.cells.map((cell) => {return cell.id;})).toEqual(['B', 'A', 'C']);
+    });
+  });
+
+///////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////
   describe('after worksheet.addCell action', () => {
     var addCellAction: app.notebook.action.AddCell;
     var addCellUpdate: app.notebook.update.AddCell;

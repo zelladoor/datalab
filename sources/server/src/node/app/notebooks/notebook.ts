@@ -88,7 +88,7 @@ export class ActiveNotebook implements app.IActiveNotebook {
     }
   }
 
-  _applyClearOutput(action: app.notebook.action.ClearOutput): app.notebook.update.CellUpdate {
+  _applyClearOutput (action: app.notebook.action.ClearOutput): app.notebook.update.CellUpdate {
     return this._clearCellOutput(action.cellId, action.worksheetId);
   }
 
@@ -113,7 +113,25 @@ export class ActiveNotebook implements app.IActiveNotebook {
     return update;
   }
 
-  _applyUpdateCell(action: app.notebook.action.UpdateCell): app.notebook.update.CellUpdate {
+  _applyDeleteCell (action: app.notebook.action.DeleteCell): app.notebook.update.DeleteCell {
+    // Get the worksheet from which the cell should be deleted
+    var worksheet = this._getWorksheetOrThrow(action.worksheetId);
+    // Find the index of the cell to delete within the worksheet
+    var cellIndex = this._indexOf(worksheet, action.cellId);
+    if (cellIndex === -1) {
+      throw new Error('Cannot delete cell id "'+action.cellId+'"; not found within worksheet');
+    }
+    // Remove the cell from the worksheet
+    var removed = worksheet.cells.splice(cellIndex, 1);
+    // Create and return the update message
+    return {
+      update: updates.worksheet.deleteCell,
+      worksheetId: action.worksheetId,
+      cellId: action.cellId
+    };
+  }
+
+  _applyUpdateCell (action: app.notebook.action.UpdateCell): app.notebook.update.CellUpdate {
     // Get the cell where the update should be applied
     var cell = this._getCellOrThrow(action.cellId, action.worksheetId);
 
@@ -208,6 +226,24 @@ export class ActiveNotebook implements app.IActiveNotebook {
       throw new Error('Specified worksheet id "'+worksheetId+'" does not exist');
     }
     return worksheet;
+  }
+
+  /**
+   * Find the index of the cell with given id within the worksheet
+   *
+   * Returns the index of the cell matching the given id if it is found.
+   * Otherwise, returns -1 to indicate that a cell with specified cell id doesn't exist in the
+   * given worksheet, so return sentinel value to indicate the id was not found.
+   * Note: same sentinel value as Array.indexOf()
+   */
+  _indexOf (worksheet: app.notebook.Worksheet, cellId: string): number {
+    for (var i = 0; i < worksheet.cells.length; ++i) {
+      if (cellId == worksheet.cells[i].id) {
+        return i;
+      }
+    }
+    // No cell with the specified id exists within the worksheet
+    return -1;
   }
 
   /**
