@@ -172,6 +172,7 @@ export class Session implements app.ISession {
       case actions.worksheet.addCell:
       case actions.worksheet.deleteCell:
       case actions.worksheet.moveCell:
+      case actions.notebook.clearOutputs:
         this._handleActionNotebookData(action);
       break
 
