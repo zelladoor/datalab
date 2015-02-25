@@ -48,8 +48,20 @@ class Session implements app.ISession {
 
     // Register server-side message handlers
     connection.on(updates.label, this._handleUpdate.bind(this));
+
     // Register client-side event handlers
-    this._rootScope.$on(actions.cell.execute, this._handleExecuteCellEvent.bind(this));
+    this._rootScope.$on(actions.cell.execute, this._handleAction.bind(this));
+    this._rootScope.$on(actions.cell.clearOutput, this._handleAction.bind(this));
+    this._rootScope.$on(actions.worksheet.addCell, this._handleAction.bind(this));
+    this._rootScope.$on(actions.notebook.clearOutputs, this._handleAction.bind(this));
+  }
+
+  /**
+   * Handles action messages by forwarding them to the server
+   */
+  _handleAction (event: ng.IAngularEvent, action: app.notebook.action.Action) {
+    log.debug('Sending action to server', action);
+    this._connection.emit('action', action);
   }
 
   /**
@@ -57,21 +69,8 @@ class Session implements app.ISession {
    */
   _handleUpdate (update: app.notebook.update.Update) {
     log.debug('update message received:', update);
-    // Publish the update message
     this._rootScope.$emit(update.update, update);
   }
-
-  /**
-   * Constructs a cell.execute action and sends to the server for processing
-   */
-  _handleExecuteCellEvent (event: ng.IAngularEvent, action: app.notebook.action.Action) {
-    // TODO(bryantd): Either in this event handler or another, trigger an "executing" state
-    // visual treatment for the cell being executed
-
-    log.debug('Sending execute action', action);
-    this._connection.emit('action', action);
-  }
-
 }
 
 _app.registrar.service(constants.session.name, Session);
