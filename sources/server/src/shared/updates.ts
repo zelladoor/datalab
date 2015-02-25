@@ -34,7 +34,7 @@ export var notebook = {
 export var worksheet = {
   addCell: 'worksheet.addCell',
   deleteCell: 'worksheet.deleteCell',
-  reorderCells: 'worksheet.reorderCells'
+  moveCell: 'worksheet.moveCell'
 }
 
 // Cell-level update

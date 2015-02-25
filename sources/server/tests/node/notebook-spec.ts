@@ -401,25 +401,29 @@ describe('Notebook model state', () => {
     it('should move the last cell to be first', () => {
       moveCellAction.cellId = 'C';
       moveCellAction.insertAfter = null;
-      var update = <app.notebook.update.ReorderCells>notebook.apply(moveCellAction);
-      expect(update.cellIds).toEqual(['C', 'A', 'B']);
+      var update = <app.notebook.update.MoveCell>notebook.apply(moveCellAction);
       expect(worksheet.cells.map((cell) => {return cell.id;})).toEqual(['C', 'A', 'B']);
     });
 
     it('should leave the cell order unchanged', () => {
       moveCellAction.cellId = 'A';
       moveCellAction.insertAfter = null;
-      var update = <app.notebook.update.ReorderCells>notebook.apply(moveCellAction);
-      expect(update.cellIds).toEqual(['A', 'B', 'C']);
+      var update = <app.notebook.update.MoveCell>notebook.apply(moveCellAction);
       expect(worksheet.cells.map((cell) => {return cell.id;})).toEqual(['A', 'B', 'C']);
     });
 
     it('should move the first cell to the middle', () => {
       moveCellAction.cellId = 'A';
       moveCellAction.insertAfter = 'B';
-      var update = <app.notebook.update.ReorderCells>notebook.apply(moveCellAction);
-      expect(update.cellIds).toEqual(['B', 'A', 'C']);
+      var update = <app.notebook.update.MoveCell>notebook.apply(moveCellAction);
       expect(worksheet.cells.map((cell) => {return cell.id;})).toEqual(['B', 'A', 'C']);
+    });
+
+    it('should move the first cell to the end', () => {
+      moveCellAction.cellId = 'A';
+      moveCellAction.insertAfter = 'C';
+      var update = <app.notebook.update.MoveCell>notebook.apply(moveCellAction);
+      expect(worksheet.cells.map((cell) => {return cell.id;})).toEqual(['B', 'C', 'A']);
     });
   });
 

@@ -80,11 +80,13 @@ declare module app {
         cellId: string;
       }
       /**
-       * update == 'worksheet.reorderCells'
+       * update == 'worksheet.moveCell'
        */
-      interface ReorderCells extends Update {
-        worksheetId: string;
-        cellIds: string[]; // the new cell order for the worksheet
+      interface MoveCell extends Update {
+        sourceWorksheetId: string;
+        destinationWorksheetId: string;
+        cellId: string;
+        insertAfter: string; // the cell ID after which to insert the moved cell
       }
 
       /* Cell-level updates */

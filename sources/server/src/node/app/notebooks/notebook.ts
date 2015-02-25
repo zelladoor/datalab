@@ -61,6 +61,8 @@ export class ActiveNotebook implements app.IActiveNotebook {
         return this._applyAddCell(<app.notebook.action.AddCell>action);
       case actions.worksheet.deleteCell:
         return this._applyDeleteCell(<app.notebook.action.DeleteCell>action);
+      case actions.worksheet.moveCell:
+        return this._applyMoveCell(<app.notebook.action.MoveCell>action);
       default:
         throw new Error('Unsupported action "'+action.action+'" cannot be applied');
     }
@@ -119,7 +121,7 @@ export class ActiveNotebook implements app.IActiveNotebook {
     // Find the index of the cell to delete within the worksheet
     var cellIndex = this._indexOf(worksheet, action.cellId);
     if (cellIndex === -1) {
-      throw new Error('Cannot delete cell id "'+action.cellId+'"; not found within worksheet');
+      throw new Error('Cannot delete cell id "'+action.cellId+'"; not found in worksheet');
     }
     // Remove the cell from the worksheet
     var removed = worksheet.cells.splice(cellIndex, 1);
@@ -129,6 +131,46 @@ export class ActiveNotebook implements app.IActiveNotebook {
       worksheetId: action.worksheetId,
       cellId: action.cellId
     };
+  }
+
+  _applyMoveCell (action: app.notebook.action.MoveCell): app.notebook.update.MoveCell {
+    // Find the cell to move within the source worksheet
+    var sourceWorksheet = this._getWorksheetOrThrow(action.sourceWorksheetId);
+    var sourceIndex = this._indexOf(sourceWorksheet, action.cellId);
+    if (sourceIndex === -1) {
+      throw new Error('Cannot move cell id "'+action.cellId+'"; not found in worksheet');
+    }
+
+    // Remove the cell from the worksheet
+    var cellToMove = sourceWorksheet.cells.splice(sourceIndex, 1)[0];
+
+    // Find the insertion point for the cell in the destination worksheet
+    var destinationWorksheet = this._getWorksheetOrThrow(action.sourceWorksheetId);
+    if (action.insertAfter === null) {
+      // Then prepend the cell to the destination worksheet
+      destinationWorksheet.cells = [cellToMove].concat(destinationWorksheet.cells);
+    } else {
+      // Otherwise insert the cell after the specified insertAfter cell id
+      var destinationIndex = this._indexOf(sourceWorksheet, action.insertAfter);
+      if (destinationIndex === -1) {
+        throw new Error('Cannot find insertAfter cell id "'+action.insertAfter+'"');
+      }
+      // The insertion index is one after the "insertAfter" cell's index
+      ++destinationIndex;
+      // Insert the cell into the destination index
+      destinationWorksheet.cells.splice(destinationIndex, 0, cellToMove);
+    }
+
+
+    // Note: the update message is the same as the action message, because the clients
+    // need to apply the same cell movement modifications locally.
+    return {
+      update: updates.worksheet.moveCell,
+      sourceWorksheetId: action.sourceWorksheetId,
+      destinationWorksheetId: action.destinationWorksheetId,
+      cellId: action.cellId,
+      insertAfter: action.insertAfter // the cell ID after which to insert the moved cell
+    }
   }
 
   _applyUpdateCell (action: app.notebook.action.UpdateCell): app.notebook.update.CellUpdate {
@@ -191,6 +233,10 @@ export class ActiveNotebook implements app.IActiveNotebook {
       outputs: cell.outputs,
       replaceOutputs: true
     };
+  }
+
+  _getCellIds (worksheet: app.notebook.Worksheet): string[] {
+    return worksheet.cells.map((cell) => {return cell.id});
   }
 
   _getCellOrThrow (cellId: string, worksheetId: string): app.notebook.Cell {
