@@ -275,6 +275,81 @@ describe('Notebook model state', () => {
     });
   });
 
+  describe('after worksheet.deleteCell action', () => {
+    var deleteCellAction: app.notebook.action.DeleteCell;
+    var update: app.notebook.update.DeleteCell;
+    var worksheet: app.notebook.Worksheet;
+    var notebookData: app.notebook.Notebook;
+
+    beforeEach(() => {
+      worksheet = testutil.getFirstWorksheet(notebook);
+      deleteCellAction = {
+        action: actions.worksheet.deleteCell,
+        worksheetId: worksheet.id,
+        cellId: null
+      };
+
+      // Create three cells to validate deleting in various positions
+      ['first', 'middle', 'last'].forEach((cellId) => {
+        worksheet.cells.push({
+          id: cellId,
+          type: 'code',
+          source: 'cell source content'
+        });
+      });
+    });
+
+    afterEach(() => {
+      deleteCellAction = undefined;
+      worksheet = undefined;
+    });
+
+    it('should delete the first cell', () => {
+      deleteCellAction.cellId = 'first';
+      update = <app.notebook.update.DeleteCell>notebook.apply(deleteCellAction);
+      // Validate the update message
+      expect(update.worksheetId).toBe(worksheet.id);
+      expect(update.cellId).toBe('first');
+      // Validate that the specified cell was removed from the notebook model
+      expect(worksheet.cells.length).toBe(2);
+      expect(worksheet.cells.map((cell) => {cell.id})).toEqual(['middle', 'last']);
+    });
+
+    it('should delete the middle cell', () => {
+      deleteCellAction.cellId = 'middle';
+      update = <app.notebook.update.DeleteCell>notebook.apply(deleteCellAction);
+      // Validate the update message
+      expect(update.worksheetId).toBe(worksheet.id);
+      expect(update.cellId).toBe('middle');
+      // Validate that the specified cell was removed from the notebook model
+      expect(worksheet.cells.length).toBe(2);
+      expect(worksheet.cells.map((cell) => {cell.id})).toEqual(['first', 'last']);
+    });
+
+    it('should delete the last cell', () => {
+      deleteCellAction.cellId = 'last';
+      update = <app.notebook.update.DeleteCell>notebook.apply(deleteCellAction);
+      // Validate the update message
+      expect(update.worksheetId).toBe(worksheet.id);
+      expect(update.cellId).toBe('last');
+      // Validate that the specified cell was removed from the notebook model
+      expect(worksheet.cells.length).toBe(2);
+      expect(worksheet.cells.map((cell) => {cell.id})).toEqual(['first', 'middle']);
+    });
+
+    it('should delete all cells', () => {
+      // Apply a delete operation for every cell in the notebook
+      deleteCellAction.cellId = 'first';
+      notebook.apply(deleteCellAction);
+      deleteCellAction.cellId = 'middle';
+      notebook.apply(deleteCellAction);
+      deleteCellAction.cellId = 'last';
+      notebook.apply(deleteCellAction);
+      // Validate that the worksheet now contains zero cells
+      expect(worksheet.cells.length).toBe(0);
+    });
+  });
+
   describe('after worksheet.addCell action', () => {
     var addCellAction: app.notebook.action.AddCell;
     var addCellUpdate: app.notebook.update.AddCell;

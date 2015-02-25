@@ -59,6 +59,8 @@ export class ActiveNotebook implements app.IActiveNotebook {
         return this._applyClearOutputs(<app.notebook.action.ClearOutputs>action);
       case actions.worksheet.addCell:
         return this._applyAddCell(<app.notebook.action.AddCell>action);
+      case actions.worksheet.deleteCell:
+        return this._applyDeleteCell(<app.notebook.action.DeleteCell>action);
       default:
         throw new Error('Unsupported action "'+action.action+'" cannot be applied');
     }
