@@ -354,9 +354,6 @@ describe('Notebook model state', () => {
     });
   });
 
-///////////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////////
-
   describe('after worksheet.moveCell action', () => {
     var moveCellAction: app.notebook.action.MoveCell;
     var worksheet: app.notebook.Worksheet;
@@ -427,8 +424,6 @@ describe('Notebook model state', () => {
     });
   });
 
-///////////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////////
   describe('after worksheet.addCell action', () => {
     var addCellAction: app.notebook.action.AddCell;
     var addCellUpdate: app.notebook.update.AddCell;
@@ -437,10 +432,21 @@ describe('Notebook model state', () => {
       addCellAction = {
         action: actions.worksheet.addCell,
         worksheetId: worksheetId,
-        cellId: 'new-cell-id',
+        cellId: 'NEW',
         type: 'code',
         source: 'some code here'
       };
+      var worksheet = testutil.getFirstWorksheet(notebook);
+      worksheet.cells.push({
+        id: 'A',
+        type: 'code',
+        source: 'source code here'
+      });
+      worksheet.cells.push({
+        id: 'B',
+        type: 'code',
+        source: 'source code here'
+      });
     });
 
     afterEach(() => {
@@ -448,40 +454,41 @@ describe('Notebook model state', () => {
       addCellUpdate = undefined;
     });
 
-    it('should add a cell', () => {
+    it('should add a cell to the beginning of the worksheet', () => {
+      addCellAction.insertAfter = null;
       var addCellUpdate = <app.notebook.update.AddCell>notebook.apply(addCellAction);
 
       // Validate the update message content
       expect(addCellUpdate.update).toBe(updates.worksheet.addCell);
       expect(addCellUpdate.worksheetId).toBe(worksheetId);
       expect(addCellUpdate.cell).toBeDefined();
-
       // Validate the new cell in the update has the expected structure
-      expect(addCellUpdate.cell.id).toBe('new-cell-id');
+      expect(addCellUpdate.cell.id).toBe('NEW');
       expect(addCellUpdate.cell.type).toBe('code');
       expect(addCellUpdate.cell.source).toBe('some code here');
-
       // Validate that the notebook model was also updated to have the new cell
       var worksheet = testutil.getFirstWorksheet(notebook);
-      expect(worksheet.cells.length).toBe(1);
-      var cell = worksheet.cells[0];
-      expect(cell.id).toBe('new-cell-id');
-      expect(cell.type).toBe('code');
-      expect(cell.source).toBe('some code here');
+      expect(worksheet.cells.length).toBe(3);
+      expect(worksheet.cells.map((cell) => {return cell.id})).toEqual(['NEW', 'A', 'B'])
+    });
+
+    it('should insert a cell after cell "B" in the worksheet', () => {
+      addCellAction.insertAfter = 'B';
+      notebook.apply(addCellAction);
+      // Validate that the notebook model has the added cell where expectedd
+      var worksheet = testutil.getFirstWorksheet(notebook);
+      expect(worksheet.cells.length).toBe(3);
+      expect(worksheet.cells.map((cell) => {return cell.id})).toEqual(['A', 'B', 'NEW'])
     });
 
     // Note: skipped currently as insertAfter is not yet implemented
-    xit('should throw an error due to bad insertAfter cell id', () => {
+    it('should throw an error due to bad insertAfter cell id', () => {
       addCellAction.insertAfter = 'does-not-exist';
       expect(() => {
         notebook.apply(addCellAction);
       }).toThrow();
     });
 
-    xit('should insert a cell after the cell with id foo', () => {
-      addCellAction.insertAfter = 'cell-to-insert-after';
-      notebook.apply(addCellAction);
-    });
   });
 
 });

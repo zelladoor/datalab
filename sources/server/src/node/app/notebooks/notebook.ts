@@ -75,12 +75,18 @@ export class ActiveNotebook implements app.IActiveNotebook {
     var cell = util.createCell(action.type, action.cellId, action.source);
 
     // If an insertion point was defined, verify the given cell id exists within the worksheet
+    var insertIndex: number;
     if (action.insertAfter) {
-      throw new Error('TODO(bryantd): add support for insertAfter property');
+      // Find the cell to insert after in the worksheet
+      insertIndex = this._getCellIndexOrThrow(worksheet, action.insertAfter);
+      // Increment the index because we want to insert after the "insertAfter" cell id
+      ++insertIndex;
     } else {
-      // Append the cell to the tail of the worksheet
-      worksheet.cells.push(cell);
+      // Prepend the cell to the beginning of the worksheet
+      insertIndex = 0;
     }
+    // Insert the cell at the insert index;
+    worksheet.cells.splice(insertIndex, 0, cell);
 
     // Create and return the update message
     return {
@@ -136,10 +142,7 @@ export class ActiveNotebook implements app.IActiveNotebook {
   _applyMoveCell (action: app.notebook.action.MoveCell): app.notebook.update.MoveCell {
     // Find the cell to move within the source worksheet
     var sourceWorksheet = this._getWorksheetOrThrow(action.sourceWorksheetId);
-    var sourceIndex = this._indexOf(sourceWorksheet, action.cellId);
-    if (sourceIndex === -1) {
-      throw new Error('Cannot move cell id "'+action.cellId+'"; not found in worksheet');
-    }
+    var sourceIndex = this._getCellIndexOrThrow(sourceWorksheet, action.cellId);
 
     // Remove the cell from the worksheet
     var cellToMove = sourceWorksheet.cells.splice(sourceIndex, 1)[0];
@@ -151,10 +154,7 @@ export class ActiveNotebook implements app.IActiveNotebook {
       destinationWorksheet.cells = [cellToMove].concat(destinationWorksheet.cells);
     } else {
       // Otherwise insert the cell after the specified insertAfter cell id
-      var destinationIndex = this._indexOf(sourceWorksheet, action.insertAfter);
-      if (destinationIndex === -1) {
-        throw new Error('Cannot find insertAfter cell id "'+action.insertAfter+'"');
-      }
+      var destinationIndex = this._getCellIndexOrThrow(sourceWorksheet, action.insertAfter);
       // The insertion index is one after the "insertAfter" cell's index
       ++destinationIndex;
       // Insert the cell into the destination index
@@ -237,6 +237,14 @@ export class ActiveNotebook implements app.IActiveNotebook {
 
   _getCellIds (worksheet: app.notebook.Worksheet): string[] {
     return worksheet.cells.map((cell) => {return cell.id});
+  }
+
+  _getCellIndexOrThrow (worksheet: app.notebook.Worksheet, cellId: string) {
+    var index = this._indexOf(worksheet, cellId);
+    if (index === -1) {
+      throw new Error('Cannot find insertAfter cell id "'+cellId+'"');
+    }
+    return index;
   }
 
   _getCellOrThrow (cellId: string, worksheetId: string): app.notebook.Cell {
