@@ -71,6 +71,9 @@ class NotebookData implements app.INotebookData {
   // to make the UI more responsive given the latency in getting back a server response with the
   // inserted cell.
 
+  // TODO(bryantd): many of the handlers below share a non-trivial amount of logic with server-side node
+  // code for applying modifications to the notebook model
+
   selectWorksheet (worksheetId: string) {
     var worksheet = this._getWorksheetOrThrow(worksheetId);
     this.activeWorksheet = worksheet;
@@ -126,6 +129,21 @@ class NotebookData implements app.INotebookData {
   }
 
   /**
+   * Searches for the given cell id within the worksheet and returns its index if it is found
+   *
+   * Throws an error if the given cell does not exist within the given worksheet
+   *
+   * TODO(bryantd): create a common util library. duplicate function in ActiveNotebook
+   */
+  _getCellIndexOrThrow (worksheet: app.notebook.Worksheet, cellId: string) {
+    var index = this._indexOf(worksheet, cellId);
+    if (index === -1) {
+      throw new Error('Cannot find insertAfter cell id "'+cellId+'"');
+    }
+    return index;
+  }
+
+  /**
    * Gets the specified worksheet or throws an error
    *
    * TODO(bryantd): create a common util library. duplicate function exists in ActiveNotebook
@@ -136,6 +154,23 @@ class NotebookData implements app.INotebookData {
       throw new Error('Specified worksheet id "'+worksheetId+'" does not exist');
     }
     return worksheet;
+  }
+
+  _handleAddCell (update: app.notebook.update.AddCell) {
+    var worksheet = this._getWorksheetOrThrow(update.worksheetId);
+    // If an insertion point was defined, verify the given cell id exists within the worksheet
+    var insertIndex: number;
+    if (update.insertAfter) {
+      // Find the cell to insert after in the worksheet
+      insertIndex = this._getCellIndexOrThrow(worksheet, update.insertAfter);
+      // Increment the index because we want to insert after the "insertAfter" cell id
+      ++insertIndex;
+    } else {
+      // Prepend the cell to the beginning of the worksheet
+      insertIndex = 0;
+    }
+    // Insert the cell at the insert index;
+    worksheet.cells.splice(insertIndex, 0, update.cell);
   }
 
   _handleCellUpdate (update: app.notebook.update.CellUpdate) {
@@ -175,12 +210,68 @@ class NotebookData implements app.INotebookData {
     }
   }
 
+  _handleDeleteCell (update: app.notebook.update.DeleteCell) {
+    // Get the worksheet from which the cell should be deleted
+    var worksheet = this._getWorksheetOrThrow(update.worksheetId);
+    // Find the index of the cell to delete within the worksheet
+    var cellIndex = this._getCellIndexOrThrow(worksheet, update.cellId);
+    // Remove the cell from the worksheet
+    var removed = worksheet.cells.splice(cellIndex, 1);
+    log.debug('Deletec cell from worksheet', removed);
+  }
+
+  _handleMoveCell (update: app.notebook.update.MoveCell) {
+    // Find the cell to move within the source worksheet
+    var sourceWorksheet = this._getWorksheetOrThrow(update.sourceWorksheetId);
+    var sourceIndex = this._getCellIndexOrThrow(sourceWorksheet, update.cellId);
+
+    // Remove the cell from the worksheet
+    var cellToMove = sourceWorksheet.cells.splice(sourceIndex, 1)[0];
+
+    // Find the insertion point for the cell in the destination worksheet
+    var destinationWorksheet = this._getWorksheetOrThrow(update.sourceWorksheetId);
+    if (update.insertAfter === null) {
+      // Then prepend the cell to the destination worksheet
+      destinationWorksheet.cells = [cellToMove].concat(destinationWorksheet.cells);
+    } else {
+      // Otherwise insert the cell after the specified insertAfter cell id
+      var destinationIndex = this._getCellIndexOrThrow(sourceWorksheet, update.insertAfter);
+      // The insertion index is one after the "insertAfter" cell's index
+      ++destinationIndex;
+      // Insert the cell into the destination index
+      destinationWorksheet.cells.splice(destinationIndex, 0, cellToMove);
+    }
+  }
+
+  /**
+   * Find the index of the cell with given id within the worksheet
+   *
+   * Returns the index of the cell matching the given id if it is found.
+   * Otherwise, returns -1 to indicate that a cell with specified cell id doesn't exist in the
+   * given worksheet, so return sentinel value to indicate the id was not found.
+   * Note: same sentinel value as Array.indexOf()
+   *
+   * TODO(bryantd): create common lib. duplicate method in node code for ActiveNotebook
+   */
+  _indexOf (worksheet: app.notebook.Worksheet, cellId: string): number {
+    for (var i = 0; i < worksheet.cells.length; ++i) {
+      if (cellId == worksheet.cells[i].id) {
+        return i;
+      }
+    }
+    // No cell with the specified id exists within the worksheet
+    return -1;
+  }
+
   /**
    * Register all callbacks for handling notebook update events
    */
   _registerEventHandlers () {
-    this._registerEventHandler(updates.notebook.snapshot, this._setNotebook.bind(this));
     this._registerEventHandler(updates.cell.update, this._handleCellUpdate.bind(this));
+    this._registerEventHandler(updates.notebook.snapshot, this._setNotebook.bind(this));
+    this._registerEventHandler(updates.worksheet.addCell, this._handleAddCell.bind(this));
+    this._registerEventHandler(updates.worksheet.deleteCell, this._handleDeleteCell.bind(this));
+    this._registerEventHandler(updates.worksheet.moveCell, this._handleMoveCell.bind(this));
   }
 
   /**

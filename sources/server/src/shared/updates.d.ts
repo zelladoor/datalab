@@ -71,6 +71,7 @@ declare module app {
       interface AddCell extends Update {
         worksheetId: string;
         cell: Cell;
+        insertAfter: string; // cell id to insert after
       }
       /**
        * update == 'worksheet.deleteCell'

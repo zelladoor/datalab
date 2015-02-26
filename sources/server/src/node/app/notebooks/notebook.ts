@@ -96,7 +96,8 @@ export class ActiveNotebook implements app.IActiveNotebook {
     return {
       update: updates.worksheet.addCell,
       worksheetId: worksheet.id,
-      cell: cell
+      cell: cell,
+      insertAfter: action.insertAfter
     }
   }
 
