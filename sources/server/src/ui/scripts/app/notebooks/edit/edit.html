@@ -1,33 +1,14 @@
 <div class="container-fluid">
 
-  <div class="row datalab-editor-toolbar">
-
+  <div class="row datalab-editor-header">
     <!-- Notebook title/renaming widget -->
     <div class="col-sm-6 col-md-4 col-lg-3">
       <span class="datalab-notebook-title">Title of DataLab notebook</span>
     </div>
-
     <!-- Notebook-level controls widget -->
-    <!-- FIXME: move this toolbar to a separate directive and use it here -->
     <div class="col-sm-6 col-md-8 col-lg-9">
-      <div class="btn-group pull-right" role="group">
-        <button type="button" class="btn btn-default btn-sm" ng-click="pageCtrl.executeCells()">
-          <span ng-switch on="pageCtrl.sessionStatus.kernelStatus">
-            <span ng-switch-when="busy">
-              <i class="fa-refresh fa fa-spin"></i>
-            </span>
-            <span ng-switch-default>
-              <i class="fa-play fa"></i>
-            </span>
-          </span>
-        </button>
-
-        <button type="button" class="btn btn-default btn-sm" ng-click="pageCtrl.clearAllOutputs()">
-          <i class="fa-eraser fa"></i>
-        </button>
-      </div>
+      <datalab-notebook-toolbar></datalab-notebook-toolbar>
     </div>
-
   </div>
 
   <!-- Worksheet editor widget -->

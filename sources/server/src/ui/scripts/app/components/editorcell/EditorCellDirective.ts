@@ -22,6 +22,7 @@
 /// <reference path="../../../../../../../../externs/ts/angularjs/angular.d.ts" />
 /// <reference path="../../../../../../../../externs/ts/codemirror/codemirror.d.ts" />
 /// <amd-dependency path="app/components/codeeditor/CodeEditorDirective" />
+/// <amd-dependency path="app/components/celltoolbar/CellToolbarDirective" />
 import logging = require('app/common/Logging');
 import constants = require('app/common/Constants');
 import app = require('app/App');

@@ -14,7 +14,7 @@
 
 
 /**
- * Directive for rendering a cell-level toolbar
+ * Directive for rendering a notebook-level toolbar
  */
 /// <reference path="../../../../../../../../externs/ts/angularjs/angular.d.ts" />
 import logging = require('app/common/Logging');
@@ -22,21 +22,19 @@ import constants = require('app/common/Constants');
 import _app = require('app/App');
 
 
-var log = logging.getLogger(constants.scopes.cellToolbar);
+var log = logging.getLogger(constants.scopes.notebookToolbar);
 
-interface CellToolbarScope extends ng.IScope {
+interface NotebookToolbarScope extends ng.IScope {
   actionEmitter: app.IActionEmitter,
-  cellId: string;
-  worksheetId: string;
 }
 
-class CellToolbarController {
+class NotebookToolbarController {
   _actionEmitter: app.IActionEmitter;
-  _scope: CellToolbarScope;
+  _scope: NotebookToolbarScope;
 
   static $inject = ['$scope', constants.actionEmitter.name];
   constructor (
-      scope: CellToolbarScope,
+      scope: NotebookToolbarScope,
       actionEmitter: app.IActionEmitter) {
     this._scope = scope;
 
@@ -47,18 +45,18 @@ class CellToolbarController {
 /**
  * Creates a directive definition.
  */
-function cellToolbarDirective (): ng.IDirective {
+function notebookToolbarDirective (): ng.IDirective {
   return {
     restrict: 'E',
     scope: {
       worksheetId: '=',
       cellId: '='
     },
-    templateUrl: constants.scriptPaths.app + '/components/celltoolbar/celltoolbar.html',
+    templateUrl: constants.scriptPaths.app + '/components/notebooktoolbar/notebooktoolbar.html',
     replace: true,
-    controller: CellToolbarController
+    controller: NotebookToolbarController
   }
 }
 
-_app.registrar.directive(constants.cellToolbar.directiveName, cellToolbarDirective);
-log.debug('Registered cell toolbar directive');
+_app.registrar.directive(constants.notebookToolbar.directiveName, notebookToolbarDirective);
+log.debug('Registered notebook toolbar directive');

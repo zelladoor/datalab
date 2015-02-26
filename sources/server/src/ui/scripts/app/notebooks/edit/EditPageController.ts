@@ -18,6 +18,7 @@
  */
 /// <reference path="../../../../../../../../externs/ts/angularjs/angular.d.ts" />
 /// <amd-dependency path="app/components/worksheeteditor/WorksheetEditorDirective" />
+/// <amd-dependency path="app/components/notebooktoolbar/NotebookToolbarDirective" />
 /// <amd-dependency path="app/components/session/Session" />
 /// <amd-dependency path="app/components/notebookdata/NotebookData" />
 import logging = require('app/common/Logging');
@@ -49,44 +50,7 @@ export class EditPageController {
     this._rootScope = rootScope;
     this.notebookData = notebookData;
     this._session = session;
-
-    this._configureSessionStatusHandlers();
   }
-
-  // FIXME: move these to some "notebook toolbar" directive to avoid cluttering the page-level directive
-  // FIXME: they should also delegate to notebook data service
-  clearAllOutputs () {
-    var clearOutputsAction: app.notebook.action.ClearOutputs = {
-      action: actions.notebook.clearOutputs
-    };
-    this._rootScope.$emit(clearOutputsAction.action, clearOutputsAction);
-  }
-  executeCells () {
-    var executeCellsAction: app.notebook.action.ExecuteCells = {
-      action: actions.notebook.executeCells
-    };
-    this._rootScope.$emit(executeCellsAction.action, executeCellsAction);
-  }
-
-
-  // FIXME: relocate this into a sub-component? Seems noisy to have it top-level
-  _configureSessionStatusHandlers () {
-    // FIXME: re-enable and refactor once this message is being sent by server
-    //
-    // // FIXME: list out the different values for session status somewhere and replace string constant
-    // this.sessionStatus = {
-    //   kernelStatus: 'starting'
-    // };
-    // var that = this;
-    // this._rootScope.$on('session-status', (event: any, sessionStatus: any) => {
-    //   // FIXME: find other references of scope.$apply and see if they should be changed
-    //   // to $evalAsync for digest loop conflict safety
-    //   that._rootScope.$evalAsync(() => {
-    //     that.sessionStatus = sessionStatus;
-    //   });
-    // });
-  }
-
 }
 
 _app.registrar.controller(constants.notebooks.edit.pageControllerName, EditPageController);

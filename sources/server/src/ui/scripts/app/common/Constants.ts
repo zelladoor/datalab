@@ -36,6 +36,9 @@ export var layouts = {
 export var cellInserter = {
   directiveName: 'datalabCellInserter'
 }
+export var cellToolbar = {
+  directiveName: 'datalabCellToolbar'
+}
 export var codeEditor = {
   directiveName: 'datalabCodeEditor'
 };
@@ -59,6 +62,9 @@ export var headingViewer = {
 };
 export var notebookEditor = {
   directiveName: 'datalabNotebookEditor'
+};
+export var notebookToolbar = {
+  directiveName: 'datalabNotebookToolbar'
 };
 export var worksheetEditor = {
   directiveName: 'datalabWorksheetEditor'
@@ -94,11 +100,13 @@ export var scopes = {
 
   // Generic directives
   cellInserter: 'cellInserter',
+  cellToolbar: 'cellToolbar',
   codeEditor: 'codeEditor',
   headingViewer: 'headingViewer',
   layouts: 'layouts',
   markdownViewer: 'markdownViewer',
   notebookEditor: 'notebookEditor',
+  notebookToolbar: 'notebookToolbar',
   worksheetEditor: 'worksheetEditor',
 
   // Route-specific components
