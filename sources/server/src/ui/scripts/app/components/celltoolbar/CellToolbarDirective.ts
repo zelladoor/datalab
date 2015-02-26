@@ -29,7 +29,6 @@ interface CellToolbarScope extends ng.IScope {
   actionEmitter: app.IActionEmitter;
   cell: app.notebook.Cell;
   worksheetId: string;
-  foo: Function;
 }
 
 class CellToolbarController {
