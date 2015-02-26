@@ -176,19 +176,20 @@ class NotebookData implements app.INotebookData {
   }
 
   /**
-   * Register callbacks for handling notebook update events
+   * Register all callbacks for handling notebook update events
    */
   _registerEventHandlers () {
-    var rootScope = this._rootScope;
-    // TODO(bryantd): possible to simplify the nesting or add a util function to hide boilerplate?
-    var notebookSnapshotCallback = this._setNotebook.bind(this);
-    rootScope.$on(updates.notebook.snapshot, (event: any, snapshot: app.notebook.update.Snapshot) => {
-      rootScope.$evalAsync(() => { notebookSnapshotCallback(snapshot) });
-    });
+    this._registerEventHandler(updates.notebook.snapshot, this._setNotebook.bind(this));
+    this._registerEventHandler(updates.cell.update, this._handleCellUpdate.bind(this));
+  }
 
-    var cellUpdateCallback = this._handleCellUpdate.bind(this);
-    rootScope.$on(updates.cell.update, (event: any, update: app.notebook.update.CellUpdate) => {
-      rootScope.$evalAsync(() => { cellUpdateCallback(update) });
+  /**
+   * Registers a single callback to process a specified event and issue async scope digest after
+   */
+  _registerEventHandler (eventName: string, callback: Function) {
+    var rootScope = this._rootScope;
+    rootScope.$on(eventName, (event: any, message: any) => {
+      rootScope.$evalAsync(() => { callback(message) });
     });
   }
 
