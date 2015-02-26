@@ -7,20 +7,21 @@
     <!-- Create a cell rendering directive for each flavor of supported cell -->
   <div ng-repeat="cell in worksheet.cells">
     <div ng-switch="cell.type">
+    <!-- FIXME: doesn't look like any of these cells are actually using the worksheet id currently... Needs to be plumbed through all the way to editor-cell so that the toolbar controls can issue the appropriate action messages -->
       <datalab-code-cell
           ng-switch-when="code"
           cell="cell"
-          worksheetId="worksheet.id"></datalab-code-cell>
+          worksheet-id="worksheet.id"></datalab-code-cell>
 
       <datalab-markdown-cell
           ng-switch-when="markdown"
           cell="cell"
-          worksheetId="worksheet.id"></datalab-markdown-cell>
+          worksheet-id="worksheet.id"></datalab-markdown-cell>
 
       <datalab-heading-cell
           ng-switch-when="heading"
           cell="cell"
-          worksheetId="worksheet.id"></datalab-heading-cell>
+          worksheet-id="worksheet.id"></datalab-heading-cell>
     </div>
 
     <datalab-cell-inserter

@@ -14,7 +14,7 @@
 
 
 /**
- * Directive for rendering a cell inserter widget
+ * Directive for rendering a cell-level toolbar
  */
 /// <reference path="../../../../../../../../externs/ts/angularjs/angular.d.ts" />
 import logging = require('app/common/Logging');
@@ -22,43 +22,46 @@ import constants = require('app/common/Constants');
 import _app = require('app/App');
 
 
-var log = logging.getLogger(constants.scopes.cellInserter);
+var log = logging.getLogger(constants.scopes.cellToolbar);
 
-interface CellInserterScope extends ng.IScope {
-  actionEmitter: app.IActionEmitter;
-  insertAfterCellId: string;
+interface CellToolbarScope extends ng.IScope {
+  actionEmitter: app.IActionEmitter,
+  cellId: string;
   worksheetId: string;
 }
 
-class CellInserterController {
+class CellToolbarController {
   _actionEmitter: app.IActionEmitter;
-  _rootScope: ng.IRootScopeService;
-  _scope: CellInserterScope;
+  _rootScope: ng.IRootScopeServivce;
+  _scope: CellToolbarScope;
 
   static $inject = ['$rootScope', '$scope', constants.actionEmitter.name];
   constructor (
       rootScope: ng.IRootScopeService,
-      scope: CellInserterScope,
+      scope: CellToolbarScope,
       actionEmitter: app.IActionEmitter) {
     this._rootScope = rootScope;
     this._scope = scope;
-    this._scope.actionEmitter = actionEmitter;
+
+    this._scope.actionEmitter = actionEmitter
   }
 }
 
-function cellInserterDirective (): ng.IDirective {
+/**
+ * Creates a directive definition.
+ */
+function cellToolbarDirective (): ng.IDirective {
   return {
     restrict: 'E',
     scope: {
-      // TODO(bryantd): try to make these properties use one-way binding for efficiency
-      insertAfterCellId: '=',
-      worksheetId: '='
+      worksheetId: '=',
+      cellId: '='
     },
+    templateUrl: constants.scriptPaths.app + '/components/celltoolbar/celltoolbar.html',
     replace: true,
-    controller: CellInserterController,
-    templateUrl: constants.scriptPaths.app + '/components/cellinserter/cellinserter.html',
+    controller: CellToolbarController
   }
 }
 
-_app.registrar.directive(constants.cellInserter.directiveName, cellInserterDirective);
-log.debug('Registered cell inserter directive');
+_app.registrar.directive(constants.cellToolbar.directiveName, cellToolbarDirective);
+log.debug('Registered editor cell directive');

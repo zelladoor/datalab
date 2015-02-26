@@ -13,12 +13,6 @@
  */
 
 
-/**
- * Directive for creating a single editor cell
- *
- * The input region provides and editable text region. The output region appears if there is any
- * output content, and disappears is the output content is falsey (undefined/null/empty).
- */
 /// <reference path="../../../../../../../../externs/ts/angularjs/angular.d.ts" />
 import logging = require('app/common/Logging');
 import constants = require('app/common/Constants');
@@ -70,7 +64,6 @@ class NotebookData implements app.INotebookData {
     this._rootScope = rootScope;
     this._sce = sce;
 
-    // FIXME: move event name strings to constants file
     // FIXME: clean this up, possible to simplify the nesting?
     var callback: Function = this._setNotebook.bind(this);
     rootScope.$on(updates.notebook.snapshot, (event: any, snapshot: any) => {
@@ -83,18 +76,6 @@ class NotebookData implements app.INotebookData {
   // TODO(bryantd): decide if we want a local "predictive modification" for the various insert functions
   // to make the UI more responsive given the latency in getting back a server response with the
   // inserted cell.
-
-  insertMarkdownCell () {
-    console.debug('insert markdown cell()');
-  }
-
-  insertCodeCell () {
-    console.debug('insert code cell()');
-  }
-
-  insertHeadingCell () {
-    console.debug('insert heading cell()');
-  }
 
   selectWorksheet (worksheetId: string) {
     var worksheet = this.notebook.worksheets[worksheetId];

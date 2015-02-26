@@ -55,43 +55,5 @@
     <datalab-markdown-viewer ng-if="cell.type == 'markdown'" source="cell.source"></datalab-markdown-viewer>
     <datalab-heading-viewer ng-if="cell.type == 'heading'" source="cell.source"level="cell.metadata.level"></datalab-heading-viewer>
   </div>
-
-
-  <!-- FIXME: separate out the controls into a separate directive -->
-  <!-- FIXME: make this cell controls widget appear whenever the cell is active: place it in the (vertical) gutter via negative margins (ala colab)-->
-  <!-- TODO(bryantd): find a more concise way to surface cell-level controls and then add these buttons back
-  <div class="col-md-1">
-    <div class="datalab-editor-cell-controls">
-
-        <div class="row">
-          <div class="md-col-12">
-            <button type="button" class="btn btn-default btn-block btn-xs">
-              <i class="fa-long-arrow-down fa"></i>&nbsp;Run
-            </button>
-          </div>
-
-
-          <div class="md-col-12">
-            <button type="button" class="btn btn-default btn-block btn-xs">
-              <i class="fa-eraser fa"></i>&nbsp;Clear
-            </button>
-          </div>
-
-
-
-          <div class="md-col-6">
-          <button type="button" class="btn btn-default btn-block btn-xs">
-            <i class="fa fa-plus-square-o"></i>&nbsp;New cell
-          </button>
-          </div>
-
-          <div class="md-col-6">
-          <button type="button" class="btn btn-default btn-block btn-xs">
-            <i class="fa fa-minus-square-o"></i>&nbsp;Delete
-          </button>
-          </div>
-        </div>
-  -->
-
 </div>
 
