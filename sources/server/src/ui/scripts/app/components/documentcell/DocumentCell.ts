@@ -17,6 +17,7 @@
  * Directive controller for document-based cells (markdown and heading)
  */
 /// <reference path="../../../../../../../../externs/ts/angularjs/angular.d.ts" />
+/// <amd-dependency path="app/components/actionemitter/ActionEmitter" />
 import constants = require('app/common/Constants');
 
 

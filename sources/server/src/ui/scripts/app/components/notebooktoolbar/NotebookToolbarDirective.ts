@@ -17,6 +17,7 @@
  * Directive for rendering a notebook-level toolbar
  */
 /// <reference path="../../../../../../../../externs/ts/angularjs/angular.d.ts" />
+/// <amd-dependency path="app/components/actionemitter/ActionEmitter" />
 import logging = require('app/common/Logging');
 import constants = require('app/common/Constants');
 import _app = require('app/App');

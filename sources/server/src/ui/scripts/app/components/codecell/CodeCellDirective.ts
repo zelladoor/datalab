@@ -17,6 +17,7 @@
  * Directive for creating a single code cell
  */
 /// <reference path="../../../../../../../../externs/ts/angularjs/angular.d.ts" />
+/// <amd-dependency path="app/components/actionemitter/ActionEmitter" />
 /// <amd-dependency path="app/components/editorcell/EditorCellDirective" />
 import logging = require('app/common/Logging');
 import constants = require('app/common/Constants');
