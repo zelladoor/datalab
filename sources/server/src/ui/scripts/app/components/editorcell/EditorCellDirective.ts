@@ -21,8 +21,9 @@
  */
 /// <reference path="../../../../../../../../externs/ts/angularjs/angular.d.ts" />
 /// <reference path="../../../../../../../../externs/ts/codemirror/codemirror.d.ts" />
-/// <amd-dependency path="app/components/codeeditor/CodeEditorDirective" />
+/// <amd-dependency path="app/components/celloutputviewer/CellOutputViewerDirective" />
 /// <amd-dependency path="app/components/celltoolbar/CellToolbarDirective" />
+/// <amd-dependency path="app/components/codeeditor/CodeEditorDirective" />
 import logging = require('app/common/Logging');
 import constants = require('app/common/Constants');
 import _app = require('app/App');
