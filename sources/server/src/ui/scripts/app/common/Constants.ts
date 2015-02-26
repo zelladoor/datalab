@@ -35,30 +35,33 @@ export var layouts = {
 };
 export var cellInserter = {
   directiveName: 'datalabCellInserter'
-}
+};
+export var cellOutputViewer = {
+  directiveName: 'datalabCellOutputViewer'
+};
 export var cellToolbar = {
   directiveName: 'datalabCellToolbar'
-}
+};
+export var codeCell = {
+  directiveName: 'datalabCodeCell'
+};
 export var codeEditor = {
   directiveName: 'datalabCodeEditor'
 };
 export var editorCell = {
   directiveName: 'datalabEditorCell'
 };
-export var codeCell = {
-  directiveName: 'datalabCodeCell'
+export var headingCell = {
+  directiveName: 'datalabHeadingCell'
+};
+export var headingViewer = {
+  directiveName: 'datalabHeadingViewer'
 };
 export var markdownCell = {
   directiveName: 'datalabMarkdownCell'
 };
 export var markdownViewer = {
   directiveName: 'datalabMarkdownViewer'
-};
-export var headingCell = {
-  directiveName: 'datalabHeadingCell'
-};
-export var headingViewer = {
-  directiveName: 'datalabHeadingViewer'
 };
 export var notebookEditor = {
   directiveName: 'datalabNotebookEditor'
@@ -103,6 +106,7 @@ export var scopes = {
 
   // Generic directives
   cellInserter: 'cellInserter',
+  cellOutputViewer: 'cellOutputViewer',
   cellToolbar: 'cellToolbar',
   codeEditor: 'codeEditor',
   headingViewer: 'headingViewer',

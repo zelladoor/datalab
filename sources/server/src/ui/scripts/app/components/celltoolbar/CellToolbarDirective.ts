@@ -40,10 +40,6 @@ class CellToolbarController {
     this._scope = scope;
 
     this._scope.actionEmitter = actionEmitter;
-
-    this._scope.foo = () => { // FIXME
-      console.warn('scope.foo()!: ', arguments);
-    }
   }
 }
 
