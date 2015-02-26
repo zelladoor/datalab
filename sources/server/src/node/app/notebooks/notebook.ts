@@ -196,20 +196,6 @@ export class ActiveNotebook implements app.IActiveNotebook {
       cell.source = cellUpdate.source = action.source;
     }
 
-    if (action.metadata) {
-      if (action.replaceMetadata) {
-        // Simple case, use the action message's metadata to replace the cell's
-        cell.metadata = cellUpdate.metadata = action.metadata;
-      } else {
-        // Merge the metadata objects, with the action overwriting existing fields on the cell
-        cellUpdate.metadata = {};
-        Object.keys(action.metadata).forEach((property: string) => {
-          cell.metadata[property] = cellUpdate.metadata[property] = action.metadata[property];
-        });
-      }
-      cellUpdate.replaceMetadata = action.replaceMetadata;
-    }
-
     if (action.outputs) {
       if (action.replaceOutputs) {
         // Simple case, replace the cell's outputs with the output list in the action message
@@ -221,6 +207,20 @@ export class ActiveNotebook implements app.IActiveNotebook {
         cellUpdate.outputs = action.outputs;
       }
       cellUpdate.replaceOutputs = action.replaceOutputs;
+    }
+
+    if (action.metadata) {
+      if (action.replaceMetadata) {
+        // Simple case, use the action message's metadata to replace the cell's
+        cell.metadata = cellUpdate.metadata = action.metadata;
+      } else {
+        // Merge the metadata objects, with the action overwriting existing fields on the cell
+        cellUpdate.metadata = {};
+        Object.keys(action.metadata).forEach((property) => {
+          cell.metadata[property] = cellUpdate.metadata[property] = action.metadata[property];
+        });
+      }
+      cellUpdate.replaceMetadata = action.replaceMetadata;
     }
 
     return cellUpdate;
