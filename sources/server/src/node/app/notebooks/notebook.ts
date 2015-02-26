@@ -69,7 +69,7 @@ export class ActiveNotebook implements app.IActiveNotebook {
   }
 
   getCell (cellId: string, worksheetId: string) {
-    return <app.notebook.Cell>{id: 'todo'};
+    return this._getCellOrThrow(cellId, worksheetId);
   }
 
   _applyAddCell (action: app.notebook.action.AddCell): app.notebook.update.AddCell {

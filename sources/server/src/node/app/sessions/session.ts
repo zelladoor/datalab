@@ -277,7 +277,7 @@ export class Session implements app.ISession {
     var update = this._notebook.apply({
       action: actions.cell.update,
       worksheetId: cellRef.worksheetId,
-      cellid: cellRef.cellId,
+      cellId: cellRef.cellId,
       outputs: [{
         type: message.type,
         mimetypeBundle: message.mimetypeBundle
