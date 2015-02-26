@@ -17,6 +17,15 @@
  * Action message typedefs that define the client-server websocket protocol
  *
  * Actions are client requests for modifications to a notebook data model.
+ *
+ * FIXME: several actions have a corresponding update that is identical in structure
+ * other than the action/update field. Coudl collapse all messages to just have a "type" field
+ * rather than update/action to avoid duplicating. Other consideration is that both actions and
+ * updates are emitted into the global event scope in the client-side code, possibly in the future
+ * on the node side if an event emitter is ever added; have a distinction between the action and
+ * update versions of a message like AddCell is important because different pieces of code will
+ * handle an action (e.g., client-side code forwards these to the server) vs the update (client-
+ * side code applys the AddCell operation to the local notebook model).
  */
 declare module app {
   module notebook {

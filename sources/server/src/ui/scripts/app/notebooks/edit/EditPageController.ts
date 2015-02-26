@@ -59,13 +59,13 @@ export class EditPageController {
     var clearOutputsAction: app.notebook.action.ClearOutputs = {
       action: actions.notebook.clearOutputs
     };
-    this._rootScope.$emit(actions.notebook.clearOutputs, clearOutputsAction);
+    this._rootScope.$emit(clearOutputsAction.action, clearOutputsAction);
   }
   executeCells () {
     var executeCellsAction: app.notebook.action.ExecuteCells = {
       action: actions.notebook.executeCells
     };
-    this._rootScope.$emit(actions.notebook.executeCells, executeCellsAction);
+    this._rootScope.$emit(executeCellsAction.action, executeCellsAction);
   }
 
 

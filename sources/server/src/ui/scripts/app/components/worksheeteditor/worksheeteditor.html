@@ -1,23 +1,31 @@
 <div class="datalab-worksheet-editor">
 
+  <datalab-cell-inserter
+      insert-after-cell-id="null"
+      worksheet-id="worksheet.id"></datalab-cell-inserter>
+
     <!-- Create a cell rendering directive for each flavor of supported cell -->
   <div ng-repeat="cell in worksheet.cells">
     <div ng-switch="cell.type">
-        <datalab-code-cell
-            ng-switch-when="code"
-            cell="cell"
-            worksheetId="worksheet.id"></datalab-code-cell>
+      <datalab-code-cell
+          ng-switch-when="code"
+          cell="cell"
+          worksheetId="worksheet.id"></datalab-code-cell>
 
-        <datalab-markdown-cell
-            ng-switch-when="markdown"
-            cell="cell"
-            worksheetId="worksheet.id"></datalab-markdown-cell>
+      <datalab-markdown-cell
+          ng-switch-when="markdown"
+          cell="cell"
+          worksheetId="worksheet.id"></datalab-markdown-cell>
 
-        <datalab-heading-cell
-            ng-switch-when="heading"
-            cell="cell"
-            worksheetId="worksheet.id"></datalab-heading-cell>
+      <datalab-heading-cell
+          ng-switch-when="heading"
+          cell="cell"
+          worksheetId="worksheet.id"></datalab-heading-cell>
     </div>
+
+    <datalab-cell-inserter
+        insert-after-cell-id="cell.id"
+        worksheet-id="worksheet.id"></datalab-cell-inserter>
   </div>
 
 </div>

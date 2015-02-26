@@ -24,20 +24,23 @@ export var label = 'update'
 export var composite = 'composite';
 
 // Notebook-level update
+var notebookPrefix = label + '.notebook.';
 export var notebook = {
-  snapshot: 'notebook.snapshot',
-  metadata: 'notebook.metadata',
-  sessionStatus: 'notebook.sessionStatus'
+  snapshot: notebookPrefix + 'snapshot',
+  metadata: notebookPrefix + 'metadata',
+  sessionStatus: notebookPrefix + 'sessionStatus'
 };
 
 // Worksheet-level update
+var worksheetPrefix = label + '.worksheet.';
 export var worksheet = {
-  addCell: 'worksheet.addCell',
-  deleteCell: 'worksheet.deleteCell',
-  moveCell: 'worksheet.moveCell'
+  addCell: worksheetPrefix + 'addCell',
+  deleteCell: worksheetPrefix + 'deleteCell',
+  moveCell: worksheetPrefix + 'moveCell'
 }
 
 // Cell-level update
+var cellPrefix = label + '.cell.';
 export var cell = {
-  update: 'cell.update'
+  update: cellPrefix + 'update'
 }

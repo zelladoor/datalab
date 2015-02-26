@@ -24,22 +24,25 @@ export var label = 'action'
 export var composite = 'composite';
 
 // Notebook-level actions
+var notebookPrefix = label + '.notebook.';
 export var notebook = {
-  clearOutputs: 'notebook.clearOutputs',
-  executeCells: 'notebook.executeCells',
-  rename: 'notebook.rename'
+  clearOutputs: notebookPrefix + 'clearOutputs',
+  executeCells: notebookPrefix + 'executeCells',
+  rename: notebookPrefix + 'rename'
 };
 
 // Worksheet-level actions
+var worksheetPrefix = label + '.worksheet.';
 export var worksheet = {
-  addCell: 'worksheet.addCell',
-  deleteCell: 'worksheet.deleteCell',
-  moveCell: 'worksheet.moveCell'
+  addCell: worksheetPrefix + 'addCell',
+  deleteCell: worksheetPrefix + 'deleteCell',
+  moveCell: worksheetPrefix + 'moveCell'
 };
 
 // Cell-level actions
+var cellPrefix = label + '.cell.';
 export var cell = {
-  clearOutput: 'cell.clearOutput',
-  update: 'cell.update',
-  execute: 'cell.execute'
+  clearOutput: cellPrefix + 'clearOutput',
+  update: cellPrefix + 'update',
+  execute: cellPrefix + 'execute'
 };

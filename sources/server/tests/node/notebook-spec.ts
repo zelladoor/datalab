@@ -95,7 +95,7 @@ describe('Notebook model state', () => {
         });
       });
 
-      var action = {action: 'notebook.clearOutputs'};
+      var action = {action: actions.notebook.clearOutputs};
       var update = <app.notebook.update.Composite>notebook.apply(action);
 
       // Now each worksheet should still have two cells, each with zero outputs

@@ -1,25 +1,16 @@
 <div class="container-fluid">
 
   <div class="row datalab-editor-toolbar">
+
+    <!-- Notebook title/renaming widget -->
     <div class="col-sm-6 col-md-4 col-lg-3">
       <span class="datalab-notebook-title">Title of DataLab notebook</span>
     </div>
+
+    <!-- Notebook-level controls widget -->
     <!-- FIXME: move this toolbar to a separate directive and use it here -->
     <div class="col-sm-6 col-md-8 col-lg-9">
       <div class="btn-group pull-right" role="group">
-<!--
-        <button type="button" class="btn btn-default btn-sm" ng-click="pageCtrl.notebookData.insertCodeCell()">
-          &nbsp;<i class="fa-terminal fa"></i>&nbsp;Cell
-        </button>
-
-        <button type="button" class="btn btn-default btn-sm" ng-click="pageCtrl.notebookData.insertMarkdownCell()">
-          &nbsp;<i class="fa-edit fa"></i>&nbsp;Cell
-        </button>
-
-        <button type="button" class="btn btn-default btn-sm" ng-click="pageCtrl.notebookData.insertHeadingCell()">
-          &nbsp;<i class="fa-paragraph fa"></i>&nbsp;Cell
-        </button>
--->
         <button type="button" class="btn btn-default btn-sm" ng-click="pageCtrl.executeCells()">
           <span ng-switch on="pageCtrl.sessionStatus.kernelStatus">
             <span ng-switch-when="busy">
@@ -35,14 +26,13 @@
           <i class="fa-eraser fa"></i>
         </button>
       </div>
-
     </div>
+
   </div>
 
+  <!-- Worksheet editor widget -->
   <div class="row">
     <div class="col-md-12">
-      <!-- FIXME: keep the notebook-editor or merge it here? -->
-      <!-- <datalab-notebook-editor notebook="pageCtrl.notebookData"></datalab-notebook-editor> -->
       <datalab-worksheet-editor worksheet="pageCtrl.notebookData.activeWorksheet"></datalab-worksheet-editor>
     </div>
   </div>
