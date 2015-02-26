@@ -27,17 +27,19 @@ import actions = require('app/shared/actions');
 var log = logging.getLogger(constants.scopes.codeCell);
 
 class CodeCellController implements app.ICellController {
-
+  _actionEmitter: app.IActionEmitter;
   _rootScope: ng.IRootScopeService;
   _scope: app.CellScope;
 
   showEditRegion: boolean;
   showPreviewRegion: boolean;
 
-  static $inject: string[] = ['$scope', '$rootScope'];
-  constructor (scope: app.CellScope, rootScope: ng.IRootScopeService) {
-    this._scope = scope;
+  static $inject: string[] = ['$scope', '$rootScope', constants.actionEmitter.name];
+  constructor (scope: app.CellScope, rootScope: ng.IRootScopeService, actionEmitter: app.IActionEmitter) {
+    this._actionEmitter = actionEmitter;
     this._rootScope = rootScope;
+    this._scope = scope;
+
     this.showPreviewRegion = false; // always-off for code cell
     this.showEditRegion = true; // always-on for code cell
 
@@ -63,7 +65,7 @@ class CodeCellController implements app.ICellController {
     // TODO(bryantd): apply a subset of the updates below as "predictive modifications" (e.g.,
     // clear the cell output immediately)
     // TODO(bryantd): apply a visual treatment to show that the cell is in an "executing" state
-    this._actionEmitter.executeCell(this._scope.cell);
+    this._actionEmitter.evaluateCell(this._scope.cell, this._scope.worksheetId);
   }
 }
 

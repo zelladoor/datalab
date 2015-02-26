@@ -25,7 +25,7 @@ import _app = require('app/App');
 var log = logging.getLogger(constants.scopes.cellToolbar);
 
 interface CellToolbarScope extends ng.IScope {
-  actionEmitter: app.IActionEmitter,
+  actionEmitter: app.IActionEmitter;
   cellId: string;
   worksheetId: string;
 }

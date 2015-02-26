@@ -30,6 +30,17 @@ declare module app {
     ctrl?: ICellController;
   }
 
+  interface IActionEmitter {
+    addCell (cellType: string, worksheetId: string, insertAfterCellId: string): void;
+    clearOutput (cellId: string, worksheetId: string): void;
+    clearOutputs (): void;
+    deleteCell (cellId: string, worksheetId: string): void;
+    evaluateCell (cell: app.notebook.Cell, worksheetId: string): void;
+    executeCell (cellId: string, worksheetId: string): void;
+    executeCells (): void;
+    updateCell (cell: app.notebook.Cell, worksheetId: string): void;
+  }
+
   interface ICellController {
     showEditRegion: boolean;
     showPreviewRegion: boolean;
@@ -45,10 +56,6 @@ declare module app {
 
   interface INotebookData {
     notebook: app.notebook.Notebook;
-    // FIXME: following methods should take an insertion point reference (prev cell id)
-    insertCodeCell (): void;
-    insertHeadingCell (): void;
-    insertMarkdownCell (): void;
   }
 
   interface IRegistrar {

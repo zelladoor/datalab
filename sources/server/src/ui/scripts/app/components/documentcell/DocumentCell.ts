@@ -17,26 +17,31 @@
  * Directive controller for document-based cells (markdown and heading)
  */
 /// <reference path="../../../../../../../../externs/ts/angularjs/angular.d.ts" />
-import actions = require('app/shared/actions');
+import constants = require('app/common/Constants');
 
 
 export class DocumentCellController implements app.ICellController {
-
+  _actionEmitter: app.IActionEmitter;
   _rootScope: ng.IRootScopeService;
   _scope: app.CellScope;
 
   showEditRegion: boolean;
   showPreviewRegion: boolean;
 
-  static $inject: string[] = ['$scope', '$rootScope'];
-  constructor (scope: app.CellScope, rootScope: ng.IRootScopeService) {
-    this._scope = scope;
+  static $inject: string[] = ['$scope', '$rootScope', constants.actionEmitter.name];
+  constructor (
+      scope: app.CellScope,
+      rootScope: ng.IRootScopeService,
+      actionEmitter: app.IActionEmitter) {
+    this._actionEmitter = actionEmitter;
     this._rootScope = rootScope;
-    this.showPreviewRegion = true; // always-on for heading cell
-    this.showEditRegion = false; // hide the edit region until the cell is put in edit mode
+    this._scope = scope;
 
     scope.keymap = this._createKeymap();
     scope.ctrl = this;
+
+    this.showPreviewRegion = true; // always-on for heading cell
+    this.showEditRegion = false; // hide the edit region until the cell is put in edit mode
   }
 
   switchToEditMode () {
@@ -63,17 +68,7 @@ export class DocumentCellController implements app.ICellController {
    * Emits a 'cell.update' action
    */
   _handleFinishedEditing () {
-    var cell = this._scope.cell;
-    var update: app.notebook.action.UpdateCell = {
-      action: actions.cell.update,
-      worksheetId: this._scope.worksheetId,
-      cellId: cell.id,
-      source: cell.source,
-      metadata: cell.metadata,
-      replaceMetadata: true
-    }
-
-    this._rootScope.$emit(actions.cell.update, update);
+    this._actionEmitter.updateCell(this._scope.cell, this._scope.worksheetId);
     this.switchToViewMode();
   }
 }

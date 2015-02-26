@@ -71,6 +71,9 @@ export var worksheetEditor = {
 };
 
 
+export var actionEmitter = {
+  name: 'actionEmitter'
+}
 export var notebookData = {
   name: 'notebookData'
 };
@@ -118,6 +121,7 @@ export var scopes = {
   },
 
   // Other injectables (services, factories, providers, etc.)
+  actionEmitter: actionEmitter.name,
   notebookData: notebookData.name,
   session: session.name,
   sessionConnection: sessionConnection.name
