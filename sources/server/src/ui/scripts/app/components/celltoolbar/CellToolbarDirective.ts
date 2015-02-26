@@ -27,7 +27,7 @@ var log = logging.getLogger(constants.scopes.cellToolbar);
 
 interface CellToolbarScope extends ng.IScope {
   actionEmitter: app.IActionEmitter;
-  cellId: string;
+  cell: app.notebook.Cell;
   worksheetId: string;
 }
 
@@ -53,7 +53,7 @@ function cellToolbarDirective (): ng.IDirective {
     restrict: 'E',
     scope: {
       worksheetId: '=',
-      cellId: '='
+      cell: '='
     },
     templateUrl: constants.scriptPaths.app + '/components/celltoolbar/celltoolbar.html',
     replace: true,

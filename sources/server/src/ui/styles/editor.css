@@ -25,6 +25,15 @@
   border-bottom: 1px solid #ddd;
 }
 
+.datalab-cell-inserter {
+  /* TODO(bryantd): make the cell insert toolbar less distracting until ui overhaul */
+  opacity: 0.2;
+}
+
+.datalab-cell-toolbar {
+
+}
+
 /**
  * Code editor cell styling
  */

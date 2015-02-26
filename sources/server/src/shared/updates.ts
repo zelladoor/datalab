@@ -21,7 +21,7 @@
 export var label = 'update'
 
 // Composite update (sequence of updates)
-export var composite = 'composite';
+export var composite = label + '.composite';
 
 // Notebook-level update
 var notebookPrefix = label + '.notebook.';

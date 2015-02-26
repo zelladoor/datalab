@@ -50,12 +50,14 @@ class Session implements app.ISession {
     connection.on(updates.label, this._handleUpdate.bind(this));
 
     // Register client-side event handlers for each action scope
+    var actionHandler = this._handleAction.bind(this);
     [actions.cell, actions.notebook, actions.worksheet].forEach((actionScope) => {
       Object.keys(actionScope).forEach((action) => {
         // Add an event listener for each action type
-        this._rootScope.$on(actionScope[action], this._handleAction.bind(this));
+        this._rootScope.$on(actionScope[action], actionHandler);
       }, this);
     }, this);
+    this._rootScope.$on(actions.composite, actionHandler);
   }
 
   /**

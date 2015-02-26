@@ -1,16 +1,26 @@
-<div class="datalab-editor-cell-controls btn-group pull-right" role="group">
+<div class="datalab-cell-toolbar btn-group pull-right" role="group">
   <!-- Execute cell -->
-  <button type="button" class="btn btn-default btn-block btn-xs" ng-click="actionEmitter.evaluateCell(cell, worksheetId)">
+  <button
+      type="button"
+      class="btn btn-default btn-block btn-xs"
+      ng-click="actionEmitter.evaluateCell(cell, worksheetId)">
     <i class="fa-play fa"></i>
   </button>
 
   <!-- Clear cell output -->
-  <button type="button" class="btn btn-default btn-block btn-xs" ng-click="actionEmitter.clearOutput(cell.id, worksheetId)">
+  <button
+      type="button"
+      class="btn btn-default btn-block btn-xs"
+      ng-click="actionEmitter.clearOutput(cell.id, worksheetId)"
+      ng-if="cell.type == 'code'">
     <i class="fa-eraser fa"></i>
   </button>
 
   <!-- Delete cell -->
-  <button type="button" class="btn btn-default btn-block btn-xs" ng-click="actionEmitter.deleteCell(cell.id, worksheetId)">
+  <button
+      type="button"
+      class="btn btn-default btn-block btn-xs"
+      ng-click="actionEmitter.deleteCell(cell.id, worksheetId)">
     <i class="fa-trash fa"></i>
   </button>
 

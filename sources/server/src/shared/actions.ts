@@ -21,7 +21,7 @@
 export var label = 'action'
 
 // Composite action (set of primitive actions)
-export var composite = 'composite';
+export var composite = label + '.composite';
 
 // Notebook-level actions
 var notebookPrefix = label + '.notebook.';
