@@ -210,6 +210,19 @@ class NotebookData implements app.INotebookData {
     }
   }
 
+  _handleCompositeUpdate (update: app.notebook.update.Composite) {
+    update.subUpdates.forEach((update) => {
+      switch (update.update) {
+        case updates.cell.update:
+          this._handleCellUpdate(<app.notebook.update.CellUpdate>update);
+        break;
+
+        default:
+          throw new Error('Composite update containing type "'+update.update+'" is not supported');
+      }
+    });
+  }
+
   _handleDeleteCell (update: app.notebook.update.DeleteCell) {
     // Get the worksheet from which the cell should be deleted
     var worksheet = this._getWorksheetOrThrow(update.worksheetId);
@@ -268,6 +281,7 @@ class NotebookData implements app.INotebookData {
    */
   _registerEventHandlers () {
     this._registerEventHandler(updates.cell.update, this._handleCellUpdate.bind(this));
+    this._registerEventHandler(updates.composite, this._handleCompositeUpdate.bind(this));
     this._registerEventHandler(updates.notebook.snapshot, this._setNotebook.bind(this));
     this._registerEventHandler(updates.worksheet.addCell, this._handleAddCell.bind(this));
     this._registerEventHandler(updates.worksheet.deleteCell, this._handleDeleteCell.bind(this));
