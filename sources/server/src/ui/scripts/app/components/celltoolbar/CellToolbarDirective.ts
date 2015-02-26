@@ -29,6 +29,7 @@ interface CellToolbarScope extends ng.IScope {
   actionEmitter: app.IActionEmitter;
   cell: app.notebook.Cell;
   worksheetId: string;
+  foo: Function;
 }
 
 class CellToolbarController {
@@ -36,12 +37,14 @@ class CellToolbarController {
   _scope: CellToolbarScope;
 
   static $inject = ['$scope', constants.actionEmitter.name];
-  constructor (
-      scope: CellToolbarScope,
-      actionEmitter: app.IActionEmitter) {
+  constructor (scope: CellToolbarScope, actionEmitter: app.IActionEmitter) {
     this._scope = scope;
 
-    this._scope.actionEmitter = actionEmitter
+    this._scope.actionEmitter = actionEmitter;
+
+    this._scope.foo = () => { // FIXME
+      console.warn('scope.foo()!: ', arguments);
+    }
   }
 }
 

@@ -14,6 +14,7 @@
 
 
 import actions = require('../shared/actions');
+import cells = require('../shared/cells');
 import formats = require('./serializers/formats');
 import updates = require('../shared/updates');
 import util = require('./util');
@@ -115,9 +116,11 @@ export class ActiveNotebook implements app.IActiveNotebook {
     nb.worksheetIds.forEach((worksheetId: string) => {
       // Clear each cell within the worksheet
       nb.worksheets[worksheetId].cells.forEach((cell: app.notebook.Cell) => {
-        var cellUpdate = this._clearCellOutput(cell.id, worksheetId);
-        // Add an update for the cleared cell
-        update.subUpdates.push(cellUpdate);
+        if (cell.type == cells.code) {
+          var cellUpdate = this._clearCellOutput(cell.id, worksheetId);
+          // Add an update for the cleared cell
+          update.subUpdates.push(cellUpdate);
+        }
       }, this);
     }, this);
 

@@ -25,7 +25,7 @@
 /// <amd-dependency path="app/components/celltoolbar/CellToolbarDirective" />
 import logging = require('app/common/Logging');
 import constants = require('app/common/Constants');
-import app = require('app/App');
+import _app = require('app/App');
 
 // FIXME: remove the codemirror dep if type is factored out
 // Try to avoid the codemirror types bleeding out of the code editor directive if possible
@@ -36,7 +36,8 @@ import app = require('app/App');
 var log = logging.getLogger(constants.scopes.editorCell);
 
 interface EditorCellScope extends ng.IScope {
-  cell: any;
+  cell: app.notebook.Cell;
+  worksheetId: string;
   getKeymap?: any;
   enableEditRegion?: boolean;
   enablePreviewRegion?: boolean;
@@ -91,6 +92,7 @@ function editorCellDirective (): ng.IDirective {
     restrict: 'E',
     scope: {
       cell: '=',
+      worksheetId: '=',
       getKeymap: '&keymap',
       enableEditRegion: '=',
       enablePreviewRegion: '=',
@@ -102,5 +104,5 @@ function editorCellDirective (): ng.IDirective {
   }
 }
 
-app.registrar.directive(constants.editorCell.directiveName, editorCellDirective);
+_app.registrar.directive(constants.editorCell.directiveName, editorCellDirective);
 log.debug('Registered editor cell directive');
