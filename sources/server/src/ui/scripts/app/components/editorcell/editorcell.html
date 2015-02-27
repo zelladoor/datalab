@@ -15,11 +15,15 @@
       </div>
 
       <!-- Cell toolbar -->
+      <!-- TODO(bryantd): only show cell toolbar when cell is active  -->
       <div class="datalab-editor-cell-toolbar">
-        <!-- TODO(bryantd): only show cell toolbar when cell is active  -->
         <datalab-cell-toolbar
             cell="cell"
             worksheet-id="worksheetId"></datalab-cell-toolbar>
+        <!-- TODO(bryantd): decide if inserter bit will be in a different part of the page or merged with cell toolbar -->
+        <datalab-cell-inserter
+            insert-after-cell-id="cell.id"
+            worksheet-id="worksheetId"></datalab-cell-inserter>
       </div>
     </div>
 

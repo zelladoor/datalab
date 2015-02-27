@@ -1,29 +1,15 @@
-<div class="datalab-cell-inserter col-lg-12 col-md-12 col-sm-12 col-xs-12">
+<div class="datalab-cell-inserter-toolbar">
 
-  <div class="btn-group" role="group">
     <!-- Add code cell -->
-    <button
-        type="button"
-        class="btn btn-default btn-sm"
-        ng-click="notebookData.addCell('code', worksheetId, insertAfterCellId)">
-      <i class="fa-terminal fa"></i>
-    </button>
+    <i class="datalab-toolbar-button fa-terminal fa"
+        ng-click="notebookData.addCell('code', worksheetId, insertAfterCellId)"></i>
 
     <!-- Add markdown cell -->
-    <button
-        type="button"
-        class="btn btn-default btn-sm"
-        ng-click="notebookData.addCell('markdown', worksheetId, insertAfterCellId)">
-      <i class="fa-edit fa"></i>
-    </button>
+    <i class="datalab-toolbar-button fa-edit fa"
+        ng-click="notebookData.addCell('markdown', worksheetId, insertAfterCellId)"></i>
 
     <!-- Add heading cell -->
-    <button
-        type="button"
-        class="btn btn-default btn-sm"
-        ng-click="notebookData.addCell('heading', worksheetId, insertAfterCellId)">
-      <i class="fa-paragraph fa"></i>
-    </button>
-  </div>
+    <i class="datalab-toolbar-button fa-paragraph fa"
+        ng-click="notebookData.addCell('heading', worksheetId, insertAfterCellId)"></i>
 
 </div>

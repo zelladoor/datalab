@@ -79,12 +79,27 @@ class NotebookData implements app.INotebookData {
   // into a util library to be shared between client/server.
 
   addCell (cellType: string, worksheetId: string, insertAfterCellId: string) {
+    // Define default source strings per cell type
+    var source: string;
+    switch (cellType) {
+      case cells.markdown:
+        source = 'Markdown cell';
+      break;
+
+      case cells.heading:
+        source = 'Heading cell';
+      break;
+
+      default:
+        source = ''
+    }
+
     var addCellAction: app.notebook.action.AddCell = {
       action: actions.worksheet.addCell,
       worksheetId: worksheetId,
       cellId: uuid.v4(),
       type: cellType,
-      source: '',
+      source: source,
       insertAfter: insertAfterCellId
     };
     this._emitAction(addCellAction)
