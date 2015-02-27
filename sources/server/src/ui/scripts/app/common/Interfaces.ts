@@ -86,7 +86,7 @@ declare module app {
 
   // UI-specific extensions to the datalab notebook types
   module notebook {
-    interface AugmentedCellOutput extends CellOutput{ // FIXME: better name for this interface?
+    interface AugmentedCellOutput extends CellOutput {
       preferredMimetype?: string;
       trustedHtml?: string;
     }

@@ -1,9 +1,5 @@
 <div class="datalab-worksheet-editor">
 
-  <datalab-cell-inserter
-      insert-after-cell-id="null"
-      worksheet-id="worksheet.id"></datalab-cell-inserter>
-
     <!-- Create a cell rendering directive for each flavor of supported cell -->
   <div ng-repeat="cell in worksheet.cells">
     <div ng-switch="cell.type">
