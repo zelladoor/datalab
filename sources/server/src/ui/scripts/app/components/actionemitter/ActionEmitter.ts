@@ -103,6 +103,17 @@ class ActionEmitter implements app.IActionEmitter {
     this._emitAction(executeCellsAction);
   }
 
+  moveCell (worksheetId: string, cellId: string, insertAfterCellId: string) {
+    var moveCellAction: app.notebook.action.MoveCell = {
+      action: actions.worksheet.moveCell,
+      sourceWorksheetId: worksheetId,
+      destinationWorksheetId: worksheetId,
+      cellId: cellId,
+      insertAfter: insertAfterCellId
+    };
+    this._emitAction(moveCellAction);
+  }
+
   updateCell (cell: app.notebook.Cell, worksheetId: string) {
     this._emitAction(this._createUpdateCellAction(cell, worksheetId));
   }
