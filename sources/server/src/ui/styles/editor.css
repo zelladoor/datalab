@@ -68,6 +68,7 @@
 .datalab-editor-cell {
   padding: 10px;
   margin: 20px;
+  padding-top: 30px;
 }
 .datalab-editor-cell-identifier {
   float: left;
