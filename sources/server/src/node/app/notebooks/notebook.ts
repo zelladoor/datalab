@@ -132,10 +132,7 @@ export class ActiveNotebook implements app.IActiveNotebook {
     // Get the worksheet from which the cell should be deleted
     var worksheet = this._getWorksheetOrThrow(action.worksheetId);
     // Find the index of the cell to delete within the worksheet
-    var cellIndex = this._indexOf(worksheet, action.cellId);
-    if (cellIndex === -1) {
-      throw new Error('Cannot delete cell id "'+action.cellId+'"; not found in worksheet');
-    }
+    var cellIndex = this._getCellIndexOrThrow(worksheet, action.cellId);
     // Remove the cell from the worksheet
     var removed = worksheet.cells.splice(cellIndex, 1);
     // Create and return the update message
