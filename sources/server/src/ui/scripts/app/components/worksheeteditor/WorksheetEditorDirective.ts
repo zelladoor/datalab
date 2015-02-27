@@ -32,17 +32,6 @@ interface WorksheetEditorScope extends ng.IScope {
   worksheet?: app.notebook.Worksheet;
 }
 
-class WorksheetEditorController {
-  _scope: WorksheetEditorScope;
-
-  static $inject = ['$scope'];
-  constructor (scope: WorksheetEditorScope) {
-    this._scope = scope;
-
-    this._scope.ctrl = this;
-  }
-}
-
 function worksheetEditorDirective (): ng.IDirective {
   return {
     restrict: 'E',
@@ -50,7 +39,6 @@ function worksheetEditorDirective (): ng.IDirective {
       worksheet: '='
     },
     replace: true,
-    controller: WorksheetEditorController,
     templateUrl: constants.scriptPaths.app + '/components/worksheeteditor/worksheeteditor.html',
   }
 }

@@ -19,6 +19,7 @@ import cells = require('app/shared/cells');
 import constants = require('app/common/Constants');
 import logging = require('app/common/Logging');
 import updates = require('app/shared/updates');
+import uuid = require('app/common/uuid');
 import _app = require('app/App');
 
 
@@ -170,13 +171,13 @@ class NotebookData implements app.INotebookData {
         // Move the cell to the top of the worksheet.
         // Because there is not currently an insertBefore option for the move cell action
         // a insertAfter value of null is used to indicate inserting at the head of the worksheet
-        this.moveCel(cellId, worksheetId, null);
+        this.moveCell(cellId, worksheetId, null);
       break;
       default:
         // Given worksheet cell ids [A, B, C, D], if we want to move C "up" (towards beginning of
         // worksheet), we want to insert cell C after cell A, which is two before cell C
         var insertAfterCell = worksheet.cells[cellIndexToMove - 2];
-        this.moveCel(cellId, worksheetId, insertAfterCell.id);
+        this.moveCell(cellId, worksheetId, insertAfterCell.id);
     }
   }
 
