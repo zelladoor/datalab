@@ -14,11 +14,13 @@
 
 
 /// <reference path="../../../../../../../../externs/ts/angularjs/angular.d.ts" />
-import logging = require('app/common/Logging');
-import constants = require('app/common/Constants');
 import actions = require('app/shared/actions');
+import cells = require('app/shared/cells');
+import constants = require('app/common/Constants');
+import logging = require('app/common/Logging');
 import updates = require('app/shared/updates');
 import _app = require('app/App');
+
 
 var log = logging.getLogger(constants.scopes.notebookData);
 
@@ -72,11 +74,167 @@ class NotebookData implements app.INotebookData {
   // inserted cell.
 
   // TODO(bryantd): many of the handlers below share a non-trivial amount of logic with server-side node
-  // code for applying modifications to the notebook model
+  // code for applying modifications to the notebook model. Consider pulling out common pieces
+  // into a util library to be shared between client/server.
+
+  addCell (cellType: string, worksheetId: string, insertAfterCellId: string) {
+    var addCellAction: app.notebook.action.AddCell = {
+      action: actions.worksheet.addCell,
+      worksheetId: worksheetId,
+      cellId: uuid.v4(),
+      type: cellType,
+      source: '',
+      insertAfter: insertAfterCellId
+    };
+    this._emitAction(addCellAction)
+  }
+
+  clearOutput (cellId: string, worksheetId: string) {
+    var clearOutputAction: app.notebook.action.ClearOutput = {
+      action: actions.cell.clearOutput,
+      worksheetId: worksheetId,
+      cellId: cellId
+    };
+    this._emitAction(clearOutputAction);
+  }
+
+  clearOutputs () {
+    var clearOutputsAction: app.notebook.action.ClearOutputs = {
+      action: actions.notebook.clearOutputs
+    };
+    this._emitAction(clearOutputsAction);
+  }
+
+  deleteCell (cellId: string, worksheetId: string) {
+    var deleteCellAction: app.notebook.action.DeleteCell = {
+      action: actions.worksheet.deleteCell,
+      cellId: cellId,
+      worksheetId: worksheetId
+    }
+    this._emitAction(deleteCellAction);
+  }
+
+  /**
+   * Emits a composite action with both update+execute
+   *
+   * In the case of non-code cells, only an update action will be emitted
+   */
+  evaluateCell (cell: app.notebook.Cell, worksheetId: string) {
+    if (cell.type != cells.code) {
+      // Then we can simply send an update cell action
+      this.updateCell(cell, worksheetId);
+      return;
+    }
+
+    var compositeAction: app.notebook.action.Composite = {
+      action: actions.composite,
+      subActions: [
+        this._createUpdateCellAction(cell, worksheetId),
+        this._createExecuteCellAction(cell.id, worksheetId)
+      ]
+    }
+    this._emitAction(compositeAction);
+  }
+
+  executeCell (cellId: string, worksheetId: string) {
+    this._emitAction(this._createExecuteCellAction(cellId, worksheetId));
+  }
+
+  executeCells () {
+    var executeCellsAction: app.notebook.action.ExecuteCells = {
+      action: actions.notebook.executeCells
+    };
+    this._emitAction(executeCellsAction);
+  }
+
+  moveCell (cellId: string, worksheetId: string, insertAfterCellId: string) {
+    var moveCellAction: app.notebook.action.MoveCell = {
+      action: actions.worksheet.moveCell,
+      cellId: cellId,
+      sourceWorksheetId: worksheetId,
+      destinationWorksheetId: worksheetId,
+      insertAfter: insertAfterCellId
+    };
+    this._emitAction(moveCellAction);
+  }
+
+  moveCellUp (cellId: string, worksheetId: string) {
+    var worksheet = this._getWorksheetOrThrow(worksheetId);
+    var cellIndexToMove = this._getCellIndexOrThrow(worksheet, cellId);
+
+    switch (cellIndexToMove) {
+      case 0:
+        // Cannot move cell up, already at top of worksheet (no-op)
+        return;
+      case 1:
+        // Move the cell to the top of the worksheet.
+        // Because there is not currently an insertBefore option for the move cell action
+        // a insertAfter value of null is used to indicate inserting at the head of the worksheet
+        this.moveCel(cellId, worksheetId, null);
+      break;
+      default:
+        // Given worksheet cell ids [A, B, C, D], if we want to move C "up" (towards beginning of
+        // worksheet), we want to insert cell C after cell A, which is two before cell C
+        var insertAfterCell = worksheet.cells[cellIndexToMove - 2];
+        this.moveCel(cellId, worksheetId, insertAfterCell.id);
+    }
+  }
+
+  moveCellDown (cellId: string, worksheetId: string) {
+    var worksheet = this._getWorksheetOrThrow(worksheetId);
+    var cellIndexToMove = this._getCellIndexOrThrow(worksheet, cellId);
+
+    if (cellIndexToMove == (worksheet.cells.length - 1)) {
+      // Then this the cell to move is already last, so no-op
+      return;
+    }
+
+    // Insert the current cell after the next cell
+    var insertAfterCell = worksheet.cells[cellIndexToMove + 1];
+    this.moveCell(worksheetId, cellId, insertAfterCell.id);
+  }
 
   selectWorksheet (worksheetId: string) {
     var worksheet = this._getWorksheetOrThrow(worksheetId);
     this.activeWorksheet = worksheet;
+  }
+
+  updateCell (cell: app.notebook.Cell, worksheetId: string) {
+    this._emitAction(this._createUpdateCellAction(cell, worksheetId));
+  }
+
+
+  _createExecuteCellAction (
+      cellId: string,
+      worksheetId: string
+      ): app.notebook.action.ExecuteCell {
+
+    return {
+      action: actions.cell.execute,
+      worksheetId: worksheetId,
+      cellId: cellId
+    }
+  }
+
+  _createUpdateCellAction (
+      cell: app.notebook.Cell,
+      worksheetId: string
+      ): app.notebook.action.UpdateCell {
+
+    return {
+      action: actions.cell.update,
+      worksheetId: worksheetId,
+      cellId: cell.id,
+      source: cell.source,
+      outputs: [],
+      replaceOutputs: true,
+      metadata: cell.metadata,
+      replaceMetadata: true
+    }
+  }
+
+  _emitAction(action: app.notebook.action.Action) {
+    this._rootScope.$emit(action.action, action);
   }
 
   /**
@@ -134,6 +292,8 @@ class NotebookData implements app.INotebookData {
    * Throws an error if the given cell does not exist within the given worksheet
    *
    * TODO(bryantd): create a common util library. duplicate function in ActiveNotebook
+   *
+   * FIXME: switch argument order to be (cell, worksheet) for consistency
    */
   _getCellIndexOrThrow (worksheet: app.notebook.Worksheet, cellId: string) {
     var index = this._indexOf(worksheet, cellId);
