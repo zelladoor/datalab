@@ -30,8 +30,21 @@
   opacity: 0.2;
 }
 
+/**
+ * Places the cell-level toolbar in the upper right corner of the cell "card"
+ */
 .datalab-cell-toolbar {
-
+  float: right;
+  position: relative;
+  top: -45px;
+}
+/**
+ * Adds some horizontal spacing to the cell-level toolbar controls
+ */
+.datalab-toolbar-button {
+  margin-left: 15px;
+  display: block;
+  float: left;
 }
 
 /**

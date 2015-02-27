@@ -1,44 +1,25 @@
-<div class="datalab-cell-toolbar btn-group pull-right" role="group">
+<div class="datalab-cell-toolbar">
 
   <!-- Evaluate cell (update + execute-if-code-cell) -->
-  <button
-      type="button"
-      class="btn btn-default btn-block btn-xs"
-      ng-click="notebookData.evaluateCell(cell, worksheetId)">
-    <i class="fa-play fa"></i>
-  </button>
+  <i class="datalab-toolbar-button fa-play fa"
+      ng-click="notebookData.evaluateCell(cell, worksheetId)"></i>
 
   <!-- Move cell up -->
-  <button
-      type="button"
-      class="btn btn-default btn-block btn-xs"
-      ng-click="notebookData.moveCellUp(cell.id, worksheetId)">
-    <i class="fa-level-up fa"></i>
-  </button>
+  <i class="datalab-toolbar-button fa-level-up fa"
+      ng-click="notebookData.moveCellUp(cell.id, worksheetId)"></i>
 
   <!-- Move cell down -->
-  <button
-      type="button"
-      class="btn btn-default btn-block btn-xs"
-      ng-click="notebookData.moveCellDown(cell.id, worksheetId)">
-    <i class="fa-level-down fa"></i>
+  <i class="datalab-toolbar-button fa-level-down fa"
+      ng-click="notebookData.moveCellDown(cell.id, worksheetId)"></i>
   </button>
 
   <!-- Clear cell output -->
-  <button
-      type="button"
-      class="btn btn-default btn-block btn-xs"
+  <i class="datalab-toolbar-button fa-eraser fa"
       ng-click="notebookData.clearOutput(cell.id, worksheetId)"
-      ng-if="cell.type == 'code'">
-    <i class="fa-eraser fa"></i>
-  </button>
+      ng-if="cell.type == 'code'"></i>
 
   <!-- Delete cell -->
-  <button
-      type="button"
-      class="btn btn-default btn-block btn-xs"
-      ng-click="notebookData.deleteCell(cell.id, worksheetId)">
-    <i class="fa-trash fa"></i>
-  </button>
+  <i class="datalab-toolbar-button fa-trash fa"
+      ng-click="notebookData.deleteCell(cell.id, worksheetId)"></i>
 
 </div>

@@ -10,12 +10,12 @@
         <span class="fa fa-paragraph fa-lg" ng-if="cell.type == 'heading'"></span>
       </div>
 
-      <div class="datalab-editor-cell-input-content col-md-10">
+      <div class="datalab-editor-cell-input-content col-md-11">
         <datalab-code-editor source="cell.source" active="cell.active" keymap='keymap' actions='actions'></datalab-code-editor>
       </div>
 
       <!-- Cell toolbar -->
-      <div class="datalab-editor-cell-toolbar col-md-1">
+      <div class="datalab-editor-cell-toolbar">
         <!-- TODO(bryantd): only show cell toolbar when cell is active  -->
         <datalab-cell-toolbar
             cell="cell"
