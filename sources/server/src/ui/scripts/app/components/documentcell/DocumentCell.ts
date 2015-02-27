@@ -17,24 +17,21 @@
  * Directive controller for document-based cells (markdown and heading)
  */
 /// <reference path="../../../../../../../../externs/ts/angularjs/angular.d.ts" />
-/// <amd-dependency path="app/components/actionemitter/ActionEmitter" />
+/// <amd-dependency path="app/components/notebookdata/NotebookData" />
 import constants = require('app/common/Constants');
 
 
 export class DocumentCellController implements app.ICellController {
-  _actionEmitter: app.IActionEmitter;
+  _notebookData: app.INotebookData;
   _rootScope: ng.IRootScopeService;
   _scope: app.CellScope;
 
   showEditRegion: boolean;
   showPreviewRegion: boolean;
 
-  static $inject: string[] = ['$scope', '$rootScope', constants.actionEmitter.name];
-  constructor (
-      scope: app.CellScope,
-      rootScope: ng.IRootScopeService,
-      actionEmitter: app.IActionEmitter) {
-    this._actionEmitter = actionEmitter;
+  static $inject: string[] = ['$scope', '$rootScope', constants.notebookData.name];
+  constructor (scope: app.CellScope, rootScope: ng.IRootScopeService, notebookData: app.INotebookData) {
+    this._notebookData = notebookData;
     this._rootScope = rootScope;
     this._scope = scope;
 
@@ -66,10 +63,10 @@ export class DocumentCellController implements app.ICellController {
   }
 
   /**
-   * Emits a 'cell.update' action
+   * Switches the cell to view mode and issues an update for the modified cell content
    */
   _handleFinishedEditing () {
-    this._actionEmitter.updateCell(this._scope.cell, this._scope.worksheetId);
+    this._notebookData.updateCell(this._scope.cell, this._scope.worksheetId);
     this.switchToViewMode();
   }
 }

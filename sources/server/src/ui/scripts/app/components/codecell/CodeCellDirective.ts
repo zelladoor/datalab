@@ -17,27 +17,27 @@
  * Directive for creating a single code cell
  */
 /// <reference path="../../../../../../../../externs/ts/angularjs/angular.d.ts" />
-/// <amd-dependency path="app/components/actionemitter/ActionEmitter" />
 /// <amd-dependency path="app/components/editorcell/EditorCellDirective" />
-import logging = require('app/common/Logging');
-import constants = require('app/common/Constants');
-import _app = require('app/App');
+/// <amd-dependency path="app/components/notebookdata/NotebookData" />
 import actions = require('app/shared/actions');
+import constants = require('app/common/Constants');
+import logging = require('app/common/Logging');
+import _app = require('app/App');
 
 
 var log = logging.getLogger(constants.scopes.codeCell);
 
 class CodeCellController implements app.ICellController {
-  _actionEmitter: app.IActionEmitter;
+  _notebookData: app.INotebookData;
   _rootScope: ng.IRootScopeService;
   _scope: app.CellScope;
 
   showEditRegion: boolean;
   showPreviewRegion: boolean;
 
-  static $inject: string[] = ['$scope', '$rootScope', constants.actionEmitter.name];
-  constructor (scope: app.CellScope, rootScope: ng.IRootScopeService, actionEmitter: app.IActionEmitter) {
-    this._actionEmitter = actionEmitter;
+  static $inject: string[] = ['$scope', '$rootScope', constants.notebookData.name];
+  constructor (scope: app.CellScope, rootScope: ng.IRootScopeService, notebookData: app.INotebookData) {
+    this._notebookData = notebookData;
     this._rootScope = rootScope;
     this._scope = scope;
 
@@ -57,16 +57,13 @@ class CodeCellController implements app.ICellController {
   }
 
   /**
-   * Emits a 'cell.execute' action
-   *
-   * Event is actually a composite containing an update+execute to ensure that the server has the
-   * exact source code string the user sees when the execution is requested.
+   * Requests that the notebook evaluate the given cell (update + execute)
    */
   _handleExecute () {
     // TODO(bryantd): apply a subset of the updates below as "predictive modifications" (e.g.,
     // clear the cell output immediately)
     // TODO(bryantd): apply a visual treatment to show that the cell is in an "executing" state
-    this._actionEmitter.evaluateCell(this._scope.cell, this._scope.worksheetId);
+    this._notebookData.evaluateCell(this._scope.cell, this._scope.worksheetId);
   }
 }
 

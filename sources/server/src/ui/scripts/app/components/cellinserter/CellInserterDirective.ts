@@ -17,7 +17,7 @@
  * Directive for rendering a cell inserter widget
  */
 /// <reference path="../../../../../../../../externs/ts/angularjs/angular.d.ts" />
-/// <amd-dependency path="app/components/actionemitter/ActionEmitter" />
+/// <amd-dependency path="app/components/notebookdata/NotebookData" />
 import logging = require('app/common/Logging');
 import constants = require('app/common/Constants');
 import _app = require('app/App');
@@ -26,24 +26,24 @@ import _app = require('app/App');
 var log = logging.getLogger(constants.scopes.cellInserter);
 
 interface CellInserterScope extends ng.IScope {
-  actionEmitter: app.IActionEmitter;
+  notebookData: app.INotebookData;
   insertAfterCellId: string;
   worksheetId: string;
 }
 
 class CellInserterController {
-  _actionEmitter: app.IActionEmitter;
+  _notebookData: app.INotebookData;
   _rootScope: ng.IRootScopeService;
   _scope: CellInserterScope;
 
-  static $inject = ['$rootScope', '$scope', constants.actionEmitter.name];
+  static $inject = ['$rootScope', '$scope', constants.notebookData.name];
   constructor (
       rootScope: ng.IRootScopeService,
       scope: CellInserterScope,
-      actionEmitter: app.IActionEmitter) {
+      notebookData: app.INotebookData) {
     this._rootScope = rootScope;
     this._scope = scope;
-    this._scope.actionEmitter = actionEmitter;
+    this._scope.notebookData = notebookData;
   }
 }
 
