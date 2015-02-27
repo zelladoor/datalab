@@ -192,7 +192,7 @@ class NotebookData implements app.INotebookData {
 
     // Insert the current cell after the next cell
     var insertAfterCell = worksheet.cells[cellIndexToMove + 1];
-    this.moveCell(worksheetId, cellId, insertAfterCell.id);
+    this.moveCell(cellId, worksheetId, insertAfterCell.id);
   }
 
   selectWorksheet (worksheetId: string) {
