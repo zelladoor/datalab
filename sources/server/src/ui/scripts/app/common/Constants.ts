@@ -66,6 +66,9 @@ export var markdownViewer = {
 export var notebookEditor = {
   directiveName: 'datalabNotebookEditor'
 };
+export var notebookTitle = {
+  directiveName: 'datalabNotebookTitle'
+};
 export var notebookToolbar = {
   directiveName: 'datalabNotebookToolbar'
 };
@@ -74,9 +77,6 @@ export var worksheetEditor = {
 };
 
 
-export var actionEmitter = {
-  name: 'actionEmitter'
-}
 export var notebookData = {
   name: 'notebookData'
 };
@@ -113,6 +113,7 @@ export var scopes = {
   layouts: 'layouts',
   markdownViewer: 'markdownViewer',
   notebookEditor: 'notebookEditor',
+  notebookTitle: 'notebookTitle',
   notebookToolbar: 'notebookToolbar',
   worksheetEditor: 'worksheetEditor',
 
@@ -125,7 +126,6 @@ export var scopes = {
   },
 
   // Other injectables (services, factories, providers, etc.)
-  actionEmitter: actionEmitter.name,
   notebookData: notebookData.name,
   session: session.name,
   sessionConnection: sessionConnection.name

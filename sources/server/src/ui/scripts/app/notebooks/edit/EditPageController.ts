@@ -18,13 +18,14 @@
  */
 /// <reference path="../../../../../../../../externs/ts/angularjs/angular.d.ts" />
 /// <amd-dependency path="app/components/worksheeteditor/WorksheetEditorDirective" />
+/// <amd-dependency path="app/components/notebookdata/NotebookData" />
+/// <amd-dependency path="app/components/notebooktitle/NotebookTitleDirective" />
 /// <amd-dependency path="app/components/notebooktoolbar/NotebookToolbarDirective" />
 /// <amd-dependency path="app/components/session/Session" />
-/// <amd-dependency path="app/components/notebookdata/NotebookData" />
-import logging = require('app/common/Logging');
-import constants = require('app/common/Constants');
-import _app = require('app/App');
 import actions = require('app/shared/actions');
+import constants = require('app/common/Constants');
+import logging = require('app/common/Logging');
+import _app = require('app/App');
 
 
 var log = logging.getLogger(constants.scopes.notebooks.edit.page);
