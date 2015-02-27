@@ -30,6 +30,12 @@
   opacity: 0.2;
 }
 
+
+.datalab-notebook-toolbar {
+  float: right;
+  position: relative;
+  top: 5px;
+}
 /**
  * Places the cell-level toolbar in the upper right corner of the cell "card"
  */
