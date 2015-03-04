@@ -14,7 +14,7 @@
 
 
 /**
- * Type definitions for IPython notebook formats
+ * Type definitions for the IPython notebook v3 format
  */
 declare module app {
   module ipy {
@@ -78,8 +78,8 @@ declare module app {
 
     interface CodeCell extends Cell {
       input: string[];
-      prompt_number: number
-      collapsed: boolean;
+      prompt_number?: number
+      collapsed?: boolean;
       language: string;
       outputs: any[];
     }

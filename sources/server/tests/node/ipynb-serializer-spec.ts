@@ -13,6 +13,7 @@
  */
 
 
+
 describe('IPython .ipynb v3 format serialization', () => {
   var ipynb: app.ipy.Notebook;
   var notebook: app.notebook.Notebook;
@@ -27,7 +28,7 @@ describe('IPython .ipynb v3 format serialization', () => {
     notebook = undefined;
   });
 
-  it('should be an empty notebook with one worksheet and zero cells', () => {
+  it('shou', () => {
     // var notebookData: app.notebook.Notebook = notebook.getSnapshot()
     // expect(notebookData.worksheetIds.length).toBe(1);
   });

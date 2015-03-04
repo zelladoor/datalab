@@ -14,10 +14,11 @@
 
 
 /// <reference path="../../../../../../externs/ts/node/node-uuid.d.ts" />
-import uuid = require('node-uuid');
-import updates = require('../shared/updates');
 import actions = require('../shared/actions');
 import cells = require('../shared/cells');
+import updates = require('../shared/updates');
+import util = require('../common/util');
+import uuid = require('node-uuid');
 
 
 /**
@@ -109,29 +110,21 @@ export class Session implements app.ISession {
     }
 
     // Convert the execution counter to a string to be used as a cell prompt
-    var prompt = message.executionCounter.toString();
+    var prompt = message.executionCounter
 
     var action: app.notebook.action.UpdateCell = {
       action: actions.cell.update,
       worksheetId: cellRef.worksheetId,
       cellId: cellRef.cellId,
-      prompt: prompt
+      prompt: message.executionCounter
     };
 
     // Add the error messaging as an output if an error has occurred
     if (message.errorName) {
-      action.outputs = [{
-        type: 'error',
-        mimetypeBundle: {
-          // TODO(bryantd): parse and present the traceback data as well
-          // Hopefully there's a configuration setting for getting back html
-          // traceback data rather than the escape-code formatted traceback
-          //
-          // Look at the --colors='NoColor' argument to the kernel to see if can be disabled there?
-          // also the --no-color-info flag, also --no-pprint
-          'text/plain': message.errorName + ': ' + message.errorMessage
-        }
-      }];
+      action.outputs = [
+        util.createErrorOutputMimetypeBundle(
+          message.errorName, message.errorMessage, message.traceback)
+      ];
     }
 
     var update = this._notebook.apply(action);

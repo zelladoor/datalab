@@ -57,6 +57,8 @@ declare module app {
        *   language: 'python' | 'java' | 'html' | 'javascript' | etc.
        *   // if cell type is heading
        *   level: 1 | 2 | 3 | 4 | 5 | 6
+       *   // if the output of the cell should be shown as collapsed/exanded
+       *   collapsed: <boolean>
        *   // other metadata needed for new/plugin-defined cell types go here
        * }
       */

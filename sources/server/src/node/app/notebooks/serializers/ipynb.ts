@@ -13,13 +13,16 @@
  */
 
 
-/// <reference path="../../../../../../../externs/ts/node/node-uuid.d.ts" />
-import uuid = require('node-uuid');
 import formats = require('./formats');
+import transforms = require('./ipynbv3/transforms');
 import util = require('../util');
+
 
 /**
  * Serializer for reading/writing the .ipynb (IPython) v3 format
+ *
+ * Eventually this serializer will need to branch based upon the nbformat field specified
+ * within the ipynb and then delegate to a ipynb version-specific serializer
  */
 export class IPySerializer implements app.INotebookSerializer {
 
@@ -52,13 +55,13 @@ export class IPySerializer implements app.INotebookSerializer {
       var cell: app.notebook.Cell;
       switch (ipyCell.cell_type) {
         case 'markdown':
-          cell = deserializeIPyMarkdownCell(<app.ipy.MarkdownCell>ipyCell);
+          cell = transforms.fromIPyMarkdownCell(<app.ipy.MarkdownCell>ipyCell);
           break;
         case 'code':
-          cell = deserializeIPyCodeCell(<app.ipy.CodeCell>ipyCell);
+          cell = transforms.fromIPyCodeCell(<app.ipy.CodeCell>ipyCell);
           break;
         case 'heading':
-          cell = deserializeIPyHeadingCell(<app.ipy.HeadingCell>ipyCell);
+          cell = transforms.fromIPyHeadingCell(<app.ipy.HeadingCell>ipyCell);
           break;
         default:
           console.log('WARNING: skipping unsupported cell type: ', ipyCell.cell_type);
@@ -92,94 +95,4 @@ export class IPySerializer implements app.INotebookSerializer {
     }
   }
 
-}
-
-function createCell(): app.notebook.Cell {
-  return {
-    id: uuid.v4(),
-    metadata: {}
-  };
-}
-
-function deserializeIPyCodeCell (ipyCell: app.ipy.CodeCell): app.notebook.Cell {
-  var cell = createCell();
-  cell.type = 'code';
-  cell.source = ipyCell.input.join('');
-  cell.prompt = ''+ipyCell.prompt_number;
-  cell.metadata.language = ipyCell.language;
-  cell.outputs = [];
-
-  // Now handle the deserialization of any outputs for the code cell
-  ipyCell.outputs.forEach(function (ipyOutput: any) {
-    switch (ipyOutput.output_type) {
-      case 'display_data': // equivalent to pyout case, fall-through
-      case 'pyout':
-        cell.outputs.push(deserializeIPyRichOutput (ipyOutput));
-        break;
-      case 'stream':
-        cell.outputs.push(deserializeIPyStreamOutput (ipyOutput));
-        break;
-      default:
-        console.log('WARNING: skipping unsupported cell output type: ', ipyOutput.output_type);
-    }
-  });
-  return cell;
-}
-
-function deserializeIPyStreamOutput (ipyOutput: any): app.notebook.CellOutput {
-  return {
-    type: ipyOutput.stream,
-    mimetypeBundle: {
-      'text/plain': ipyOutput.text.join('')
-    }
-  }
-}
-
-/**
- * Deserialize an ipython (v3) format mimetype bundle
- */
-function deserializeIPyRichOutput (ipyOutput: any): app.notebook.CellOutput {
-  var output: app.notebook.CellOutput = {
-    type: 'result',
-    mimetypeBundle: {}
-  };
-
-  Object.keys(ipyOutput).forEach(function (key) {
-    switch(key) {
-      case 'png':
-        // The base64 encoded png data is the value of the property
-        output.mimetypeBundle['image/png'] = ipyOutput.png;
-        break;
-      case 'html':
-        output.mimetypeBundle['text/html'] = ipyOutput.html.join('');
-        break;
-      case 'text':
-        output.mimetypeBundle['text/plain'] = ipyOutput.text.join('');
-        break;
-      // non-mimetype properties that can exist within the object
-      case 'metadata':
-      case 'output_type':
-        break; // not a mimetype
-      default:
-        console.log('WARNING: skipping unsupported output mimetype: ', key)
-    }
-  });
-
-  return output;
-}
-
-var DEFAULT_HEADING_LEVEL = 1;
-function deserializeIPyHeadingCell (ipyCell: app.ipy.HeadingCell): app.notebook.Cell {
-  var cell = createCell();
-  cell.type = 'heading';
-  cell.source = ipyCell.source.join('');
-  cell.metadata.level = ipyCell.level || DEFAULT_HEADING_LEVEL;
-  return cell;
-}
-
-function deserializeIPyMarkdownCell (ipyCell: app.ipy.MarkdownCell): app.notebook.Cell {
-  var cell = createCell();
-  cell.type = 'markdown';
-  cell.source = ipyCell.source.join('');
-  return cell;
 }

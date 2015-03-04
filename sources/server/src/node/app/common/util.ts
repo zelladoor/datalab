@@ -28,3 +28,26 @@ export function getAvailablePort (): number {
  * Generic no-op function that takes a single arg
  */
 export function noop (arg1: any): void {}
+
+
+/**
+ * Creates a mimetype bundle to represent an error output
+ *
+ * Used when transforming the common set of error fields to a rich cell output
+ * in the case of .ipynb error outputs and kernel error messages.
+ */
+export function createErrorOutputMimetypeBundle (
+    errorName: string,
+    errorMessage: string,
+    traceback: string[]
+    ): app.notebook.CellOutput {
+  return {
+    type: 'error',
+    mimetypeBundle: {
+      'text/plain': errorName + ': ' + errorMessage
+      // TODO(bryantd): parse and present the traceback data as formatted html content
+      // This requires converting the ANSI color codes embedded in the traceback to appropriate
+      // CSS classes.
+    }
+  };
+}

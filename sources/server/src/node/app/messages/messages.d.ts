@@ -57,7 +57,7 @@ declare module app {
   }
 
   interface OutputData {
-    type: string; // 'stdout' | 'stderr' | 'result'
+    type: string; // 'stdout' | 'stderr' | 'result' | 'error'
     mimetypeBundle: any;
     requestId: string;
   }
@@ -66,7 +66,7 @@ declare module app {
     success: boolean;
     requestId: string;
     // When execute has not been aborted, we get back an execution count
-    executionCounter?: number;
+    executionCounter?: string;
     // When an error has occurred, the following are populated
     errorName?: string;
     errorMessage?: string;
