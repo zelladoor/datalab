@@ -87,6 +87,7 @@ declare module app {
        * }
        */
       mimetypeBundle: Map<string>;
+      metadata?: any;
     }
 
   }

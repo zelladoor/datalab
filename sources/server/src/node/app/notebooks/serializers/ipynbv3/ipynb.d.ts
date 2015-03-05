@@ -116,12 +116,40 @@ declare module app {
     }
 
     interface MarkdownCell extends DocumentCell {
-      // FIXME: worth keeping this interface to make the code more explicit/self-documenting?
+      // This interface exists currently to make the code more explicit/self-documenting?
     }
 
     interface CellOutput {
       output_type: string;
+      metadata?: any;
+    }
+
+    interface ErrorOutput extends CellOutput {
+      ename: string;
+      evalue: string;
+      traceback: string[];
+    }
+
+    interface StreamOutput extends CellOutput {
+      stream: string;
       text: string[];
+    }
+
+    interface DisplayDataOutput extends CellOutput {
+      // One field per supported mime-type
+      text?: string[];
+      latex?: string[];
+      png?: string[];
+      jpeg?: string[];
+      svg?: string[];
+      html?: string[];
+      javascript?: string[];
+      json?: string[];
+      pdf?: string[];
+    }
+
+    interface ExecuteOutput extends DisplayDataOutput {
+      prompt_number: number;
     }
   }
 }

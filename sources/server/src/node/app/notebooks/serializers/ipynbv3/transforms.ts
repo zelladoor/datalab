@@ -55,7 +55,9 @@ export function fromIPyCodeCell (ipyCell: app.ipy.CodeCell): app.notebook.Cell {
 }
 
 function fromIPyErrorOutput (ipyOutput: any): app.notebook.CellOutput {
-  return util.createErrorOutputMimetypeBundle(
+  // FIXME store the individual error fields as cell output metadata
+  // so that they can be round-tripped without loss of fidelity
+  return util.createErrorOutput(
       ipyOutput.ename, ipyOutput.evalue, ipyOutput.traceback);
 }
 
@@ -173,8 +175,106 @@ export function fromIPyNotebook (ipyNotebook: app.ipy.Notebook): app.notebook.No
   return notebook;
 }
 
+export function toIPyCodeCell (cell: app.notebook.Cell): app.ipy.CodeCell {
+  var ipyCell: app.ipy.CodeCell = {
+    cell_type: 'code',
+    input: [],
+    collapsed: false,
+    metadata: cell.metadata || {},
+    // Attempt to set the language for the cell if defined, if not, leave undefined
+    language: (cell.metadata && cell.metadata.language) || undefined,
+    // Set the prompt number if the value is numeric, otherwise leave undefined
+    prompt_number: parseInt(cell.prompt) || undefined,
+    outputs: []
+  };
 
-function _createCell(): app.notebook.Cell {
+  cell.outputs.forEach((output) => {
+    switch (output.type) {
+      case 'result':
+
+      break;
+
+      case 'error':
+
+      break;
+
+      case 'stdout':
+
+      break;
+
+      case 'stderr':
+
+      break;
+
+      default:
+        throw new Error('Unsupported output type for conversion to IPython cell output: "'
+          + output.type + '"');
+    }
+  });
+
+  return ipyCell;
+}
+
+function toIPyRichOutput (output: app.notebook.CellOutput): app.ipy.DisplayDataOutput {
+  return null;
+}
+
+function toIPyErrorOutput (output: app.notebook.CellOutput): app.ipy.ErrorOutput {
+  // FIXME recreate the individual error fields here eventually when they
+  // are being persisted into the cell output's metadata dict both on ingestion
+  // of ipynb content and as part of error-based execute reply responses
+  return {
+    output_type: 'pyerr',
+    ename: 'todo',
+    evalue: 'todo',
+    traceback: ['todo']
+  }
+  return null;
+}
+
+function toIPyStreamOutput (output: app.notebook.CellOutput): app.ipy.StreamOutput {
+  return {
+    output_type: 'stream',
+    stream: output.type,
+    text: stringToLineArray(output.mimetypeBundle['text/plain']) || [],
+    metadata: output.metadata || {}
+  }
+}
+
+/**
+ * Convert a string containing newlines into an array of strings, while keeping newlines
+ *
+ * s = 'foo\nbar\nbaz' => ['foo\n', 'bar\n', 'baz']
+ */
+export function stringToLineArray (s: string): string[] {
+  if (!s) {
+    return [];
+  }
+
+  return s.split('\n').map((line, i, lines) => {
+    // Avoid appending a newline to the last line
+    if (i < lines.length - 1) {
+      return line + '\n';
+    } else {
+      return line;
+    }
+  });
+}
+
+export function toIPyHeadingCell (cell: app.notebook.Cell): app.ipy.HeadingCell {
+  return null;
+}
+
+export function toIPyMarkdownCell (cell: app.notebook.Cell): app.ipy.MarkdownCell {
+  return null;
+}
+
+export function toIPyNotebook (notebook: app.notebook.Notebook): app.ipy.Notebook {
+  return null;
+}
+
+
+function _createCell (): app.notebook.Cell {
   return {
     id: uuid.v4(),
     metadata: {}

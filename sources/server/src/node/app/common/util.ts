@@ -36,7 +36,7 @@ export function noop (arg1: any): void {}
  * Used when transforming the common set of error fields to a rich cell output
  * in the case of .ipynb error outputs and kernel error messages.
  */
-export function createErrorOutputMimetypeBundle (
+export function createErrorOutput (
     errorName: string,
     errorMessage: string,
     traceback: string[]

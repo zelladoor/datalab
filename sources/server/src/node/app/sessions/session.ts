@@ -122,8 +122,7 @@ export class Session implements app.ISession {
     // Add the error messaging as an output if an error has occurred
     if (message.errorName) {
       action.outputs = [
-        util.createErrorOutputMimetypeBundle(
-          message.errorName, message.errorMessage, message.traceback)
+        util.createErrorOutput(message.errorName, message.errorMessage, message.traceback)
       ];
     }
 
