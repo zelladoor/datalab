@@ -178,7 +178,7 @@ export function fromIPyNotebook (ipyNotebook: app.ipy.Notebook): app.notebook.No
 export function toIPyCodeCell (cell: app.notebook.Cell): app.ipy.CodeCell {
   var ipyCell: app.ipy.CodeCell = {
     cell_type: 'code',
-    input: [],
+    input: stringToLineArray(cell.source),
     collapsed: false,
     metadata: cell.metadata || {},
     // Attempt to set the language for the cell if defined, if not, leave undefined
@@ -191,19 +191,16 @@ export function toIPyCodeCell (cell: app.notebook.Cell): app.ipy.CodeCell {
   cell.outputs.forEach((output) => {
     switch (output.type) {
       case 'result':
-
+        ipyCell.outputs.push(toIPyDisplayDataOutput(output));
       break;
 
       case 'error':
-
+        ipyCell.outputs.push(toIPyErrorOutput(output));
       break;
 
       case 'stdout':
-
-      break;
-
       case 'stderr':
-
+        ipyCell.outputs.push(toIPyStreamOutput(output));
       break;
 
       default:
@@ -215,28 +212,60 @@ export function toIPyCodeCell (cell: app.notebook.Cell): app.ipy.CodeCell {
   return ipyCell;
 }
 
-function toIPyRichOutput (output: app.notebook.CellOutput): app.ipy.DisplayDataOutput {
-  return null;
+function toIPyDisplayDataOutput (output: app.notebook.CellOutput): app.ipy.DisplayDataOutput {
+  var ipyOutput: app.ipy.DisplayDataOutput = {
+    output_type: 'display_data',
+    metadata: output.metadata || {}
+  };
+
+  // For each mimetype, map it to the corresponding ipy property
+  Object.keys(output.mimetypeBundle).forEach((mimetype) => {
+    var data = output.mimetypeBundle[mimetype];
+    switch (mimetype) {
+      case 'text/plain':
+        ipyOutput.text = stringToLineArray(data);
+      break;
+
+      case 'text/html':
+        ipyOutput.html = stringToLineArray(data);
+      break;
+
+      case 'image/png':
+        ipyOutput.png = data;
+      break;
+
+      case 'image/jpeg':
+        ipyOutput.jpeg = data;
+      break;
+
+      default:
+        throw new Error('Unsupported mimetype for conversion to ipynb cell output "'+mimetype+'"');
+    }
+  });
+
+  return ipyOutput;
 }
 
 function toIPyErrorOutput (output: app.notebook.CellOutput): app.ipy.ErrorOutput {
   // FIXME recreate the individual error fields here eventually when they
   // are being persisted into the cell output's metadata dict both on ingestion
   // of ipynb content and as part of error-based execute reply responses
+
+  // FIXME: ensure that the individual error fields are removed from the metadata dict
+  // since they are captured in the fields too
   return {
     output_type: 'pyerr',
     ename: 'todo',
     evalue: 'todo',
     traceback: ['todo']
   }
-  return null;
 }
 
 function toIPyStreamOutput (output: app.notebook.CellOutput): app.ipy.StreamOutput {
   return {
     output_type: 'stream',
     stream: output.type,
-    text: stringToLineArray(output.mimetypeBundle['text/plain']) || [],
+    text: stringToLineArray(output.mimetypeBundle['text/plain']),
     metadata: output.metadata || {}
   }
 }

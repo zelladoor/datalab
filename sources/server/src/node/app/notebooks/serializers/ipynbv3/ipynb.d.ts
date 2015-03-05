@@ -137,15 +137,15 @@ declare module app {
 
     interface DisplayDataOutput extends CellOutput {
       // One field per supported mime-type
-      text?: string[];
+      text?: string[]; // text/plain
       latex?: string[];
-      png?: string[];
-      jpeg?: string[];
+      png?: string; // image/png
+      jpeg?: string; // image/jpeg
       svg?: string[];
-      html?: string[];
+      html?: string[]; // text/html
       javascript?: string[];
-      json?: string[];
-      pdf?: string[];
+      // json?: string[];
+      // pdf?: string[];
     }
 
     interface ExecuteOutput extends DisplayDataOutput {
