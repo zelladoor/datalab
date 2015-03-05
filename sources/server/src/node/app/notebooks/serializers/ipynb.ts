@@ -34,43 +34,14 @@ export class IPySerializer implements app.INotebookSerializer {
 
     // Read the raw file contents (json blob) into an object
     var ipynb = JSON.parse(notebookData);
-    console.log(JSON.stringify(ipynb, null, 4));
 
-    var notebook = util.createEmptyNotebook();
-    // FIMXE: set the notebook name here somehow... need filename for consistency with ipython
-
-    // Get a reference to the first worksheet
-    var worksheet = notebook.worksheets[notebook.worksheetIds[0]];
-
-    // Notebooks created by IPython in v3 format will have zero or one worksheet(s)
-    if (ipynb.worksheets.length === 0) {
-      // Nothing else to convert from ipynb format
-      return notebook;
+    // Validate that this serializer supports the specified format
+    var ipynbVersion = ipynb.nbformat;
+    if (ipynbVersion != 3) {
+      throw new Error('Cannot read unsupported .ipynb version "' + ipynbVersion + '"');
     }
 
-    // Notebook has a single worksheet
-    var ipynbWorksheet = ipynb.worksheets[0];
-
-    ipynbWorksheet.cells.forEach(function (ipyCell: any) {
-      var cell: app.notebook.Cell;
-      switch (ipyCell.cell_type) {
-        case 'markdown':
-          cell = transforms.fromIPyMarkdownCell(<app.ipy.MarkdownCell>ipyCell);
-          break;
-        case 'code':
-          cell = transforms.fromIPyCodeCell(<app.ipy.CodeCell>ipyCell);
-          break;
-        case 'heading':
-          cell = transforms.fromIPyHeadingCell(<app.ipy.HeadingCell>ipyCell);
-          break;
-        default:
-          console.log('WARNING: skipping unsupported cell type: ', ipyCell.cell_type);
-      }
-      // Attach the converted cell to the worksheet
-      worksheet.cells.push(cell);
-    });
-
-    return notebook;
+    return transforms.fromIPyNotebook(ipynb);
   }
 
   /**

@@ -13,6 +13,7 @@
  */
 
 
+/// <reference path="../../../../externs/ts/jasmine.d.ts"/>
 import xforms = require('./app/notebooks/serializers/ipynbv3/transforms');
 import cells = require('./app/shared/cells');
 
@@ -285,18 +286,71 @@ describe('IPython .ipynb v3 format serialization of heading cells', () => {
 });
 
 
-// // Move these to notebook-level test
+describe('IPython .ipynb v3 format serialization of notebook metadata', () => {
+  var ipyNotebook: app.ipy.Notebook;
+  var notebook: app.notebook.Notebook;
 
-// // notebook metadata examples
-// {
-//  "metadata": {
-//   "name": "",
-//   "signature": "sha256:c2b0ce7a67276ff10d1aaa411e38e71d8f1d5fb925891d9f4e47ef8149b503a6"
-//  },
-//  "nbformat": 3,
-//  "nbformat_minor": 0,
-//  "worksheets": [
-//   {
-//    "cells": []
-//   }
-// }
+  beforeEach(() => {
+    ipyNotebook = {
+      "metadata": {
+        "signature": "sha256 hash"
+      },
+      "nbformat": 3,
+      "nbformat_minor": 0,
+      "worksheets": []
+    }
+  });
+
+  afterEach(() => {
+    ipyNotebook = undefined;
+    notebook = undefined;
+  });
+
+  it('should transform the .ipynb notebook with zero worksheets', () => {
+    notebook = xforms.fromIPyNotebook(ipyNotebook);
+    // There should be a single empty worksheet
+    expect(notebook.worksheetIds.length).toBe(1);
+    var worksheet = notebook.worksheets[notebook.worksheetIds[0]];
+    expect(worksheet.cells.length).toBe(0);
+  });
+
+  it('should transform the .ipynb notebook with one worksheet having zero cells', () => {
+    ipyNotebook.worksheets.push({
+      metadata: {foo: 'bar'},
+      cells: []
+    });
+
+    notebook = xforms.fromIPyNotebook(ipyNotebook);
+
+    expect(notebook.worksheetIds.length).toBe(1);
+    var worksheet = notebook.worksheets[notebook.worksheetIds[0]];
+    expect(worksheet.metadata).toEqual({foo: 'bar'});
+    expect(worksheet.cells).toEqual([]);
+  });
+
+  it('should transform the .ipynb notebook with one worksheet having non-zero cells', () => {
+    ipyNotebook.worksheets.push({
+      metadata: {baz: 'quux'},
+      cells: [{
+        cell_type: 'markdown',
+        source: ['md text'],
+        metadata: {foo: 'bar'}
+      }]
+    });
+
+    notebook = xforms.fromIPyNotebook(ipyNotebook);
+
+    expect(notebook.worksheetIds.length).toBe(1);
+
+    var worksheet = notebook.worksheets[notebook.worksheetIds[0]];
+    expect(worksheet.cells.length).toBe(1);
+    expect(worksheet.metadata).toEqual({baz: 'quux'});
+
+    var cell = worksheet.cells[0];
+    expect(cell.type).toBe(cells.markdown);
+    expect(cell.source).toBe('md text');
+    expect(cell.metadata).toEqual({foo: 'bar'});
+    expect(cell.id).toBeDefined();
+  });
+
+});

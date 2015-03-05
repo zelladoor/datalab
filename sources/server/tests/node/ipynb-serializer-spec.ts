@@ -13,6 +13,8 @@
  */
 
 
+/// <reference path="../../../../externs/ts/jasmine.d.ts"/>
+
 
 describe('IPython .ipynb v3 format serialization', () => {
   var ipynb: app.ipy.Notebook;

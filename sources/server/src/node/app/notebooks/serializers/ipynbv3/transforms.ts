@@ -17,6 +17,7 @@
  * Transformation functions from .ipynb-formatted objects to datalab in-memory notebook types
  */
 /// <reference path="../../../../../../../../externs/ts/node/node-uuid.d.ts" />
+import nbutil = require('../../util');
 import util = require('../../../common/util');
 import uuid = require('node-uuid');
 
@@ -26,6 +27,7 @@ export function fromIPyCodeCell (ipyCell: app.ipy.CodeCell): app.notebook.Cell {
   cell.type = 'code';
   cell.source = ipyCell.input.join('');
   cell.prompt = ''+ipyCell.prompt_number;
+  cell.metadata = ipyCell.metadata || {};
   cell.metadata.language = ipyCell.language;
   cell.outputs = [];
 
@@ -108,6 +110,7 @@ export function fromIPyHeadingCell (ipyCell: app.ipy.HeadingCell): app.notebook.
   var cell = _createCell();
   cell.type = 'heading';
   cell.source = ipyCell.source.join('');
+  cell.metadata = ipyCell.metadata || {};
   cell.metadata.level = ipyCell.level || DEFAULT_HEADING_LEVEL;
   return cell;
 }
@@ -116,8 +119,60 @@ export function fromIPyMarkdownCell (ipyCell: app.ipy.MarkdownCell): app.noteboo
   var cell = _createCell();
   cell.type = 'markdown';
   cell.source = ipyCell.source.join('');
+  cell.metadata = ipyCell.metadata || {};
   return cell;
 }
+
+export function fromIPyNotebook (ipyNotebook: app.ipy.Notebook): app.notebook.Notebook {
+  var notebook = nbutil.createEmptyNotebook();
+  // Copy over the notebook-level metadata if it was defined
+  notebook.metadata = ipyNotebook.metadata || {};
+
+  // Notebooks created by IPython in v3 format will have zero or one worksheet(s)
+  // because no existing IPython tools are capable of creating/reading multiple worksheets.
+  //
+  // As part of DataLab's multi-worksheet support, DataLab may export multi-worksheet .ipynb
+  // but this is unlikely since no other tools will be able to read beyond the first worksheet.
+  //
+  // Thus, assume zero or one worksheet, but throw an informative error if these expectations are
+  // not met.
+  if (ipyNotebook.worksheets.length === 0) {
+    // Nothing else to convert from ipynb format
+    return notebook;
+  } else if (ipyNotebook.worksheets.length > 1) {
+    //
+    throw new Error('Multi-worksheet .ipynb notebooks are not currently supported');
+  }
+
+  // Then the .ipynb notebook has a single worksheet
+  var ipynbWorksheet = ipyNotebook.worksheets[0];
+
+  // Get a reference to the first worksheet in the converted notebook
+  var worksheet = notebook.worksheets[notebook.worksheetIds[0]];
+  worksheet.metadata = ipynbWorksheet.metadata || {};
+
+  ipynbWorksheet.cells.forEach(function (ipyCell: any) {
+    var cell: app.notebook.Cell;
+    switch (ipyCell.cell_type) {
+      case 'markdown':
+        cell = fromIPyMarkdownCell(<app.ipy.MarkdownCell>ipyCell);
+        break;
+      case 'code':
+        cell = fromIPyCodeCell(<app.ipy.CodeCell>ipyCell);
+        break;
+      case 'heading':
+        cell = fromIPyHeadingCell(<app.ipy.HeadingCell>ipyCell);
+        break;
+      default:
+        console.log('WARNING: skipping unsupported cell type: ', ipyCell.cell_type);
+    }
+    // Attach the converted cell to the worksheet
+    worksheet.cells.push(cell);
+  });
+
+  return notebook;
+}
+
 
 function _createCell(): app.notebook.Cell {
   return {

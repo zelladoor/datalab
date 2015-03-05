@@ -15,6 +15,9 @@
 
 /**
  * Type definitions for the IPython notebook v3 format
+ *
+ * The JSON schema that defines the v3 format is here:
+ * https://github.com/ipython/ipython/blob/master/IPython/nbformat/v3/nbformat.v3.schema.json
  */
 declare module app {
   module ipy {
@@ -58,16 +61,36 @@ declare module app {
 
     */
 
-    // TODO(bryantd): this is only a subset of the possible fields at the moment
     interface Notebook {
-      metadata: any;
-      nbformat: number;
-      nbformat_minor: number;
+
+      // Notebook format (major number). Incremented between backwards incompatible changes to the notebook format
+      nbformat: number; // === 3 for ipynb v3
+      // Notebook format (minor number). Incremented for backward compatible changes to the notebook format
+      nbformat_minor: number; // >= 0
+
+      // Original notebook format (major number) before converting the notebook between versions
+      orig_nbformat?: number; // >= 1
+      // Original notebook format (minor number) before converting the notebook between versions
+      orig_nbformat_minor?: number; // >= 0
+
+      // Notebook-level metadata
+      //
+      // Properties used by IPython currently include:
+      //
+      // signature: string; // sha256 hash of the notebook content
+      //
+      // kernel_info: {
+      //   name: string; // name/label for the kernel spec
+      //   language: string; // e.g. 'python'
+      //   codemirror_mode?: string; // which CodeMirror mode to load for the notebook
+      // }
+      metadata?: any;
+
       worksheets: Worksheet[];
     }
 
     interface Worksheet {
-      metadata: any;
+      metadata?: any;
       cells: Cell[];
     }
 
