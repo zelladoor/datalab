@@ -48,6 +48,15 @@ export function createErrorOutput (
       // TODO(bryantd): parse and present the traceback data as formatted html content
       // This requires converting the ANSI color codes embedded in the traceback to appropriate
       // CSS classes.
+    },
+    // Retain the individual error fields as metadata
+    // Necessary to fully support exporting to .ipynb format
+    metadata: {
+      errorDetails: {
+        errorName: errorName,
+        errorMessage: errorMessage,
+        traceback: traceback
+      }
     }
   };
 }

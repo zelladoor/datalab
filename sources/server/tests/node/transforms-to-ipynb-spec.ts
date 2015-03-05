@@ -173,6 +173,16 @@ describe('Code cell', () => {
         'text/plain': "NameError: name 'asdf' is not defined"
         // TODO(bryantd): validate content of html traceback once the ansi color code and format
         // are translated to html with appropriate css classes
+      },
+      metadata: {
+        errorDetails: {
+          errorName: "NameError",
+          errorMessage: "name 'asdf' is not defined",
+          traceback: [
+            "tb line 1",
+            "tb line 2"
+          ]
+        }
       }
     });
 
@@ -184,9 +194,8 @@ describe('Code cell', () => {
       "evalue": "name 'asdf' is not defined",
       "output_type": "pyerr",
       "traceback": [
-        "\u001b[0;31m---------------------------------------------------------------------------\u001b[0m\n\u001b[0;31mNameError\u001b[0m                                 Traceback (most recent call last)",
-        "\u001b[0;32m<ipython-input-1-fa7e98d32929>\u001b[0m in \u001b[0;36m<module>\u001b[0;34m()\u001b[0m\n\u001b[0;32m----> 1\u001b[0;31m \u001b[0;32mprint\u001b[0m \u001b[0masdf\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[0m",
-        "\u001b[0;31mNameError\u001b[0m: name 'asdf' is not defined"
+        "tb line 1",
+        "tb line 2"
       ],
       "metadata": {}
     });

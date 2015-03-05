@@ -55,8 +55,6 @@ export function fromIPyCodeCell (ipyCell: app.ipy.CodeCell): app.notebook.Cell {
 }
 
 function fromIPyErrorOutput (ipyOutput: any): app.notebook.CellOutput {
-  // FIXME store the individual error fields as cell output metadata
-  // so that they can be round-tripped without loss of fidelity
   return util.createErrorOutput(
       ipyOutput.ename, ipyOutput.evalue, ipyOutput.traceback);
 }
@@ -247,17 +245,22 @@ function toIPyDisplayDataOutput (output: app.notebook.CellOutput): app.ipy.Displ
 }
 
 function toIPyErrorOutput (output: app.notebook.CellOutput): app.ipy.ErrorOutput {
-  // FIXME recreate the individual error fields here eventually when they
-  // are being persisted into the cell output's metadata dict both on ingestion
-  // of ipynb content and as part of error-based execute reply responses
+  // Copy over all metadata fields that are not part of the error details
+  // (error details are captured as top-level field in ipy outputs)
+  var metadata = {};
+  Object.keys(output.metadata).forEach((property) => {
+    if (property != 'errorDetails') {
+      metadata[property] = output.metadata[property];
+    }
+  });
 
-  // FIXME: ensure that the individual error fields are removed from the metadata dict
-  // since they are captured in the fields too
+  var error = output.metadata.errorDetails;
   return {
     output_type: 'pyerr',
-    ename: 'todo',
-    evalue: 'todo',
-    traceback: ['todo']
+    metadata: metadata,
+    ename: error.errorName,
+    evalue: error.errorMessage,
+    traceback: error.traceback
   }
 }
 
