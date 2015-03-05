@@ -41,7 +41,7 @@ describe('IPython .ipynb v3 format serialization of code cells', () => {
     cell = undefined;
   });
 
-  it('should transform the .ipynb code cell with no outputs', () => {
+  it('should transform from the .ipynb code cell with no outputs', () => {
     cell = xforms.fromIPyCodeCell(ipyCodeCell);
 
     expect(cell.type).toBe(cells.code);
@@ -53,7 +53,7 @@ describe('IPython .ipynb v3 format serialization of code cells', () => {
   });
 
 
-  it('should transform the .ipynb executed code cell with multi-line input', () => {
+  it('should transform from the .ipynb executed code cell with multi-line input', () => {
     ipyCodeCell.input = [
        "import pandas as pd\n",
        "import numpy as np"
@@ -64,7 +64,7 @@ describe('IPython .ipynb v3 format serialization of code cells', () => {
     expect(cell.source).toBe('import pandas as pd\nimport numpy as np');
   });
 
-  it('should transform the .ipynb code cell with a single-line pyout output', () => {
+  it('should transform from the .ipynb code cell with a single-line pyout output', () => {
     ipyCodeCell.outputs = [{
       "metadata": {},
       "output_type": "pyout",
@@ -84,7 +84,7 @@ describe('IPython .ipynb v3 format serialization of code cells', () => {
     });
   });
 
-  it('should transform the .ipynb code cell with a multiline pyout output', () => {
+  it('should transform from the .ipynb code cell with a multiline pyout output', () => {
     ipyCodeCell.outputs = [{
       "metadata": {},
       "output_type": "pyout",
@@ -107,7 +107,7 @@ describe('IPython .ipynb v3 format serialization of code cells', () => {
 
   });
 
-  it('should transform the .ipynb code cell with multiple mimetypes in a single output', () => {
+  it('should transform from the .ipynb code cell with multiple mimetypes in a single output', () => {
     ipyCodeCell.outputs = [{
 
       "html": [
@@ -136,7 +136,7 @@ describe('IPython .ipynb v3 format serialization of code cells', () => {
 
   });
 
-  it('should transform the .ipynb code cell with stdout stream output', () => {
+  it('should transform from the .ipynb code cell with stdout stream output', () => {
     ipyCodeCell.outputs = [{
       "output_type": "stream",
       "stream": "stdout",
@@ -157,7 +157,7 @@ describe('IPython .ipynb v3 format serialization of code cells', () => {
     });
   });
 
-  it('should transform the .ipynb code cell with display data output', () => {
+  it('should transform from the .ipynb code cell with display data output', () => {
     ipyCodeCell.outputs = [{
        "output_type": "display_data",
        "png": "png base64 encoded content here",
@@ -178,7 +178,7 @@ describe('IPython .ipynb v3 format serialization of code cells', () => {
     });
   });
 
-  it('should transform the .ipynb code cell with error output', () => {
+  it('should transform from the .ipynb code cell with error output', () => {
     ipyCodeCell.outputs = [{
       "ename": "NameError",
       "evalue": "name 'asdf' is not defined",
@@ -228,7 +228,7 @@ describe('IPython .ipynb v3 format serialization of markdown cells', () => {
     cell = undefined;
   });
 
-  it('should transform the .ipynb Markdown cell', () => {
+  it('should transform from the .ipynb Markdown cell', () => {
     cell = xforms.fromIPyMarkdownCell(ipyMarkdownCell);
 
     expect(cell.type).toBe(cells.markdown);
@@ -261,7 +261,7 @@ describe('IPython .ipynb v3 format serialization of heading cells', () => {
     cell = undefined;
   });
 
-  it('should transform the .ipynb heading cell (level 1)', () => {
+  it('should transform from the .ipynb heading cell (level 1)', () => {
     cell = xforms.fromIPyHeadingCell(ipyHeadingCell);
 
     expect(cell.type).toBe(cells.heading);
@@ -271,7 +271,7 @@ describe('IPython .ipynb v3 format serialization of heading cells', () => {
     expect(cell.source).toBe('this is a heading');
   });
 
-  it('should transform the .ipynb heading cell (level 2)', () => {
+  it('should transform from the .ipynb heading cell (level 2)', () => {
     ipyHeadingCell.level = 2;
 
     cell = xforms.fromIPyHeadingCell(ipyHeadingCell);
@@ -306,7 +306,7 @@ describe('IPython .ipynb v3 format serialization of notebook metadata', () => {
     notebook = undefined;
   });
 
-  it('should transform the .ipynb notebook with zero worksheets', () => {
+  it('should transform from the .ipynb notebook with zero worksheets', () => {
     notebook = xforms.fromIPyNotebook(ipyNotebook);
     // There should be a single empty worksheet
     expect(notebook.worksheetIds.length).toBe(1);
@@ -314,7 +314,7 @@ describe('IPython .ipynb v3 format serialization of notebook metadata', () => {
     expect(worksheet.cells.length).toBe(0);
   });
 
-  it('should transform the .ipynb notebook with one worksheet having zero cells', () => {
+  it('should transform from the .ipynb notebook with one worksheet having zero cells', () => {
     ipyNotebook.worksheets.push({
       metadata: {foo: 'bar'},
       cells: []
@@ -328,7 +328,7 @@ describe('IPython .ipynb v3 format serialization of notebook metadata', () => {
     expect(worksheet.cells).toEqual([]);
   });
 
-  it('should transform the .ipynb notebook with one worksheet having non-zero cells', () => {
+  it('should transform from the .ipynb notebook with one worksheet having non-zero cells', () => {
     ipyNotebook.worksheets.push({
       metadata: {baz: 'quux'},
       cells: [{
