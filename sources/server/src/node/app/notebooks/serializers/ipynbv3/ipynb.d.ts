@@ -106,17 +106,13 @@ declare module app {
       language: string;
       outputs: any[];
     }
-    interface DocumentCell extends Cell {
+
+    interface MarkdownCell extends Cell {
       source: string[];
     }
 
-    interface HeadingCell extends DocumentCell {
-      source: string[];
+    interface HeadingCell extends MarkdownCell {
       level: number;
-    }
-
-    interface MarkdownCell extends DocumentCell {
-      // This interface exists currently to make the code more explicit/self-documenting?
     }
 
     interface CellOutput {

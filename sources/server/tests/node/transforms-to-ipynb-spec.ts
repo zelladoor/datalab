@@ -223,38 +223,39 @@ describe('Convert text containing newlines to IPython-style line-array', () => {
 });
 
 
-// describe('IPython .ipynb v3 format serialization of markdown cells', () => {
+describe('Markdown cell', () => {
 
-//   var ipyMarkdownCell: app.ipy.MarkdownCell;
-//   var cell: app.notebook.Cell;
+  var ipyMarkdownCell: app.ipy.MarkdownCell;
+  var cell: app.notebook.Cell;
 
-//   beforeEach(() => {
-//     ipyMarkdownCell = {
-//       "cell_type": "markdown",
-//       "metadata": {},
-//       "source": [
-//         "# Some markdown heading\n",
-//         "\n",
-//         "This notebook demonstrates...\n",
-//       ]
-//     };
-//   });
+  beforeEach(() => {
+    cell = {
+      id: 'foo-id',
+      type: cells.markdown,
+      source: '# Some markdown heading\n\nThis notebook demonstrates...',
+      metadata: {}
+    };
+  });
 
-//   afterEach(() => {
-//     ipyMarkdownCell = undefined;
-//     cell = undefined;
-//   });
+  afterEach(() => {
+    ipyMarkdownCell = undefined;
+    cell = undefined;
+  });
 
-//   it('should transform to the .ipynb Markdown cell', () => {
-//     cell = xforms.fromIPyMarkdownCell(ipyMarkdownCell);
+  it('should transform to the .ipynb Markdown cell', () => {
+    ipyMarkdownCell = xforms.toIPyMarkdownCell(cell);
 
-//     expect(cell.type).toBe(cells.markdown);
-//     expect(cell.metadata).toEqual({});
-//     expect(cell.source).toBe(
-//       '# Some markdown heading\n\nThis notebook demonstrates...\n');
-//   });
+    expect(ipyMarkdownCell.cell_type).toBe('markdown');
+    expect(ipyMarkdownCell.metadata).toEqual({});
+    expect(ipyMarkdownCell.source.length).toBe(3);
+    expect(ipyMarkdownCell.source).toEqual([
+      "# Some markdown heading\n",
+      "\n",
+      "This notebook demonstrates...",
+    ]);
+  });
 
-// });
+});
 
 
 // describe('IPython .ipynb v3 format serialization of heading cells', () => {

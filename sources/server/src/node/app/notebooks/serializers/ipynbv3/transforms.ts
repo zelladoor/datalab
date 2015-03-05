@@ -298,7 +298,11 @@ export function toIPyHeadingCell (cell: app.notebook.Cell): app.ipy.HeadingCell 
 }
 
 export function toIPyMarkdownCell (cell: app.notebook.Cell): app.ipy.MarkdownCell {
-  return null;
+  return {
+    cell_type: 'markdown',
+    source: stringToLineArray(cell.source),
+    metadata: cell.metadata || {}
+  }
 }
 
 export function toIPyNotebook (notebook: app.notebook.Notebook): app.ipy.Notebook {
