@@ -19,15 +19,14 @@ import util = require('../util');
 
 
 /**
- * Serializer for reading/writing the .ipynb (IPython) v3 format
+ * Serializer for reading/writing the .ipynb (IPython) formats
  *
- * Eventually this serializer will need to branch based upon the nbformat field specified
- * within the ipynb and then delegate to a ipynb version-specific serializer
+ * Only supports .ipynb v3 format currently
  */
 export class IPySerializer implements app.INotebookSerializer {
 
   /**
-   * Deserialize an in-memory notebook model from a JSON string
+   * Parses and transforms the given .ipynb formatted JSON string into an in-memory notebook model
    */
   parse (notebookData: string, format: string) {
     this._validateFormatOrThrow(format);
@@ -45,18 +44,15 @@ export class IPySerializer implements app.INotebookSerializer {
   }
 
   /**
-   * Serialize the in-memory notebook model as-is to a JSON string
+   * Serializes the in-memory notebook model to a .ipynb formatted JSON string
    */
   stringify (notebook: app.notebook.Notebook, format: string) {
     this._validateFormatOrThrow(format);
-
-    // TODO(bryantd): serialize to ipynb format
-    throw 'NotImplemented';
-    return 'NotImplemented'; // Must return string response for compilation to succeed
+    return JSON.stringify(transforms.toIPyNotebook(notebook), null, 2);
   }
 
   /**
-   * Validate that this serializer can parse the notebook specified format.
+   * Validates that this serializer can parse the notebook specified format.
    *
    * Throws an exception if the format is unsupported by this serializer.
    */

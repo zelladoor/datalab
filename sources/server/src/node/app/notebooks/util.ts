@@ -22,11 +22,6 @@ import cells = require('../shared/cells');
 
 
 /**
- * Name for notebooks with unspecified name
- */
-export var defaultNotebookName = 'Untitled Notebook';
-
-/**
  * Name for worksheets with unspecified name
  */
 export var defaultWorksheetName = 'Untitled Worksheet';
@@ -113,7 +108,6 @@ export function createEmptyNotebook (): app.notebook.Notebook {
   var notebook: app.notebook.Notebook = {
     id: uuid.v4(),
     metadata: {},
-    name: defaultNotebookName,
     worksheetIds: [worksheetId],
     worksheets: {}
   };
