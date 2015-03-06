@@ -13,9 +13,9 @@
  */
 
 
-/// <reference path="../../../../externs/ts/jasmine.d.ts"/>
-import xforms = require('./app/notebooks/serializers/ipynbv3/transforms');
-import cells = require('./app/shared/cells');
+/// <reference path="../../../../../externs/ts/jasmine.d.ts"/>
+import xforms = require('../app/notebooks/serializers/ipynbv3/transforms');
+import cells = require('../app/shared/cells');
 
 
 describe('IPython .ipynb v3 format serialization of code cells', () => {
