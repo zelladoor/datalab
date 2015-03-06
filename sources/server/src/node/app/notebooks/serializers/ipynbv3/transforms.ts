@@ -127,14 +127,16 @@ export function fromIPyNotebook (ipyNotebook: app.ipy.Notebook): app.notebook.No
   var notebook = nbutil.createEmptyNotebook();
   // Copy over the notebook-level metadata if it was defined
   notebook.metadata = ipyNotebook.metadata || {};
+  // Remove the sha-256 signature field if it is defined (it's no longer valid)
+  delete notebook.metadata.signature;
 
   // Notebooks created by IPython in v3 format will have zero or one worksheet(s)
   // because no existing IPython tools are capable of creating/reading multiple worksheets.
   //
-  // As part of DataLab's multi-worksheet support, DataLab may export multi-worksheet .ipynb
+  // As part of multi-worksheet support, we *could* export a multi-worksheet .ipynb
   // but this is unlikely since no other tools will be able to read beyond the first worksheet.
   //
-  // Thus, assume zero or one worksheet, but throw an informative error if these expectations are
+  // So, assume zero or one worksheet, but throw an informative error if these expectations are
   // not met.
   if (ipyNotebook.worksheets.length === 0) {
     // Nothing else to convert from ipynb format
@@ -178,7 +180,8 @@ export function toIPyCodeCell (cell: app.notebook.Cell): app.ipy.CodeCell {
     cell_type: 'code',
     input: stringToLineArray(cell.source),
     collapsed: false,
-    metadata: cell.metadata || {},
+    // language is promoted to cell-level attribute, remove it from the metadata dict
+    metadata: shallowCopy(cell.metadata || {}, 'language'),
     // Attempt to set the language for the cell if defined, if not, leave undefined
     language: (cell.metadata && cell.metadata.language) || undefined,
     // Set the prompt number if the value is numeric, otherwise leave undefined

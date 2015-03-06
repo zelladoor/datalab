@@ -73,6 +73,7 @@ describe('Parse .ipynb format to in-memory notebook model', () => {
 
   it('should generate a .ipynb formatted JSON string', () => {
     console.log('parsed: ', JSON.stringify(serializer.parse(ipynbSerialized, formats.names.ipynbV3), null, 2));
+    // validate that the signature field has been removed
   });
 
 });
@@ -89,8 +90,7 @@ describe('Serialize in-memory notebook model to .ipynb format', () => {
     notebook = {
       "id": "f59535f7-02d0-4958-b051-089694d56fed",
       "metadata": {
-        "name": "",
-        "signature": "sha256:hash-value-goes-here"
+        "name": ""
       },
       "worksheetIds": [
         "c34cb974-49d3-45e1-90fc-d393ec4882dd"
