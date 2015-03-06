@@ -26,7 +26,7 @@ export function fromIPyCodeCell (ipyCell: app.ipy.CodeCell): app.notebook.Cell {
   var cell = _createCell();
   cell.type = 'code';
   cell.source = ipyCell.input.join('');
-  cell.prompt = ''+ipyCell.prompt_number;
+  cell.prompt = (ipyCell.prompt_number && ipyCell.prompt_number.toString()) || undefined;
   cell.metadata = ipyCell.metadata || {};
   cell.metadata.language = ipyCell.language;
   cell.outputs = [];
@@ -64,7 +64,8 @@ function fromIPyStreamOutput (ipyOutput: any): app.notebook.CellOutput {
     type: ipyOutput.stream,
     mimetypeBundle: {
       'text/plain': ipyOutput.text.join('')
-    }
+    },
+    metadata: ipyOutput.metadata || {}
   }
 }
 
@@ -74,7 +75,8 @@ function fromIPyStreamOutput (ipyOutput: any): app.notebook.CellOutput {
 function fromIPyRichOutput (ipyOutput: any): app.notebook.CellOutput {
   var output: app.notebook.CellOutput = {
     type: 'result',
-    mimetypeBundle: {}
+    mimetypeBundle: {},
+    metadata: ipyOutput.metadata || {}
   };
 
   Object.keys(ipyOutput).forEach((key) => {
@@ -95,6 +97,7 @@ function fromIPyRichOutput (ipyOutput: any): app.notebook.CellOutput {
       // non-mimetype properties that can exist within the object
       case 'metadata':
       case 'output_type':
+      case 'prompt_number':
       break; // not a mimetype
 
       default:

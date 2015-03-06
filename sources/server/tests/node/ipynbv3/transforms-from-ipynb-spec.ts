@@ -80,7 +80,8 @@ describe('IPython .ipynb v3 format serialization of code cells', () => {
       type: 'result',
       mimetypeBundle: {
         'text/plain': '4'
-      }
+      },
+      metadata: {}
     });
   });
 
@@ -102,7 +103,8 @@ describe('IPython .ipynb v3 format serialization of code cells', () => {
       type: 'result',
       mimetypeBundle: {
         'text/plain': 'first\nsecond\nthird'
-      }
+      },
+      metadata: {}
     });
 
   });
@@ -131,7 +133,8 @@ describe('IPython .ipynb v3 format serialization of code cells', () => {
       mimetypeBundle: {
         'text/plain': 'first line\nsecond line',
         'text/html': '<div><p>first line</p><p>second line</div>'
-      }
+      },
+      metadata: {}
     });
 
   });
@@ -153,7 +156,8 @@ describe('IPython .ipynb v3 format serialization of code cells', () => {
       type: 'stdout',
       mimetypeBundle: {
         'text/plain': 'stdout line 1\nstdout line 2\n'
-      }
+      },
+      metadata: {}
     });
   });
 
@@ -174,7 +178,8 @@ describe('IPython .ipynb v3 format serialization of code cells', () => {
       mimetypeBundle: {
         'text/plain': '<matplotlib.figure.Figure at 0x10669a310>',
         'image/png': 'png base64 encoded content here'
-      }
+      },
+      metadata: {}
     });
   });
 

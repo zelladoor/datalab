@@ -61,7 +61,7 @@ describe('Parse .ipynb format to in-memory notebook model', () => {
         }
        ]
     };
-    ipynbSerialized = JSON.stringify(ipynb, null, 2)
+    ipynbSerialized = JSON.stringify(ipynb, null, 2);
   });
 
   afterEach(() => {
@@ -72,12 +72,73 @@ describe('Parse .ipynb format to in-memory notebook model', () => {
   });
 
   it('should generate a .ipynb formatted JSON string', () => {
-    console.log('parsed: ', JSON.stringify(serializer.parse(ipynbSerialized, formats.names.ipynbV3), null, 2));
-    // validate that the signature field has been removed
+    notebook = serializer.parse(ipynbSerialized, formats.names.ipynbV3);
+    // Expected parse of ipynb content and subsequent transformation to notebook model
+    // {
+    //   "id": "8c293b25-d5ea-4dcb-816f-2210e84dacc7",
+    //   "metadata": {
+    //     "name": ""
+    //   },
+    //   "worksheetIds": [
+    //     "2e427c22-e88b-4bb7-9b00-e7cae81dfed6"
+    //   ],
+    //   "worksheets": {
+    //     "2e427c22-e88b-4bb7-9b00-e7cae81dfed6": {
+    //       "id": "2e427c22-e88b-4bb7-9b00-e7cae81dfed6",
+    //       "name": "Untitled Worksheet",
+    //       "metadata": {},
+    //       "cells": [
+    //         {
+    //           "id": "b0bd5bca-2111-4336-ae81-ac491637383c",
+    //           "metadata": {
+    //             "language": "python"
+    //           },
+    //           "type": "code",
+    //           "source": "1 + 3",
+    //           "prompt": "1",
+    //           "outputs": [
+    //             {
+    //               "type": "result",
+    //               "mimetypeBundle": {
+    //                 "text/plain": "4"
+    //               },
+    //               metadata: {}
+    //             }
+    //           ]
+    //         }
+    //       ]
+    //     }
+    //   }
+    // }
+    expect(notebook.id).toBeDefined();
+    expect(notebook.metadata).toEqual({
+      // The signature field should not be present
+      name: ''
+    });
+    expect(notebook.worksheetIds.length).toBe(1);
+
+    var worksheet = notebook.worksheets[notebook.worksheetIds[0]];
+    expect(worksheet.id).toBeDefined();
+    expect(worksheet.name).toBeDefined();
+    expect(worksheet.metadata).toEqual({});
+    expect(worksheet.cells.length).toBe(1);
+
+    var cell = worksheet.cells[0];
+    expect(cell.id).toBeDefined();
+    expect(cell.metadata).toEqual({language: 'python'});
+    expect(cell.type).toBe('code');
+    expect(cell.source).toBe('1 + 3');
+    expect(cell.prompt).toBe('1');
+    expect(cell.outputs.length).toBe(1);
+
+    var output = cell.outputs[0];
+    expect(output.type).toBe('result');
+    expect(output.mimetypeBundle).toEqual({
+      'text/plain': '4'
+    });
+    expect(output.metadata).toEqual({});
   });
-
 });
-
 
 describe('Serialize in-memory notebook model to .ipynb format', () => {
   var ipynb: app.ipy.Notebook;
@@ -132,7 +193,6 @@ describe('Serialize in-memory notebook model to .ipynb format', () => {
 
   it('should generate a .ipynb formatted JSON string', () => {
     ipynbSerialized = serializer.stringify(notebook, formats.names.ipynbV3);
-    console.log('generated: ', ipynbSerialized);
     // The exact string is probably fragile to compare against because insignificant,
     // so parse it back into an object and compare the data contained within
     ipynb = JSON.parse(ipynbSerialized);
