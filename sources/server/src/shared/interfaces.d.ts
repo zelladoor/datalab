@@ -32,7 +32,6 @@ declare module app {
   module notebook {
 
     interface Notebook {
-      name: string; // the name of the notebook
       id: string; // the notebook id
       worksheetIds: string[];
       worksheets: app.Map<Worksheet>; // worksheetId -> Worksheet

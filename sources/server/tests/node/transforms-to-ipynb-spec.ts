@@ -245,7 +245,7 @@ describe('Markdown cell', () => {
   it('should transform to the .ipynb Markdown cell', () => {
     ipyMarkdownCell = xforms.toIPyMarkdownCell(cell);
 
-    expect(ipyMarkdownCell.cell_type).toBe('markdown');
+    expect(ipyMarkdownCell.cell_type).toBe(cells.markdown);
     expect(ipyMarkdownCell.metadata).toEqual({});
     expect(ipyMarkdownCell.source.length).toBe(3);
     expect(ipyMarkdownCell.source).toEqual([
@@ -258,117 +258,84 @@ describe('Markdown cell', () => {
 });
 
 
-// describe('IPython .ipynb v3 format serialization of heading cells', () => {
+describe('Heading cell', () => {
 
-//   var ipyHeadingCell: app.ipy.HeadingCell;
-//   var cell: app.notebook.Cell;
+  var ipyHeadingCell: app.ipy.HeadingCell;
+  var cell: app.notebook.Cell;
 
-//   beforeEach(() => {
-//     ipyHeadingCell = {
-//       "cell_type": "heading",
-//       "metadata": {},
-//       "source": [
-//         "this is a heading"
-//       ],
-//       level: 1
-//     };
-//   });
+  beforeEach(() => {
+    cell = {
+      id: 'foo-id',
+      type: cells.heading,
+      source: 'this is a heading',
+      metadata: {
+        level: 1
+      }
+    }
+  });
 
-//   afterEach(() => {
-//     ipyHeadingCell = undefined;
-//     cell = undefined;
-//   });
+  afterEach(() => {
+    ipyHeadingCell = undefined;
+    cell = undefined;
+  });
 
-//   it('should transform to the .ipynb heading cell (level 1)', () => {
-//     cell = xforms.fromIPyHeadingCell(ipyHeadingCell);
+  it('should transform to the .ipynb heading cell (level 1)', () => {
+    ipyHeadingCell = xforms.toIPyHeadingCell(cell);
 
-//     expect(cell.type).toBe(cells.heading);
-//     expect(cell.metadata).toEqual({
-//       level: 1
-//     });
-//     expect(cell.source).toBe('this is a heading');
-//   });
+    expect(ipyHeadingCell.cell_type).toBe(cells.heading);
+    expect(ipyHeadingCell.level).toBe(1);
+    expect(ipyHeadingCell.metadata).toEqual({});
+    expect(ipyHeadingCell.source).toEqual(['this is a heading']);
+  });
 
-//   it('should transform to the .ipynb heading cell (level 2)', () => {
-//     ipyHeadingCell.level = 2;
+  it('should transform to the .ipynb heading cell (level 2)', () => {
+    cell.metadata.level = 2;
 
-//     cell = xforms.fromIPyHeadingCell(ipyHeadingCell);
+    ipyHeadingCell = xforms.toIPyHeadingCell(cell);
 
-//     expect(cell.type).toBe(cells.heading);
-//     expect(cell.metadata).toEqual({
-//       level: 2
-//     });
-//     expect(cell.source).toBe('this is a heading');
-//   });
+    expect(ipyHeadingCell.cell_type).toBe(cells.heading);
+    expect(ipyHeadingCell.level).toBe(2);
+    expect(ipyHeadingCell.metadata).toEqual({});
+    expect(ipyHeadingCell.source).toEqual(['this is a heading']);
+  });
 
-// });
+});
 
 
-// describe('IPython .ipynb v3 format serialization of notebook metadata', () => {
-//   var ipyNotebook: app.ipy.Notebook;
-//   var notebook: app.notebook.Notebook;
+describe('Notebook metadata', () => {
+  var ipyNotebook: app.ipy.Notebook;
+  var notebook: app.notebook.Notebook;
 
-//   beforeEach(() => {
-//     ipyNotebook = {
-//       "metadata": {
-//         "signature": "sha256 hash"
-//       },
-//       "nbformat": 3,
-//       "nbformat_minor": 0,
-//       "worksheets": []
-//     }
-//   });
+  beforeEach(() => {
+    notebook = {
+      id: 'notebook-id',
+      metadata: {},
+      worksheetIds: [],
+      worksheets: {}
+    }
+  });
 
-//   afterEach(() => {
-//     ipyNotebook = undefined;
-//     notebook = undefined;
-//   });
+  afterEach(() => {
+    ipyNotebook = undefined;
+    notebook = undefined;
+  });
 
-//   it('should transform to the .ipynb notebook with zero worksheets', () => {
-//     notebook = xforms.fromIPyNotebook(ipyNotebook);
-//     // There should be a single empty worksheet
-//     expect(notebook.worksheetIds.length).toBe(1);
-//     var worksheet = notebook.worksheets[notebook.worksheetIds[0]];
-//     expect(worksheet.cells.length).toBe(0);
-//   });
+  it('should transform to the .ipynb notebook with one worksheet having zero cells', () => {
+    notebook.worksheetIds.push('ws-id');
+    notebook.worksheets['ws-id'] = {
+      id: 'ws-id',
+      name: 'Worksheet 1',
+      cells: [],
+      metadata: {}
+    };
 
-//   it('should transform to the .ipynb notebook with one worksheet having zero cells', () => {
-//     ipyNotebook.worksheets.push({
-//       metadata: {foo: 'bar'},
-//       cells: []
-//     });
+    ipyNotebook = xforms.toIPyNotebook(notebook);
 
-//     notebook = xforms.fromIPyNotebook(ipyNotebook);
+    expect(ipyNotebook.nbformat).toBe(3);
+    expect(ipyNotebook.nbformat_minor).toBe(0);
+    expect(ipyNotebook.worksheets.length).toBe(1);
+    var worksheet = ipyNotebook.worksheets[0];
+    expect(worksheet.cells).toEqual([]);
+  });
 
-//     expect(notebook.worksheetIds.length).toBe(1);
-//     var worksheet = notebook.worksheets[notebook.worksheetIds[0]];
-//     expect(worksheet.metadata).toEqual({foo: 'bar'});
-//     expect(worksheet.cells).toEqual([]);
-//   });
-
-//   it('should transform to the .ipynb notebook with one worksheet having non-zero cells', () => {
-//     ipyNotebook.worksheets.push({
-//       metadata: {baz: 'quux'},
-//       cells: [{
-//         cell_type: 'markdown',
-//         source: ['md text'],
-//         metadata: {foo: 'bar'}
-//       }]
-//     });
-
-//     notebook = xforms.fromIPyNotebook(ipyNotebook);
-
-//     expect(notebook.worksheetIds.length).toBe(1);
-
-//     var worksheet = notebook.worksheets[notebook.worksheetIds[0]];
-//     expect(worksheet.cells.length).toBe(1);
-//     expect(worksheet.metadata).toEqual({baz: 'quux'});
-
-//     var cell = worksheet.cells[0];
-//     expect(cell.type).toBe(cells.markdown);
-//     expect(cell.source).toBe('md text');
-//     expect(cell.metadata).toEqual({foo: 'bar'});
-//     expect(cell.id).toBeDefined();
-//   });
-
-// });
+});

@@ -247,13 +247,7 @@ function toIPyDisplayDataOutput (output: app.notebook.CellOutput): app.ipy.Displ
 function toIPyErrorOutput (output: app.notebook.CellOutput): app.ipy.ErrorOutput {
   // Copy over all metadata fields that are not part of the error details
   // (error details are captured as top-level field in ipy outputs)
-  var metadata = {};
-  Object.keys(output.metadata).forEach((property) => {
-    if (property != 'errorDetails') {
-      metadata[property] = output.metadata[property];
-    }
-  });
-
+  var metadata = shallowCopy(output.metadata || {}, 'errorDetails');
   var error = output.metadata.errorDetails;
   return {
     output_type: 'pyerr',
@@ -293,8 +287,27 @@ export function stringToLineArray (s: string): string[] {
   });
 }
 
+/**
+ * Creates a shallow copy of the object, excluding the specified property
+ */
+export function shallowCopy (o: any, excludedProperty: string): any {
+  var copy = {};
+  Object.keys(o).forEach((property) => {
+    if (property != excludedProperty) {
+      copy[property] = o[property];
+    }
+  });
+  return copy;
+}
+
 export function toIPyHeadingCell (cell: app.notebook.Cell): app.ipy.HeadingCell {
-  return null;
+  var metadata = shallowCopy(cell.metadata, 'level');
+  return {
+    cell_type: 'heading',
+    source: stringToLineArray(cell.source),
+    level: cell.metadata.level,
+    metadata: metadata
+  };
 }
 
 export function toIPyMarkdownCell (cell: app.notebook.Cell): app.ipy.MarkdownCell {
@@ -306,7 +319,45 @@ export function toIPyMarkdownCell (cell: app.notebook.Cell): app.ipy.MarkdownCel
 }
 
 export function toIPyNotebook (notebook: app.notebook.Notebook): app.ipy.Notebook {
-  return null;
+  var ipyNotebook: app.ipy.Notebook = {
+    nbformat: 3, // i.e., .ipynb v3
+    nbformat_minor: 0,
+    metadata: notebook.metadata || {},
+    worksheets: [{
+      metadata: {},
+      cells: []
+    }]
+  };
+
+  // IPython Notebook only supports rendering/manipulating a single worksheet, so concatenate
+  // the cells from each worksheet in worksheet order
+  var ipyWorksheet = ipyNotebook.worksheets[0];
+  notebook.worksheetIds.forEach((worksheetId) => {
+    // TODO(bryantd): not aware of any worksheet-level metadata populated by IPython at the moment,
+    // but will need to merge the per-worksheet metadata intelligently once multiple worksheets are
+    // supported (and we actually store any worksheet metadata)
+    notebook.worksheets[worksheetId].cells.forEach((cell) => {
+      switch (cell.type) {
+        case 'code':
+          ipyWorksheet.cells.push(toIPyCodeCell(cell));
+        break;
+
+        case 'markdown':
+          ipyWorksheet.cells.push(toIPyMarkdownCell(cell));
+        break;
+
+        case 'heading':
+          ipyWorksheet.cells.push(toIPyHeadingCell(cell));
+        break;
+
+        default:
+          throw new Error('Unsupported cell type cannot be transformed to .ipynb format: "'
+            + cell.type + '"');
+      }
+    });
+  });
+
+  return ipyNotebook;
 }
 
 
