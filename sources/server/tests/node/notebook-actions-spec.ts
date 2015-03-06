@@ -25,7 +25,7 @@ describe('Notebook model state', () => {
   var worksheetId: string;
 
   beforeEach(() => {
-    notebook = new nb.ActiveNotebook('foo.ipynb', testutil.mockStorage, testutil.mockSerializer);
+    notebook = new nb.ActiveNotebook(testutil.createEmptyNotebook());
     worksheetId = testutil.getFirstWorksheet(notebook).id;
   });
 

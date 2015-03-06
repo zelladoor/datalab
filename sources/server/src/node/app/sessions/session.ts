@@ -16,6 +16,9 @@
 /// <reference path="../../../../../../externs/ts/node/node-uuid.d.ts" />
 import actions = require('../shared/actions');
 import cells = require('../shared/cells');
+import formats = require('../notebooks/serializers/formats');
+import nb = require('../notebooks/notebook');
+import nbutil = require('../notebooks/util');
 import updates = require('../shared/updates');
 import util = require('../common/util');
 import uuid = require('node-uuid');
@@ -32,9 +35,13 @@ export class Session implements app.ISession {
   id: string;
 
   _kernel: app.IKernel;
-  _userconns: app.IUserConnection[];
   _notebook: app.IActiveNotebook;
+  _notebookPath: string;
+  _notebookSerializer: app.INotebookSerializer;
   _requestIdToCellRef: app.Map<app.CellRef>;
+  _serializedNotebookFormat: string;
+  _storage: app.IStorage;
+  _userconns: app.IUserConnection[];
 
   /**
    * All messages flowing in either direction between user<->kernel will pass through this handler
@@ -43,17 +50,23 @@ export class Session implements app.ISession {
 
   constructor (
       id: string,
-      userconn: app.IUserConnection,
       kernel: app.IKernel,
-      notebook: app.IActiveNotebook,
-      messageHandler: app.MessageHandler) {
+      messageHandler: app.MessageHandler,
+      notebookPath: string,
+      notebookSerializer: app.INotebookSerializer,
+      storage: app.IStorage,
+      userconn: app.IUserConnection) {
     this.id = id;
     this._kernel = kernel;
-    this._registerKernelEventHandlers();
-    this._notebook = notebook;
     this._messageHandler = messageHandler;
+    this._notebookSerializer = notebookSerializer;
     this._requestIdToCellRef = {};
+    this._storage = storage;
     this._userconns = [];
+
+    this._registerKernelEventHandlers();
+    this._setNotebookPath(notebookPath);
+    this._readOrCreateNotebook();
     this.updateUserConnection(userconn);
   }
 
@@ -229,7 +242,7 @@ export class Session implements app.ISession {
   }
 
   _handleActionRenameNotebook (action: app.notebook.action.Rename) {
-    this._notebook.setNotebookPath(action.path);
+    this._setNotebookPath(action.path);
     this._broadcastUpdate({
       update: updates.notebook.metadata,
       path: action.path
@@ -280,6 +293,39 @@ export class Session implements app.ISession {
     this._broadcastUpdate(update);
   }
 
+  /**
+   * Persist the current state of the notebook model to the storage system
+   */
+  _persistNotebook () {
+    console.log('Saving notebook ' + this._notebookPath + ' ...');
+    // Serialize the current notebook model state to the format inferred from the file extension
+    var serializedNotebook = this._notebookSerializer.stringify(
+        this._notebook.getSnapshot(),
+        this._serializedNotebookFormat);
+    this._storage.write(this._notebookPath, serializedNotebook);
+  }
+
+  /**
+   * Reads in the notebook if it exists or creates a blank notebook if not.
+   */
+  _readOrCreateNotebook () {
+    console.log('Reading notebook ' + this._notebookPath + ' ...');
+    // First, attempt to read in the notebook if it already exists at the defined path
+    var serializedNotebook = this._storage.read(this._notebookPath);
+    var notebookData: app.notebook.Notebook;
+    if (serializedNotebook === undefined) {
+      // Notebook didn't exist, so create a starter notebook
+      notebookData = nbutil.createStarterNotebook();
+    } else {
+      // Notebook already existed. Deserialize the notebook data
+      notebookData = this._notebookSerializer.parse(
+          serializedNotebook,
+          this._serializedNotebookFormat);
+    }
+    // Create the notebook wrapper to manage the notebook model state
+    this._notebook = new nb.ActiveNotebook(notebookData);
+  }
+
   _registerUserEventHandlers (userconn: app.IUserConnection) {
     userconn.onAction(this._handleActionPreDelegate.bind(this));
   }
@@ -288,6 +334,14 @@ export class Session implements app.ISession {
     this._kernel.onExecuteReply(this._handleExecuteReplyPreDelegate.bind(this));
     this._kernel.onKernelStatus(this._handleKernelStatusPreDelegate.bind(this));
     this._kernel.onOutputData(this._handleOutputDataPreDelegate.bind(this));
+  }
+
+  /**
+   * Sets the notebook path and selects a notebook format based upon the file extension
+   */
+  _setNotebookPath (notebookPath: string) {
+    this._notebookPath = notebookPath;
+    this._serializedNotebookFormat = formats.selectNotebookFormat(notebookPath);
   }
 
   /* Methods for managing request <-> cell reference mappings */
@@ -317,20 +371,21 @@ export class Session implements app.ISession {
    * that should be updated.
    */
   _setCellRefForRequestId (requestId: string, cellRef: app.CellRef) {
-    // FIXME: need to implement some policy for removing request->cell mappings
+    // TODO(bryantd): need to implement some policy for removing request->cell mappings
     // when they are no longer needed. Ideally there'd be a way to guarantee
     // that a request will have no further messages.
     //
-    // Worst case implement something like a fixed-size LRU cache to avoid growing without bound,
-    // or evict request IDs based upon a TTL value.
-    //
     // Best case would be to somehow store the cell reference within the kernel request message
-    // and have the cell reference returned in all replies to that message. This would rely upon
+    // and have the cell reference returned in all replies to that message, which would remove the
+    // need to store the requestId => cellRef mapping in the first place. This would rely upon
     // adding an extra field to the ipython message header, which is then returned as the
     // "parent header" in all reply messages. If all kernels simply copy the header data to parent
     // header in responses, this will work, but needs verification. Since a generic header metadata
     // dict isn't part of the current message spec, there are likely no guarantees w.r.t.
     // additional/non-standard header fields.
+    //
+    // Worst case implement something like a fixed-size LRU cache to avoid growing without bound,
+    // or evict request IDs based upon a TTL value.
     //
     // Another option would be to serialize the cell reference to string and use that for the
     // request id. All responses would include the parent request id, which could then be

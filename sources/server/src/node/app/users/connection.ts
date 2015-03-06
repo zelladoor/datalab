@@ -41,6 +41,17 @@ export class UserConnection implements app.IUserConnection {
     this._registerHandlers()
   }
 
+  /**
+   * Gets the notebook path provided during the connection establishment handshake
+   *
+   * Note: a notebook rename causes the notebook path to be changed (at the session level)
+   * but that change is not reflected in the return value of this method. That is because
+   * this method always returns the value of the notebook path at the time of the connection
+   * establishment; i.e., whatever notebook path was part of the original handshake data.
+   *
+   * So, only assume the notebook path returned here to match the session notebook path at the
+   * time of connection establishment.
+   */
   getNotebookPath (): string {
     return this._socket.handshake.query.notebookPath;
   }

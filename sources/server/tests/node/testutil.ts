@@ -21,7 +21,7 @@ import nbutil = require('./app/notebooks/util');
 // Create a template empty notebook and then create deep copies of the template as needed
 var emptyNotebook = nbutil.createEmptyNotebook();
 var emptyNotebookData = JSON.stringify(emptyNotebook);
-function createEmptyNotebook () {
+export function createEmptyNotebook () {
   // One simple approach to deep copy the notebook data
   return JSON.parse(emptyNotebookData);
 }

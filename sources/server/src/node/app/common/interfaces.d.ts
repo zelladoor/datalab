@@ -40,7 +40,6 @@ declare module app {
     apply (action: notebook.action.Action): notebook.update.Update;
     getSnapshot (): notebook.Notebook;
     getCell (cellId: string, worksheetId: string): notebook.Cell;
-    setNotebookPath (notebookPath: string): void;
   }
 
   interface IKernel {

@@ -75,22 +75,20 @@ export class SessionManager implements app.ISessionManager {
    * environment (where many sessions are being created).
    */
   _createSession (sessionId: string, connection: app.IUserConnection) {
+
     var kernel = this._kernelManager.create({
       iopubPort: utils.getAvailablePort(),
       shellPort: utils.getAvailablePort()
     });
 
-    var notebook = new notebooks.ActiveNotebook(
-        connection.getNotebookPath(),
-        this._storage,
-        this._notebookSerializer);
-
     return new sessions.Session(
       sessionId,
-      connection,
       kernel,
-      notebook,
-      this._handleMessage.bind(this));
+      this._handleMessage.bind(this),
+      connection.getNotebookPath(),
+      this._notebookSerializer,
+      this._storage,
+      connection);
   }
 
   /**

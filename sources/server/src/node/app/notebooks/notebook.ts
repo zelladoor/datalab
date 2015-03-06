@@ -12,31 +12,19 @@
  * the License.
  */
 
-
 import actions = require('../shared/actions');
 import cells = require('../shared/cells');
-import formats = require('./serializers/formats');
+import nbutil = require('./util');
 import updates = require('../shared/updates');
-import util = require('./util');
 
 
-/**
- * FIXME come up with a better name for this class
- */
+// FIXME come up with a better name for this class
 export class ActiveNotebook implements app.IActiveNotebook {
 
   _notebook: app.notebook.Notebook;
-  _notebookPath: string;
-  _serializedFormat: string;
-  _serializer: app.INotebookSerializer;
-  _storage: app.IStorage;
 
-  constructor (notebookPath: string, storage: app.IStorage, serializer: app.INotebookSerializer) {
-    this._storage = storage;
-    this._serializer = serializer;
-
-    this.setNotebookPath(notebookPath);
-    this._notebook = this._readOrCreateNotebook();
+  constructor (notebook: app.notebook.Notebook) {
+    this._notebook = notebook;
   }
 
   /**
@@ -64,6 +52,7 @@ export class ActiveNotebook implements app.IActiveNotebook {
   /**
    * Creates a data-only object suitable for JSON serialization
    */
+  // FIXME: call this getNotebookData() for consistency elsewhere
   getSnapshot (): app.notebook.Notebook {
     return this._notebook;
   }
@@ -76,7 +65,7 @@ export class ActiveNotebook implements app.IActiveNotebook {
     // Get the worksheet where the cell should be added
     var worksheet = this._getWorksheetOrThrow(action.worksheetId);
     // Create a cell to insert
-    var cell = util.createCell(action.type, action.cellId, action.source);
+    var cell = nbutil.createCell(action.type, action.cellId, action.source);
 
     // If an insertion point was defined, verify the given cell id exists within the worksheet
     var insertIndex: number;
@@ -304,31 +293,4 @@ export class ActiveNotebook implements app.IActiveNotebook {
     return -1;
   }
 
-  /**
-   * Reads in the notebook if it exists or creates a blank notebook if not.
-   */
-  _readOrCreateNotebook (): app.notebook.Notebook {
-    var notebook: app.notebook.Notebook;
-    // First, attempt to read in the notebook if it already exists at the defined path
-    var notebookData = this._storage.read(this._notebookPath);
-    if (notebookData === undefined) {
-      notebook = util.createStarterNotebook();
-    } else {
-      // Deserialize the notebook data
-      notebook = this._serializer.parse(notebookData, 'todo');
-    }
-    return notebook;
-  }
-
-  setNotebookPath (notebookPath: string) {
-    this._notebookPath = notebookPath;
-    this._serializedFormat = formats.selectNotebookFormat(notebookPath);
-  }
-
-  // FIXME: get rid of anything below that isn't re-intergrated with ws protocol update
-  // _persistNotebook () {
-  //   // TODO(bryantd): re-enable this once ipynb serialization is implemented
-  //   // console.log('Saving notebook ' + this._notebookPath + ' ...');
-  //   // this._storage.write(this._notebookPath, this._serializer.toString(this.getData()));
-  // }
 }
