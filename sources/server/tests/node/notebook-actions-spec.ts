@@ -36,10 +36,8 @@ describe('Notebook model state', () => {
 
   it('should be an empty notebook with one worksheet and zero cells', () => {
     var notebookData: app.notebook.Notebook = notebook.getSnapshot()
-    expect(notebookData.worksheetIds.length).toBe(1);
-    var worksheetId = notebookData.worksheetIds[0];
-    expect(notebookData.worksheets[worksheetId]).toBeDefined();
-    var worksheet = notebookData.worksheets[worksheetId];
+    expect(notebookData.worksheets.length).toBe(1);
+    var worksheet = notebookData.worksheets[0];
     expect(worksheet.cells.length).toBe(0);
   });
 
@@ -56,25 +54,27 @@ describe('Notebook model state', () => {
       notebookData = notebook.getSnapshot();
 
       // Add a second worksheet
-      var worksheetId2 = 'another-worksheet';
-      notebookData.worksheets[worksheetId2] = {
+      notebookData.worksheets.push({
         id: 'worksheet-2',
         name: 'Worksheet2',
         metadata: {},
         cells: []
-      };
-      notebookData.worksheetIds.push(worksheetId2);
+      });
 
       // Add some cells with outputs to each worksheet
-      Object.keys(notebookData.worksheets).forEach((worksheetId: string) => {
-        notebookData.worksheets[worksheetId].cells.push({
+      notebookData.worksheets.forEach((worksheet) => {
+        worksheet.cells.push({
           id: worksheetId + '-cell-1',
           type: 'code',
+          source: '',
+          metadata: {},
           outputs: [output, output]
         });
-        notebookData.worksheets[worksheetId].cells.push({
+        worksheet.cells.push({
           id: worksheetId + '-cell-2',
           type: 'code',
+          source: '',
+          metadata: {},
           outputs: [output, output]
         });
       });
@@ -87,8 +87,8 @@ describe('Notebook model state', () => {
     it('should remove all of the outputs from every cell, in every worksheet', () => {
       // Validate there are two worksheets, each with two cells, each with two outputs
       expect(Object.keys(notebookData.worksheets).length).toBe(2);
-      notebookData.worksheetIds.forEach((worksheetId: string) => {
-        var cells = notebookData.worksheets[worksheetId].cells;
+      notebookData.worksheets.forEach((worksheet) => {
+        var cells = worksheet.cells;
         expect(cells.length).toBe(2);
         cells.forEach((cell: app.notebook.Cell) => {
           expect(cell.outputs.length).toBe(2);
@@ -99,8 +99,8 @@ describe('Notebook model state', () => {
       var update = <app.notebook.update.Composite>notebook.apply(action);
 
       // Now each worksheet should still have two cells, each with zero outputs
-      notebookData.worksheetIds.forEach((worksheetId: string) => {
-        var cells = notebookData.worksheets[worksheetId].cells;
+      notebookData.worksheets.forEach((worksheet) => {
+        var cells = worksheet.cells;
         expect(cells.length).toBe(2);
         cells.forEach((cell: app.notebook.Cell) => {
           expect(cell.outputs.length).toBe(0);
@@ -242,6 +242,9 @@ describe('Notebook model state', () => {
       var worksheet = testutil.getFirstWorksheet(notebook);
       worksheet.cells.push({
         id: cellIdToClear,
+        type: 'code',
+        source: '',
+        metadata: {},
         outputs: [{
           type: 'stdout',
           mimetypeBundle: {'text/plain': 'some stdout here'}
@@ -298,7 +301,8 @@ describe('Notebook model state', () => {
         worksheet.cells.push({
           id: cellId,
           type: 'code',
-          source: 'cell source content'
+          source: 'cell source content',
+          metadata: {},
         });
       });
     });
@@ -440,12 +444,14 @@ describe('Notebook model state', () => {
       worksheet.cells.push({
         id: 'A',
         type: 'code',
-        source: 'source code here'
+        source: 'source code here',
+        metadata: {}
       });
       worksheet.cells.push({
         id: 'B',
         type: 'code',
-        source: 'source code here'
+        source: 'source code here',
+        metadata: {}
       });
     });
 

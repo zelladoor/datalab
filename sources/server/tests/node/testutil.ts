@@ -28,8 +28,7 @@ export function createEmptyNotebook () {
 
 export function getFirstWorksheet(notebook: app.IActiveNotebook): app.notebook.Worksheet {
   var notebookData = notebook.getSnapshot();
-  var worksheetId = notebookData.worksheetIds[0];
-  return notebookData.worksheets[worksheetId];
+  return notebookData.worksheets[0];
 }
 
 export var mockStorage = {
