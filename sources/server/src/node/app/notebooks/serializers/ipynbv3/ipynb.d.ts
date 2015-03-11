@@ -14,14 +14,14 @@
 
 
 /**
- * Type definitions for the IPython notebook v3 format
+ * Type definitions for the IPython notebook v3 format.
  *
  * The JSON schema that defines the v3 format is here:
  * https://github.com/ipython/ipython/blob/master/IPython/nbformat/v3/nbformat.v3.schema.json
  */
 declare module app {
   module ipy {
-    /* A minimal ipynb v3 format notebook
+    /* A minimal ipynb v3 format notebook:
 
     {
       "metadata": {
@@ -63,40 +63,42 @@ declare module app {
 
     interface Notebook {
 
-      // Notebook format (major number). Incremented between backwards incompatible changes to the notebook format
-      nbformat: number; // === 3 for ipynb v3
-      // Notebook format (minor number). Incremented for backward compatible changes to the notebook format
-      nbformat_minor: number; // >= 0
+      // Notebook format (major number).
+      // Incremented between backwards incompatible changes to the notebook format.
+      nbformat: number;
+      // Notebook format (minor number).
+      // Incremented for backward compatible changes to the notebook format.
+      nbformat_minor: number;
 
-      // Original notebook format (major number) before converting the notebook between versions
-      orig_nbformat?: number; // >= 1
-      // Original notebook format (minor number) before converting the notebook between versions
-      orig_nbformat_minor?: number; // >= 0
+      // Original notebook format (major number) before converting the notebook between versions.
+      orig_nbformat?: number;
+      // Original notebook format (minor number) before converting the notebook between versions.
+      orig_nbformat_minor?: number;
 
-      // Notebook-level metadata
+      // Notebook-level metadata.
       //
       // Properties used by IPython currently include:
       //
-      // signature: string; // sha256 hash of the notebook content
+      //   signature: string; // sha256 hash of the notebook content
       //
-      // kernel_info: {
-      //   name: string; // name/label for the kernel spec
-      //   language: string; // e.g. 'python'
-      //   codemirror_mode?: string; // which CodeMirror mode to load for the notebook
-      // }
-      metadata?: any;
+      //   kernel_info: {
+      //     name: string; // name/label for the kernel spec
+      //     language: string; // e.g. 'python'
+      //     codemirror_mode?: string; // which CodeMirror mode to load for the notebook
+      //   }
+      metadata?: app.Map<any>;
 
       worksheets: Worksheet[];
     }
 
     interface Worksheet {
-      metadata?: any;
+      metadata?: app.Map<any>;
       cells: Cell[];
     }
 
     interface Cell {
       cell_type: string;
-      metadata?: any;
+      metadata?: app.Map<any>;
     }
 
     interface CodeCell extends Cell {
@@ -104,7 +106,7 @@ declare module app {
       prompt_number?: number
       collapsed?: boolean;
       language: string;
-      outputs: any[];
+      outputs: CellOutput[];
     }
 
     interface MarkdownCell extends Cell {
@@ -115,9 +117,13 @@ declare module app {
       level: number;
     }
 
+    interface RawCell extends Cell {
+      source: string[];
+    }
+
     interface CellOutput {
       output_type: string;
-      metadata?: any;
+      metadata?: app.Map<any>;
     }
 
     interface ErrorOutput extends CellOutput {
@@ -132,16 +138,15 @@ declare module app {
     }
 
     interface DisplayDataOutput extends CellOutput {
-      // One field per supported mime-type
-      text?: string[]; // text/plain
-      latex?: string[];
-      png?: string; // image/png
-      jpeg?: string; // image/jpeg
-      svg?: string[];
       html?: string[]; // text/html
-      javascript?: string[];
-      // json?: string[];
-      // pdf?: string[];
+      javascript?: string[]; // application/javascript
+      jpeg?: string; // image/jpeg
+      json?: string[]; // application/json
+      latex?: string[]; // application/x-latex
+      pdf?: string[]; // application/pdf
+      png?: string; // image/png
+      svg?: string[]; // image/svg+xml
+      text?: string[]; // text/plain
     }
 
     interface ExecuteOutput extends DisplayDataOutput {

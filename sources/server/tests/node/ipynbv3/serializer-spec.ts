@@ -14,7 +14,6 @@
 
 
 /// <reference path="../../../../../externs/ts/jasmine.d.ts"/>
-import formats = require('../app/notebooks/serializers/formats');
 import ipy = require('../app/notebooks/serializers/ipynb');
 
 
@@ -72,18 +71,14 @@ describe('Parse .ipynb format to in-memory notebook model', () => {
   });
 
   it('should generate a .ipynb formatted JSON string', () => {
-    notebook = serializer.parse(ipynbSerialized, formats.names.ipynbV3);
+    notebook = serializer.parse(ipynbSerialized);
     // Expected parse of ipynb content and subsequent transformation to notebook model
     // {
     //   "id": "8c293b25-d5ea-4dcb-816f-2210e84dacc7",
     //   "metadata": {
     //     "name": ""
     //   },
-    //   "worksheetIds": [
-    //     "2e427c22-e88b-4bb7-9b00-e7cae81dfed6"
-    //   ],
-    //   "worksheets": {
-    //     "2e427c22-e88b-4bb7-9b00-e7cae81dfed6": {
+    //   "worksheets": [{
     //       "id": "2e427c22-e88b-4bb7-9b00-e7cae81dfed6",
     //       "name": "Untitled Worksheet",
     //       "metadata": {},
@@ -107,17 +102,16 @@ describe('Parse .ipynb format to in-memory notebook model', () => {
     //           ]
     //         }
     //       ]
-    //     }
-    //   }
+    //   }]
     // }
     expect(notebook.id).toBeDefined();
     expect(notebook.metadata).toEqual({
       // The signature field should not be present
       name: ''
     });
-    expect(notebook.worksheetIds.length).toBe(1);
+    expect(notebook.worksheets.length).toBe(1);
 
-    var worksheet = notebook.worksheets[notebook.worksheetIds[0]];
+    var worksheet = notebook.worksheets[0];
     expect(worksheet.id).toBeDefined();
     expect(worksheet.name).toBeDefined();
     expect(worksheet.metadata).toEqual({});
@@ -153,35 +147,30 @@ describe('Serialize in-memory notebook model to .ipynb format', () => {
       "metadata": {
         "name": ""
       },
-      "worksheetIds": [
-        "c34cb974-49d3-45e1-90fc-d393ec4882dd"
-      ],
-      "worksheets": {
-        "c34cb974-49d3-45e1-90fc-d393ec4882dd": {
-          "id": "c34cb974-49d3-45e1-90fc-d393ec4882dd",
-          "name": "Untitled Worksheet",
-          "metadata": {},
-          "cells": [
-            {
-              "id": "e7a32977-bc05-48b5-963d-35919a846bdd",
-              "metadata": {
-                "language": "python"
-              },
-              "type": "code",
-              "source": "1 + 3",
-              "prompt": "1",
-              "outputs": [
-                {
-                  "type": "result",
-                  "mimetypeBundle": {
-                    "text/plain": "4"
-                  }
+      "worksheets": [{
+        "id": "c34cb974-49d3-45e1-90fc-d393ec4882dd",
+        "name": "Untitled Worksheet",
+        "metadata": {},
+        "cells": [
+          {
+            "id": "e7a32977-bc05-48b5-963d-35919a846bdd",
+            "metadata": {
+              "language": "python"
+            },
+            "type": "code",
+            "source": "1 + 3",
+            "prompt": "1",
+            "outputs": [
+              {
+                "type": "result",
+                "mimetypeBundle": {
+                  "text/plain": "4"
                 }
-              ]
-            }
-          ]
-        }
-      }
+              }
+            ]
+          }
+        ]
+      }]
     };
   });
 
@@ -192,7 +181,7 @@ describe('Serialize in-memory notebook model to .ipynb format', () => {
   });
 
   it('should generate a .ipynb formatted JSON string', () => {
-    ipynbSerialized = serializer.stringify(notebook, formats.names.ipynbV3);
+    ipynbSerialized = serializer.stringify(notebook);
     // The exact string is probably fragile to compare against because insignificant,
     // so parse it back into an object and compare the data contained within
     ipynb = JSON.parse(ipynbSerialized);

@@ -13,53 +13,35 @@
  */
 
 
-import formats = require('./formats');
 import transforms = require('./ipynbv3/transforms');
 import util = require('../util');
 
 
 /**
- * Serializer for reading/writing the .ipynb (IPython) formats
+ * Serializer for reading/writing the .ipynb (IPython) formats.
  *
- * Only supports .ipynb v3 format currently
+ * Only supports .ipynb v3 format currently.
  */
 export class IPySerializer implements app.INotebookSerializer {
 
   /**
-   * Parses and transforms the given .ipynb formatted JSON string into an in-memory notebook model
+   * Parses and transforms the given .ipynb formatted JSON string into an in-memory notebook model.
    */
-  parse (notebookData: string, format: string) {
-    this._validateFormatOrThrow(format);
-
-    // Read the raw file contents (json blob) into an object
+  parse (notebookData: string) {
+    // Read the raw file contents (json blob) into an object.
     var ipynb = JSON.parse(notebookData);
-
-    // Validate that this serializer supports the specified format
-    var ipynbVersion = ipynb.nbformat;
-    if (ipynbVersion != 3) {
-      throw new Error('Cannot read unsupported .ipynb version "' + ipynbVersion + '"');
-    }
-
+    // Transform the .ipynb-formatted object into the internal notebook format.
     return transforms.fromIPyNotebook(ipynb);
   }
 
   /**
-   * Serializes the in-memory notebook model to a .ipynb formatted JSON string
+   * Serializes the in-memory notebook model to a .ipynb formatted JSON string.
    */
-  stringify (notebook: app.notebook.Notebook, format: string) {
-    this._validateFormatOrThrow(format);
-    return JSON.stringify(transforms.toIPyNotebook(notebook), null, 2);
-  }
-
-  /**
-   * Validates that this serializer can parse the notebook specified format.
-   *
-   * Throws an exception if the format is unsupported by this serializer.
-   */
-  _validateFormatOrThrow (format: string) {
-    if (format != formats.names.ipynbV3) {
-      throw new Error('Unsupported notebook format for serialization: "' + format + '"');
-    }
+  stringify (notebook: app.notebook.Notebook) {
+    return JSON.stringify(
+        transforms.toIPyNotebook(notebook),
+        null, // Null value indicates that the entire object should be serialized.
+        2); // Pretty print the json and use this number of spaces per identation level.
   }
 
 }

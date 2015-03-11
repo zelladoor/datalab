@@ -14,7 +14,7 @@
 
 
 /**
- * Transformation functions from .ipynb-formatted objects to datalab in-memory notebook types
+ * Transformation functions from .ipynb-formatted objects to datalab in-memory notebook types.
  */
 /// <reference path="../../../../../../../../externs/ts/node/node-uuid.d.ts" />
 import nbutil = require('../../util');
@@ -22,33 +22,34 @@ import util = require('../../../common/util');
 import uuid = require('node-uuid');
 
 
+/**
+ * Creates an internal format code cell from the .ipynb v3 code cell.
+ */
 export function fromIPyCodeCell (ipyCell: app.ipy.CodeCell): app.notebook.Cell {
-  var cell = _createCell();
-  cell.type = 'code';
-  cell.source = ipyCell.input.join('');
-  cell.prompt = (ipyCell.prompt_number && ipyCell.prompt_number.toString()) || undefined;
+  var cell = _createCell('code', ipyCell.input.join(''));
   cell.metadata = ipyCell.metadata || {};
-  cell.metadata.language = ipyCell.language;
+  cell.metadata['language'] = ipyCell['language'];
   cell.outputs = [];
+  cell.prompt = (ipyCell.prompt_number && ipyCell.prompt_number.toString()) || undefined;
 
-  // Now handle the deserialization of any outputs for the code cell
+  // Now handle the deserialization of any outputs for the code cell.
   ipyCell.outputs.forEach((ipyOutput) => {
     switch (ipyOutput.output_type) {
-      case 'display_data': // equivalent to pyout case, fall-through
+      case 'display_data': // Fall-through (equivalent to pyout case).
       case 'pyout':
         cell.outputs.push(fromIPyRichOutput(ipyOutput));
-      break;
+        break;
 
       case 'stream':
         cell.outputs.push(fromIPyStreamOutput(ipyOutput));
-      break;
+        break;
 
       case 'pyerr':
         cell.outputs.push(fromIPyErrorOutput(ipyOutput));
-      break;
+        break;
 
       default:
-        console.log('WARNING: skipping unsupported cell output type: ', ipyOutput.output_type);
+        throw util.createError('Unsupported cell output type: "%s"', ipyOutput.output_type);
     }
   });
   return cell;
@@ -69,9 +70,6 @@ function fromIPyStreamOutput (ipyOutput: any): app.notebook.CellOutput {
   }
 }
 
-/**
- * from an ipython (v3) format mimetype bundle
- */
 function fromIPyRichOutput (ipyOutput: any): app.notebook.CellOutput {
   var output: app.notebook.CellOutput = {
     type: 'result',
@@ -81,27 +79,52 @@ function fromIPyRichOutput (ipyOutput: any): app.notebook.CellOutput {
 
   Object.keys(ipyOutput).forEach((key) => {
     switch(key) {
-      case 'png':
-        // The base64 encoded png data is the value of the property
-        output.mimetypeBundle['image/png'] = ipyOutput.png;
-      break;
-
       case 'html':
-        output.mimetypeBundle['text/html'] = ipyOutput.html.join('');
-      break;
+        output.mimetypeBundle[mimetypes.html] = ipyOutput.html.join('');
+        break;
+
+      case 'javascript':
+        output.mimetypeBundle[mimetypes.javascript] = ipyOutput.javascript.join('');
+        break;
+
+      case 'jpeg':
+        // The base64-encoded jpeg data is the value of the property.
+        output.mimetypeBundle[mimetypes.jpeg] = ipyOutput.jpeg;
+        break;
+
+      case 'json':
+        output.mimetypeBundle[mimetypes.json] = ipyOutput.json.join('');
+        break;
+
+      case 'latex':
+        output.mimetypeBundle[mimetypes.latex] = ipyOutput.latex.join('');
+        break;
+
+      case 'pdf':
+        output.mimetypeBundle[mimetypes.pdf] = ipyOutput.pdf;
+        break;
+
+      case 'png':
+        // The base64-encoded png data is the value of the property.
+        output.mimetypeBundle[mimetypes.png] = ipyOutput.png;
+        break;
+
+      case 'svg':
+        output.mimetypeBundle[mimetypes.svg] = ipyOutput.svg.join('');
+        break;
 
       case 'text':
-        output.mimetypeBundle['text/plain'] = ipyOutput.text.join('');
-      break;
+        output.mimetypeBundle[mimetypes.text] = ipyOutput.text.join('');
+        break;
 
-      // non-mimetype properties that can exist within the object
+      // Non-mimetype properties that can exist within the object are skipped.
       case 'metadata':
       case 'output_type':
       case 'prompt_number':
-      break; // not a mimetype
+        break;
 
       default:
-        console.log('WARNING: skipping unsupported output mimetype: ', key)
+        throw util.createError('Unsupported output mimetype: "%s"', key);
     }
   });
 
@@ -109,29 +132,43 @@ function fromIPyRichOutput (ipyOutput: any): app.notebook.CellOutput {
 }
 
 var DEFAULT_HEADING_LEVEL = 1;
+/**
+ * Creates an internal format heading cell from the .ipynb v3 heading cell.
+ */
 export function fromIPyHeadingCell (ipyCell: app.ipy.HeadingCell): app.notebook.Cell {
-  var cell = _createCell();
-  cell.type = 'heading';
-  cell.source = ipyCell.source.join('');
+  var cell = _createCell('heading', ipyCell.source.join(''));
   cell.metadata = ipyCell.metadata || {};
-  cell.metadata.level = ipyCell.level || DEFAULT_HEADING_LEVEL;
+  cell.metadata['level'] = ipyCell.level || DEFAULT_HEADING_LEVEL;
   return cell;
 }
 
+/**
+ * Creates an internal format markdown cell from the .ipynb v3 markdown cell.
+ */
 export function fromIPyMarkdownCell (ipyCell: app.ipy.MarkdownCell): app.notebook.Cell {
-  var cell = _createCell();
-  cell.type = 'markdown';
-  cell.source = ipyCell.source.join('');
+  var cell = _createCell('markdown', ipyCell.source.join(''));
   cell.metadata = ipyCell.metadata || {};
   return cell;
 }
 
+/**
+ * Creates an internal format raw cell from the .ipynb v3 raw cell.
+ */
+export function fromIPyRawCell (ipyCell: app.ipy.RawCell): app.notebook.Cell {
+  var cell = _createCell('raw', ipyCell.source.join(''));
+  cell.metadata = ipyCell.metadata || {};
+  return cell;
+}
+
+/**
+ * Creates an internal format notebook from the .ipynb v3 notebook.
+ */
 export function fromIPyNotebook (ipyNotebook: app.ipy.Notebook): app.notebook.Notebook {
   var notebook = nbutil.createEmptyNotebook();
-  // Copy over the notebook-level metadata if it was defined
+  // Copy over the notebook-level metadata if it was defined,
   notebook.metadata = ipyNotebook.metadata || {};
-  // Remove the sha-256 signature field if it is defined (it's no longer valid)
-  delete notebook.metadata.signature;
+  // Remove the sha-256 signature field if it is defined (it's no longer valid),
+  delete notebook.metadata['signature'];
 
   // Notebooks created by IPython in v3 format will have zero or one worksheet(s)
   // because no existing IPython tools are capable of creating/reading multiple worksheets.
@@ -142,52 +179,58 @@ export function fromIPyNotebook (ipyNotebook: app.ipy.Notebook): app.notebook.No
   // So, assume zero or one worksheet, but throw an informative error if these expectations are
   // not met.
   if (ipyNotebook.worksheets.length === 0) {
-    // Nothing else to convert from ipynb format
+    // We're done converting the notebook content since there are no worksheets.
     return notebook;
   } else if (ipyNotebook.worksheets.length > 1) {
-    //
-    throw new Error('Multi-worksheet .ipynb notebooks are not currently supported');
+    // Multiple worksheets were found (not supported).
+    throw util.createError('Multi-worksheet .ipynb notebooks are not currently supported');
   }
 
-  // Then the .ipynb notebook has a single worksheet
+  // We've determined that the .ipynb notebook has a single worksheet.
   var ipynbWorksheet = ipyNotebook.worksheets[0];
 
-  // Get a reference to the first worksheet in the converted notebook
-  var worksheet = notebook.worksheets[notebook.worksheetIds[0]];
+  // Get a reference to the first worksheet in the converted notebook.
+  var worksheet = notebook.worksheets[0];
   worksheet.metadata = ipynbWorksheet.metadata || {};
 
   ipynbWorksheet.cells.forEach(function (ipyCell: any) {
     var cell: app.notebook.Cell;
     switch (ipyCell.cell_type) {
-      case 'markdown':
-        cell = fromIPyMarkdownCell(<app.ipy.MarkdownCell>ipyCell);
-        break;
       case 'code':
         cell = fromIPyCodeCell(<app.ipy.CodeCell>ipyCell);
         break;
       case 'heading':
         cell = fromIPyHeadingCell(<app.ipy.HeadingCell>ipyCell);
         break;
+      case 'markdown':
+        cell = fromIPyMarkdownCell(<app.ipy.MarkdownCell>ipyCell);
+        break;
+      case 'raw':
+        cell = fromIPyRawCell(<app.ipy.RawCell>ipyCell);
+        break;
       default:
-        console.log('WARNING: skipping unsupported cell type: ', ipyCell.cell_type);
+        throw util.createError('Unsupported cell type "%s"', ipyCell.cell_type);
     }
-    // Attach the converted cell to the worksheet
+    // Attach the converted cell to the worksheet.
     worksheet.cells.push(cell);
   });
 
   return notebook;
 }
 
+/**
+ * Creates an .ipynb v3 code cell from the internal format code cell
+ */
 export function toIPyCodeCell (cell: app.notebook.Cell): app.ipy.CodeCell {
   var ipyCell: app.ipy.CodeCell = {
     cell_type: 'code',
     input: stringToLineArray(cell.source),
     collapsed: false,
-    // language is promoted to cell-level attribute, remove it from the metadata dict
+    // Remove 'language' from the metadata dict (promoted to cell-level attribute)
     metadata: shallowCopy(cell.metadata || {}, 'language'),
-    // Attempt to set the language for the cell if defined, if not, leave undefined
-    language: (cell.metadata && cell.metadata.language) || undefined,
-    // Set the prompt number if the value is numeric, otherwise leave undefined
+    // Attempt to set the language for the cell if defined; if not, leave undefined.
+    language: (cell.metadata && cell.metadata['language']) || undefined,
+    // Set the prompt number if the value is numeric; otherwise leave undefined.
     prompt_number: parseInt(cell.prompt) || undefined,
     outputs: []
   };
@@ -196,20 +239,20 @@ export function toIPyCodeCell (cell: app.notebook.Cell): app.ipy.CodeCell {
     switch (output.type) {
       case 'result':
         ipyCell.outputs.push(toIPyDisplayDataOutput(output));
-      break;
+        break;
 
       case 'error':
         ipyCell.outputs.push(toIPyErrorOutput(output));
-      break;
+        break;
 
       case 'stdout':
       case 'stderr':
         ipyCell.outputs.push(toIPyStreamOutput(output));
-      break;
+        break;
 
       default:
-        throw new Error('Unsupported output type for conversion to IPython cell output: "'
-          + output.type + '"');
+        throw util.createError(
+          'Unsupported output type for conversion to IPython cell output: "%s"', output.type);
     }
   });
 
@@ -226,24 +269,46 @@ function toIPyDisplayDataOutput (output: app.notebook.CellOutput): app.ipy.Displ
   Object.keys(output.mimetypeBundle).forEach((mimetype) => {
     var data = output.mimetypeBundle[mimetype];
     switch (mimetype) {
-      case 'text/plain':
-        ipyOutput.text = stringToLineArray(data);
-      break;
 
-      case 'text/html':
+      case mimetypes.html:
         ipyOutput.html = stringToLineArray(data);
-      break;
+        break;
 
-      case 'image/png':
-        ipyOutput.png = data;
-      break;
+      case mimetypes.javascript:
+        ipyOutput.javascript = stringToLineArray(data);
+        break;
 
-      case 'image/jpeg':
+      case mimetypes.jpeg:
         ipyOutput.jpeg = data;
-      break;
+        break;
+
+      case mimetypes.json:
+        ipyOutput.json = stringToLineArray(data);
+        break;
+
+      case mimetypes.latex:
+        ipyOutput.latex = stringToLineArray(data);
+        break;
+
+      case mimetypes.pdf:
+        ipyOutput.pdf = stringToLineArray(data);
+        break;
+
+      case mimetypes.png:
+        ipyOutput.png = data;
+        break;
+
+      case mimetypes.svg:
+        ipyOutput.svg = stringToLineArray(data);
+        break;
+
+      case mimetypes.text:
+        ipyOutput.text = stringToLineArray(data);
+        break;
 
       default:
-        throw new Error('Unsupported mimetype for conversion to ipynb cell output "'+mimetype+'"');
+        throw util.createError(
+          'Unsupported mimetype for conversion to ipynb cell output "%s"', mimetype);
     }
   });
 
@@ -254,7 +319,7 @@ function toIPyErrorOutput (output: app.notebook.CellOutput): app.ipy.ErrorOutput
   // Copy over all metadata fields that are not part of the error details
   // (error details are captured as top-level field in ipy outputs)
   var metadata = shallowCopy(output.metadata || {}, 'errorDetails');
-  var error = output.metadata.errorDetails;
+  var error = output.metadata['errorDetails'];
   return {
     output_type: 'pyerr',
     metadata: metadata,
@@ -274,7 +339,7 @@ function toIPyStreamOutput (output: app.notebook.CellOutput): app.ipy.StreamOutp
 }
 
 /**
- * Convert a string containing newlines into an array of strings, while keeping newlines
+ * Converts a string containing newlines into an array of strings, while keeping newlines
  *
  * s = 'foo\nbar\nbaz' => ['foo\n', 'bar\n', 'baz']
  */
@@ -294,10 +359,10 @@ export function stringToLineArray (s: string): string[] {
 }
 
 /**
- * Creates a shallow copy of the object, excluding the specified property
+ * Creates a shallow copy of the object that excludes the specified property.
  */
 export function shallowCopy (o: any, excludedProperty: string): any {
-  var copy = {};
+  var copy: any = {};
   Object.keys(o).forEach((property) => {
     if (property != excludedProperty) {
       copy[property] = o[property];
@@ -306,16 +371,22 @@ export function shallowCopy (o: any, excludedProperty: string): any {
   return copy;
 }
 
+/**
+ * Creates an .ipynb v3 heading cell from the internal format heading cell.
+ */
 export function toIPyHeadingCell (cell: app.notebook.Cell): app.ipy.HeadingCell {
   var metadata = shallowCopy(cell.metadata, 'level');
   return {
     cell_type: 'heading',
     source: stringToLineArray(cell.source),
-    level: cell.metadata.level,
+    level: cell.metadata['level'],
     metadata: metadata
   };
 }
 
+/**
+ * Creates an .ipynb v3 markdown cell from the internal format markdown cell.
+ */
 export function toIPyMarkdownCell (cell: app.notebook.Cell): app.ipy.MarkdownCell {
   return {
     cell_type: 'markdown',
@@ -324,9 +395,23 @@ export function toIPyMarkdownCell (cell: app.notebook.Cell): app.ipy.MarkdownCel
   }
 }
 
+/**
+ * Creates an .ipynb v3 raw cell from the internal format raw cell.
+ */
+export function toIPyRawCell (cell: app.notebook.Cell): app.ipy.RawCell {
+  return {
+    cell_type: 'raw',
+    source: stringToLineArray(cell.source),
+    metadata: cell.metadata || {}
+  }
+}
+
+/**
+ * Creates an .ipynb v3 notebook from the internal format notebook
+ */
 export function toIPyNotebook (notebook: app.notebook.Notebook): app.ipy.Notebook {
   var ipyNotebook: app.ipy.Notebook = {
-    nbformat: 3, // i.e., .ipynb v3
+    nbformat: 3, // Indicates .ipynb v3 format.
     nbformat_minor: 0,
     metadata: notebook.metadata || {},
     worksheets: [{
@@ -336,29 +421,33 @@ export function toIPyNotebook (notebook: app.notebook.Notebook): app.ipy.Noteboo
   };
 
   // IPython Notebook only supports rendering/manipulating a single worksheet, so concatenate
-  // the cells from each worksheet in worksheet order
+  // the cells from each worksheet in worksheet order.
   var ipyWorksheet = ipyNotebook.worksheets[0];
-  notebook.worksheetIds.forEach((worksheetId) => {
+  notebook.worksheets.forEach((worksheet) => {
     // TODO(bryantd): not aware of any worksheet-level metadata populated by IPython at the moment,
     // but will need to merge the per-worksheet metadata intelligently once multiple worksheets are
     // supported (and we actually store any worksheet metadata)
-    notebook.worksheets[worksheetId].cells.forEach((cell) => {
+    worksheet.cells.forEach((cell) => {
       switch (cell.type) {
         case 'code':
           ipyWorksheet.cells.push(toIPyCodeCell(cell));
-        break;
-
-        case 'markdown':
-          ipyWorksheet.cells.push(toIPyMarkdownCell(cell));
-        break;
+          break;
 
         case 'heading':
           ipyWorksheet.cells.push(toIPyHeadingCell(cell));
-        break;
+          break;
+
+        case 'markdown':
+          ipyWorksheet.cells.push(toIPyMarkdownCell(cell));
+          break;
+
+        case 'raw':
+          ipyWorksheet.cells.push(toIPyRawCell(cell));
+          break;
 
         default:
-          throw new Error('Unsupported cell type cannot be transformed to .ipynb format: "'
-            + cell.type + '"');
+          throw util.createError(
+            'Unsupported cell type cannot be transformed to .ipynb format: "%s"', cell.type);
       }
     });
   });
@@ -367,9 +456,23 @@ export function toIPyNotebook (notebook: app.notebook.Notebook): app.ipy.Noteboo
 }
 
 
-function _createCell (): app.notebook.Cell {
+function _createCell (cellType: string, source: string): app.notebook.Cell {
   return {
     id: uuid.v4(),
+    type: cellType,
+    source: source,
     metadata: {}
   };
 }
+
+var mimetypes = {
+  html: 'text/html',
+  javascript: 'application/javascript',
+  jpeg: 'image/jpeg',
+  json: 'application/json',
+  latex: 'application/x-latex',
+  pdf: 'application/pdf',
+  png: 'image/png',
+  svg: 'image/svg+xml',
+  text: 'text/plain'
+};

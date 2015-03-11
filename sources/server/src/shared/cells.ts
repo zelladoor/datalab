@@ -16,9 +16,7 @@
 /**
  * Cell type string constants
  */
-
-export var heading = 'heading';
-
-export var markdown = 'markdown';
-
 export var code = 'code';
+export var heading = 'heading';
+export var markdown = 'markdown';
+export var raw = 'raw';

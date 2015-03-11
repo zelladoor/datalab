@@ -202,7 +202,7 @@ describe('IPython .ipynb v3 format serialization of code cells', () => {
       mimetypeBundle: {
         'text/plain': "NameError: name 'asdf' is not defined"
         // TODO(bryantd): validate content of html traceback once the ansi color code and format
-        // are translated to html with appropriate css classes
+        // are translated to html with appropriate css classes.
       },
       metadata: {
         errorDetails: {
@@ -322,9 +322,9 @@ describe('IPython .ipynb v3 format serialization of notebook metadata', () => {
 
   it('should transform from the .ipynb notebook with zero worksheets', () => {
     notebook = xforms.fromIPyNotebook(ipyNotebook);
-    // There should be a single empty worksheet
-    expect(notebook.worksheetIds.length).toBe(1);
-    var worksheet = notebook.worksheets[notebook.worksheetIds[0]];
+    // There should be a single empty worksheet.
+    expect(notebook.worksheets.length).toBe(1);
+    var worksheet = notebook.worksheets[0];
     expect(worksheet.cells.length).toBe(0);
   });
 
@@ -336,8 +336,8 @@ describe('IPython .ipynb v3 format serialization of notebook metadata', () => {
 
     notebook = xforms.fromIPyNotebook(ipyNotebook);
 
-    expect(notebook.worksheetIds.length).toBe(1);
-    var worksheet = notebook.worksheets[notebook.worksheetIds[0]];
+    expect(notebook.worksheets.length).toBe(1);
+    var worksheet = notebook.worksheets[0];
     expect(worksheet.metadata).toEqual({foo: 'bar'});
     expect(worksheet.cells).toEqual([]);
   });
@@ -354,9 +354,9 @@ describe('IPython .ipynb v3 format serialization of notebook metadata', () => {
 
     notebook = xforms.fromIPyNotebook(ipyNotebook);
 
-    expect(notebook.worksheetIds.length).toBe(1);
+    expect(notebook.worksheets.length).toBe(1);
 
-    var worksheet = notebook.worksheets[notebook.worksheetIds[0]];
+    var worksheet = notebook.worksheets[0];
     expect(worksheet.cells.length).toBe(1);
     expect(worksheet.metadata).toEqual({baz: 'quux'});
 

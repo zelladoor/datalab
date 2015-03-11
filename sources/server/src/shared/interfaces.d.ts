@@ -13,13 +13,6 @@
  */
 
 
-// Explicitly permit o['property'] references on all objects by defining
-// an explicit indexer on Object. For details,
-// see: https://typescript.codeplex.com/discussions/535628
-interface Object {
-  [index: string]: any;
-}
-
 declare module app {
 
   interface Map<T> {
@@ -27,21 +20,20 @@ declare module app {
   }
 
   /**
-   * Typedefs for the in-memory notebook model
+   * Typedefs for the in-memory notebook model are enumerated here.
    */
   module notebook {
 
     interface Notebook {
-      id: string; // the notebook id
-      worksheetIds: string[];
-      worksheets: app.Map<Worksheet>; // worksheetId -> Worksheet
-      metadata: any;
+      id: string; // Notebook id
+      worksheets: Worksheet[];
+      metadata: app.Map<any>;
     }
 
     interface Worksheet {
-      id: string; // the worksheet id
-      name: string; // worksheet display name
-      metadata: any;
+      id: string; // Worksheet id
+      name: string; // Worksheet display name
+      metadata: app.Map<any>;
       cells: Cell[];
     }
 
@@ -61,16 +53,12 @@ declare module app {
        *   // other metadata needed for new/plugin-defined cell types go here
        * }
       */
-      metadata?: any;
+      metadata: app.Map<any>;
 
-      source?: string; // source content (e.g., code, markdown text, etc.)
+      source: string; // Source content (e.g., code, markdown text, etc.)
       outputs?: CellOutput[];
 
-      prompt?: string; // prompt to display; e.g., execution counter value, busy symbol, etc.
-
-      // Note: The following fields are user-scoped; these should be handled on a per-user basis
-      // under any future multi-writer implementation.
-      active?: boolean;
+      prompt?: string; // Prompt to display (e.g., execution counter value, busy symbol, etc.)
     }
 
 
@@ -78,7 +66,7 @@ declare module app {
       type: string; // 'result' | 'error' | 'stdout' | 'stderr'
 
       /**
-       * Each output has a mimetype bundle {<mimetype string>: <content string>}
+       * Each output has a mimetype bundle ({<mimetype string>: <content string>}):
        * {
        *   'text/html':  <content for mimetype text/html>,
        *   'text/plain':  <content for mimetype text/plain>,
@@ -86,7 +74,7 @@ declare module app {
        * }
        */
       mimetypeBundle: Map<string>;
-      metadata?: any;
+      metadata?: app.Map<any>;
     }
 
   }

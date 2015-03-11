@@ -62,7 +62,7 @@ declare module app {
   }
 
   /**
-   * Synchronous serialization of notebooks to/from data strings
+   * Synchronous serialization of notebooks to/from data strings.
    *
    * These methods throw exceptions for ill-formed inputs or unsupported notebook formats,
    * which is consistent with the behavior of JSON.parse/stringify, which this interface mirrors
@@ -75,19 +75,19 @@ declare module app {
    */
   interface INotebookSerializer {
     /**
-     * Deserializes the notebook from a string having the specified format
+     * Deserializes the notebook from a string.
      *
-     * Throws an exception if the deserializer does not support reading the specified format
-     * or if the given notebook data string violates the specified format specifications.
+     * Throws an exception if the given notebook data string violates the expected format.
+     * specification.
      */
-    parse (data: string, format: string): notebook.Notebook;
+    parse (data: string): notebook.Notebook;
 
     /**
-     * Serializes the notebook to the specified format
+     * Serializes the notebook to the specified format.
      *
-     * Throws an exception if the serializer does not support writing the specified format
+     * Throws an exception if unsupported cell or media types are included in the notebook.
      */
-    stringify (notebook: notebook.Notebook, format: string): string;
+    stringify (notebook: notebook.Notebook): string;
   }
 
   interface ISession {

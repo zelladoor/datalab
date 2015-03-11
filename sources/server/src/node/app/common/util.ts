@@ -13,6 +13,9 @@
  */
 
 
+import util = require('util');
+
+
 /**
  * Finds an open port available for binding.
  *
@@ -29,6 +32,12 @@ export function getAvailablePort (): number {
  */
 export function noop (arg1: any): void {}
 
+/**
+ * Creates an error object from the format string and list of args to interpolate.
+ */
+export function createError(format: string, ...formatArgs: any[]) {
+  return new Error(util.format.apply(/* this context */ null, [format].concat(formatArgs)));
+}
 
 /**
  * Creates a mimetype bundle to represent an error output

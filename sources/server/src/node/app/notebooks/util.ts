@@ -14,7 +14,7 @@
 
 
 /**
- * Common utility functions and constants for working with notebook data
+ * Common utility functions and constants for working with notebook data.
  */
 /// <reference path="../../../../../../externs/ts/node/node-uuid.d.ts" />
 import uuid = require('node-uuid');
@@ -100,24 +100,19 @@ export function createCell (type: string, id: string, source: string) {
 }
 
 /**
- * Creates an empty notebook with no cells
+ * Creates an empty notebook with no cells.
  */
 export function createEmptyNotebook (): app.notebook.Notebook {
-  var cells: app.notebook.Cell[] = [];
-  var worksheetId = uuid.v4();
-  var notebook: app.notebook.Notebook = {
+  return {
     id: uuid.v4(),
     metadata: {},
-    worksheetIds: [worksheetId],
-    worksheets: {}
+    worksheets: [{
+      id: uuid.v4(),
+      name: defaultWorksheetName,
+      metadata: {},
+      cells: []
+    }]
   };
-  notebook.worksheets[worksheetId] = {
-    id: worksheetId,
-    name: defaultWorksheetName,
-    metadata: {},
-    cells: cells
-  }
-  return notebook;
 }
 
 /**
