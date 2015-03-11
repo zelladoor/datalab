@@ -56,7 +56,6 @@ export class SessionManager implements app.ISessionManager {
 
   /**
    * Rename a session by modifying its id to be the new session id
-   * @type {[type]}
    */
   renameSession (oldId: string, newId: string) {
     this._idToSession[newId] = this._idToSession[oldId];

@@ -19,6 +19,7 @@
 /// <reference path="../../../../../../externs/ts/node/node-uuid.d.ts" />
 import uuid = require('node-uuid');
 import cells = require('../shared/cells');
+import util = require('../common/util');
 
 
 /**
@@ -56,7 +57,7 @@ function appendMarkdownCell (notebook: app.notebook.Notebook) {
   getDefaultWorksheet(notebook).cells.push(cell);
 }
 
-function createCodeCell (id: string, source: string) {
+function createCodeCell (id: string, source: string): app.notebook.Cell {
   return {
     id: id,
     type: cells.code,
@@ -65,7 +66,7 @@ function createCodeCell (id: string, source: string) {
   };
 }
 
-function createHeadingCell (id: string, source: string) {
+function createHeadingCell (id: string, source: string): app.notebook.Cell {
   return {
     id: id,
     type: cells.heading,
@@ -76,7 +77,7 @@ function createHeadingCell (id: string, source: string) {
   };
 }
 
-function createMarkdownCell (id: string, source: string) {
+function createMarkdownCell (id: string, source: string): app.notebook.Cell {
   return {
     id: id,
     type: cells.markdown,
@@ -91,12 +92,24 @@ function createMarkdownCell (id: string, source: string) {
  * Throws an Error if the given cell type is unsupported.
  */
 export function createCell (type: string, id: string, source: string) {
+  var cell: app.notebook.Cell;
   switch (type) {
-    case cells.code: return createCodeCell(id, source);
-    case cells.heading: return createHeadingCell(id, source);
-    case cells.markdown: return createMarkdownCell(id, source);
-    default: throw new Error('Cannot create cell with unsupported type "'+type+'"');
+    case cells.code:
+      cell = createCodeCell(id, source);
+      break;
+
+    case cells.heading:
+      cell = createHeadingCell(id, source);
+      break;
+
+    case cells.markdown:
+      cell = createMarkdownCell(id, source);
+      break;
+
+    default:
+      throw util.createError('Cannot create cell with unsupported type "%s"', type);
   }
+  return cell;
 }
 
 /**
@@ -136,7 +149,9 @@ export function createStarterNotebook (): app.notebook.Notebook {
  * Gets the default worksheet from the notebook for appending cells
  */
 function getDefaultWorksheet (notebook: app.notebook.Notebook): app.notebook.Worksheet {
+  if (notebook.worksheets.length === 0) {
+    throw util.createError('Cannot return a default worksheet for a notebook with zero worksheets');
+  }
   // Return the first worksheet by default
-  var worksheetId = notebook.worksheetIds[0];
-  return notebook.worksheets[worksheetId];
+  return notebook.worksheets[0];
 }

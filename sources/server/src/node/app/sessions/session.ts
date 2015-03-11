@@ -228,12 +228,12 @@ export class Session implements app.ISession {
   _handleActionExecuteCells (action: app.notebook.action.ExecuteCells) {
     var notebookData = this._notebook.getSnapshot();
     // Execute all cells in each worksheet
-    notebookData.worksheetIds.forEach((worksheetId) => {
-      notebookData.worksheets[worksheetId].cells.forEach((cell) => {
+    notebookData.worksheets.forEach((worksheet) => {
+      worksheet.cells.forEach((cell) => {
         if (cell.type == cells.code) {
           this._handleActionExecuteCell({
             action: actions.cell.execute,
-            worksheetId: worksheetId,
+            worksheetId: worksheet.id,
             cellId: cell.id
           });
         }
@@ -295,18 +295,20 @@ export class Session implements app.ISession {
 
   /**
    * Persist the current state of the notebook model to the storage system
+   *
+   * FIXME: move to Persister
    */
   _persistNotebook () {
     console.log('Saving notebook ' + this._notebookPath + ' ...');
     // Serialize the current notebook model state to the format inferred from the file extension
-    var serializedNotebook = this._notebookSerializer.stringify(
-        this._notebook.getSnapshot(),
-        this._serializedNotebookFormat);
+    var serializedNotebook = this._notebookSerializer.stringify(this._notebook.getSnapshot());
     this._storage.write(this._notebookPath, serializedNotebook);
   }
 
   /**
    * Reads in the notebook if it exists or creates a blank notebook if not.
+   *
+   * FIXME: move to Persister
    */
   _readOrCreateNotebook () {
     console.log('Reading notebook ' + this._notebookPath + ' ...');
@@ -318,9 +320,7 @@ export class Session implements app.ISession {
       notebookData = nbutil.createStarterNotebook();
     } else {
       // Notebook already existed. Deserialize the notebook data
-      notebookData = this._notebookSerializer.parse(
-          serializedNotebook,
-          this._serializedNotebookFormat);
+      notebookData = this._notebookSerializer.parse(serializedNotebook);
     }
     // Create the notebook wrapper to manage the notebook model state
     this._notebook = new nb.ActiveNotebook(notebookData);
@@ -341,7 +341,7 @@ export class Session implements app.ISession {
    */
   _setNotebookPath (notebookPath: string) {
     this._notebookPath = notebookPath;
-    this._serializedNotebookFormat = formats.selectNotebookFormat(notebookPath);
+    this._notebookSerializer = formats.selectSerializer(notebookPath);
   }
 
   /* Methods for managing request <-> cell reference mappings */

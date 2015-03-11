@@ -19,7 +19,6 @@ import express = require('express');
 import mkdirp = require('mkdirp');
 import kernels = require('./kernels/index');
 import storage = require('./storage/local');
-import notebooks = require('./notebooks/index');
 
 /**
  * Default server configuration with support for environment variable overrides.
@@ -62,7 +61,13 @@ export function getSettings (): app.Settings {
  * Gets a notebook serializer instance
  */
 export function getNotebookSerializer (): app.INotebookSerializer {
-  return notebooks.serializer;
+  // return notebooks.serializer;
+  // FIXME: this config will morph to return a "Persister", which is made
+  // up of a Storage + Serializer(s) and provides api for persisting entities
+  // without needing to know the details of how that happens
+  //
+  // Session manager will take this and provide it to session instances
+  return null;
 }
 
 /**

@@ -16,9 +16,9 @@ import actions = require('../shared/actions');
 import cells = require('../shared/cells');
 import nbutil = require('./util');
 import updates = require('../shared/updates');
+import util = require('../common/util');
 
 
-// FIXME come up with a better name for this class
 export class ActiveNotebook implements app.IActiveNotebook {
 
   _notebook: app.notebook.Notebook;
@@ -45,7 +45,7 @@ export class ActiveNotebook implements app.IActiveNotebook {
       case actions.worksheet.moveCell:
         return this._applyMoveCell(<app.notebook.action.MoveCell>action);
       default:
-        throw new Error('Unsupported action "'+action.action+'" cannot be applied');
+        throw util.createError('Unsupported action "%s" cannot be applied', action.action);
     }
   }
 
@@ -101,13 +101,12 @@ export class ActiveNotebook implements app.IActiveNotebook {
       subUpdates: []
     }
 
-    var nb = this._notebook;
     // Iterate through each worksheet within the notebook
-    nb.worksheetIds.forEach((worksheetId: string) => {
+    this._notebook.worksheets.forEach((worksheet) => {
       // Clear each cell within the worksheet
-      nb.worksheets[worksheetId].cells.forEach((cell: app.notebook.Cell) => {
+      worksheet.cells.forEach((cell: app.notebook.Cell) => {
         if (cell.type == cells.code) {
-          var cellUpdate = this._clearCellOutput(cell.id, worksheetId);
+          var cellUpdate = this._clearCellOutput(cell.id, worksheet.id);
           // Add an update for the cleared cell
           update.subUpdates.push(cellUpdate);
         }
@@ -235,7 +234,7 @@ export class ActiveNotebook implements app.IActiveNotebook {
   _getCellIndexOrThrow (worksheet: app.notebook.Worksheet, cellId: string) {
     var index = this._indexOf(worksheet, cellId);
     if (index === -1) {
-      throw new Error('Cannot find insertAfter cell id "'+cellId+'"');
+      throw util.createError('Cannot find insertAfter cell id "%s"', cellId);
     }
     return index;
   }
@@ -261,17 +260,26 @@ export class ActiveNotebook implements app.IActiveNotebook {
     }
     // Verify that the cell was actually found within the worksheet
     if (cell === undefined) {
-      throw new Error('Specified cell id "' + cellId
-        + '" does not exist within worksheet with id "' + worksheetId + '"');
+      throw util.createError('Specified cell id "%s" does not exist within worksheet with id "%s"',
+          cellId, worksheetId);
     }
     return cell;
   }
 
   _getWorksheetOrThrow (worksheetId: string): app.notebook.Worksheet {
-    var worksheet = this._notebook.worksheets[worksheetId];
+    // FIXME: add a worksheetId -> worksheet index for more efficient lookup
+    var worksheet: app.notebook.Worksheet;
+    this._notebook.worksheets.forEach((ws) => {
+      if (worksheetId == ws.id) {
+        // Found the worksheet of interest.
+        worksheet = ws;
+      }
+    });
+
     if (worksheet === undefined) {
-      throw new Error('Specified worksheet id "'+worksheetId+'" does not exist');
+      throw util.createError('Specified worksheet id "%s" does not exist', worksheetId);
     }
+
     return worksheet;
   }
 
