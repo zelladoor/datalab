@@ -39,7 +39,7 @@ declare module app {
 
     interface Cell {
       id: string; // the cell id
-      type?: string; // 'code' | 'markdown' | 'heading' | 'etc'
+      type: string; // 'code' | 'markdown' | 'heading' | 'etc'
 
       /**
        * Some metadata fields reserved for internal usage

@@ -14,7 +14,7 @@
 
 
 /**
- * Update message typedefs that define the client-server websocket protocol
+ * Update message typedefs that define the client-server websocket protocol.
  *
  * Updates are server messages that propagate notebook model changes to clients participating
  * in a given notebook editing session.
@@ -22,14 +22,20 @@
 declare module app {
   module notebook {
     module update {
+
       /**
-       * Common fields for all update messages
+       * Common fields for all update messages.
+       *
+       * The update label allows for type identification at runtime (when type information has
+       * been lost).
        */
       interface Update {
-        update: string; // A name/label for the type of update message
+        update: string; // A name/label for the type of update message type.
       }
 
       /**
+       * Bundle for multiple updates that should be applied in a single transaction.
+       *
        * update == 'composite'
        */
       interface Composite extends Update {
@@ -37,9 +43,7 @@ declare module app {
       }
 
       /**
-       * A snapshot of the notebook data
-       *
-       * Note that the server may send the full data for only a subset of all worksheets.
+       * A snapshot of the notebook data.
        *
        * update == 'notebook.snapshot'
        */
@@ -50,50 +54,66 @@ declare module app {
       /* Notebook-level updates */
 
       /**
+       * Update the notebook metadata to have the provided fields.
+       *
        * update == 'notebook.metadata'
        */
       interface NotebookMetadata extends Update {
-        path: string; // notebook path
+        path: string; // This is a notebook path.
       }
+
       /**
+       * Update the known status of the notebook's kernel process.
+       *
        * update == 'notebook.sessionStatus'
        */
       interface SessionStatus extends Update {
-        kernelState: string; // 'starting' | 'idle' | 'busy'
-        kernelName: string; // a string that uniquely identifies a kernel flavor; e.g., 'Python 2.7'
+        kernelState: string; // State includes: 'starting' | 'idle' | 'busy'
+        kernelName: string; // A string that identifies a kernel flavor; e.g., 'Python 2.7'.
       }
 
       /* Worksheet-level updates */
 
       /**
+       * The given cell has been added to the specified worksheet.
+       *
        * update == 'worksheet.addCell'
        */
       interface AddCell extends Update {
         worksheetId: string;
         cell: Cell;
-        insertAfter: string; // cell id to insert after
+        insertAfter: string; // The cell id to insert after.
       }
+
       /**
+       * The given cell has been deleted from the specified worksheet.
+       *
        * update == 'worksheet.deleteCell'
        */
       interface DeleteCell extends Update {
         worksheetId: string;
         cellId: string;
       }
+
       /**
+       * The given cell has been moved between worksheets.
+       *
+       * Note: source and destination worksheets may be the same for the case of intra-worksheet
+       * movements.
+       *
        * update == 'worksheet.moveCell'
        */
       interface MoveCell extends Update {
         sourceWorksheetId: string;
         destinationWorksheetId: string;
         cellId: string;
-        insertAfter: string; // the cell ID after which to insert the moved cell
+        insertAfter: string; // The cell ID after which to insert the moved cell.
       }
 
       /* Cell-level updates */
 
       /**
-       * A cell-level update
+       * Update the specified cell with the provided fields.
        *
        * update == 'cell.update'
        */
@@ -101,16 +121,16 @@ declare module app {
         worksheetId: string;
         cellId: string;
 
-        source?: string; // new source string value
+        source?: string; // The new source string value for the cell.
 
         outputs?: CellOutput[];
         // Flag determines whether the above list of outputs is appended or replaces existing
-        // output list within the cell (false ⇒ append; true ⇒ replace)
+        // output list within the cell (false => append; true => replace).
         replaceOutputs?: boolean;
 
-        metadata?: {};
+        metadata?: app.Map<any>;
         // Flag to indicate whether the metadata dict should be merged with existing metadata
-        // on the client or fully replace it (false ⇒ merge; true ⇒ replace)
+        // on the client or fully replace it (false => merge; true => replace).
         replaceMetadata?: boolean;
       }
     }

@@ -14,30 +14,25 @@
 
 
 /**
- * Action message typedefs that define the client-server websocket protocol
+ * Action message typedefs that define the client-server websocket protocol.
  *
  * Actions are client requests for modifications to a notebook data model.
- *
- * FIXME: several actions have a corresponding update that is identical in structure
- * other than the action/update field. Coudl collapse all messages to just have a "type" field
- * rather than update/action to avoid duplicating. Other consideration is that both actions and
- * updates are emitted into the global event scope in the client-side code, possibly in the future
- * on the node side if an event emitter is ever added; have a distinction between the action and
- * update versions of a message like AddCell is important because different pieces of code will
- * handle an action (e.g., client-side code forwards these to the server) vs the update (client-
- * side code applys the AddCell operation to the local notebook model).
  */
 declare module app {
   module notebook {
     module action {
       /**
-       * Common fields for all action messages
+       * Common fields for all action messages.
+       *
+       * The action label allows type identification at runtime (when type information is lost).
        */
       interface Action {
-        action: string; // the name/label for the action type
+        action: string; // The name/label for the action message type.
       }
 
       /**
+       * Bundle for multiple actions that should be applied in a single transaction.
+       *
        * action == 'composite'
        */
       interface Composite extends Action {
@@ -47,51 +42,70 @@ declare module app {
       /* Notebook-level actions */
 
       /**
+       * Remove the outputs for all code cells within the notebook.
+       *
        * action == 'notebook.clearOutputs'
        */
       interface ClearOutputs extends Action {
-        // The action label carries sufficient information for processing this action
+        // The action label alone carries sufficient information for processing this action.
       }
+
       /**
+       * Execute all code cells within the notebook.
+       *
        * action == 'notebook.executeCells'
        */
       interface ExecuteCells extends Action {
-        // Additional flags here eventually: e.g., flag for performing a "clean run" in sandbox
+        // Additional flags here eventually; e.g., flag for performing a "clean run" in sandbox.
       }
+
       /**
+       * Update the notebook path to match the given path.
+       *
        * action == 'notebook.rename'
        */
       interface Rename extends Action {
-        path: string; // New path for the notebook'
+        path: string; // New path for the notebook.
       }
 
       /* Worksheet-level actions */
 
       /**
+       * Add a cell to the specified worksheet.
+       *
        * action == 'worksheet.addCell',
        */
       interface AddCell extends Action {
-        // Fields for specifying the cell insertion point within the notebook
+        // Fields for specifying the cell insertion point within the notebook.
         worksheetId: string;
         cellId: string;
 
-        // Configuration for the cell to add
-        type: string; // 'code' | 'md' | 'heading' | 'etc'
-        source: string; // cell content string (e.g., code, markdown, etc.)
+        // Configuration for the cell to add.
+        type: string; // Types include: 'code' | 'md' | 'heading' | 'raw' | 'etc.'
+        source: string; // Cell content string (e.g., code, text, etc.).
 
         // Insert the new cell immediately after this cell ID.
         //
-        // If the property is undefined, insert the cell at top/head of cells list
+        // If the property is undefined, insert the cell at top/head of cells list.
         insertAfter?: string;
       }
+
       /**
+       * Delete a cell from the specified worksheet.
+       *
        * action == 'worksheet.deleteCell'
        */
       interface DeleteCell extends Action {
         worksheetId: string;
         cellId: string;
       }
+
       /**
+       * Move a cell between worksheets.
+       *
+       * Note: both source and destination can be the same worksheet ID for intra-worksheet
+       * movement.
+       *
        * action == 'worksheet.moveCell',
        */
       interface MoveCell extends Action {
@@ -104,13 +118,18 @@ declare module app {
       /* Cell-level actions */
 
       /**
+       * Remove all output from the specified cell.
+       *
        * action == 'cell.clearOutput'
        */
       interface ClearOutput extends Action {
         worksheetId: string;
         cellId: string;
       }
+
       /**
+       * Update the specified cell to have the provided fields.
+       *
        * action == 'cell.update'
        */
       interface UpdateCell extends Action {
@@ -119,7 +138,7 @@ declare module app {
         source?: string; // cell content string (e.g., code, markdown, etc.)
         prompt?: string;
 
-        metadata?: any;
+        metadata?: app.Map<any>;
         // Flag to indicate whether the metadata dict should be merged with existing metadata
         // on the server or fully replace it (false ⇒ merge; true ⇒ replace)
         replaceMetadata?: boolean;
@@ -129,7 +148,10 @@ declare module app {
         // output list within the cell (false ⇒ append; true ⇒ replace)
         replaceOutputs?: boolean;
       }
+
       /**
+       * Execute the specified cell.
+       *
        * action == 'cell.execute'
        */
       interface ExecuteCell extends Action {
