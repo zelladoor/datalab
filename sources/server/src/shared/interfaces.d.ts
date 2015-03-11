@@ -38,11 +38,11 @@ declare module app {
     }
 
     interface Cell {
-      id: string; // the cell id
+      id: string; // Cell id
       type: string; // 'code' | 'markdown' | 'heading' | 'etc'
 
       /**
-       * Some metadata fields reserved for internal usage
+       * Some metadata fields reserved for internal usage:
        * {
        *   // if cell type is code
        *   language: 'python' | 'java' | 'html' | 'javascript' | etc.
