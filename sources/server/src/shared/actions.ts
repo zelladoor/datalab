@@ -14,16 +14,16 @@
 
 
 /**
- * Constants used to label notebook actions
+ * Constants used to label notebook actions.
  */
 
-// The different action flavors are all bucketed under this event/message type label
+// All of the action types are bucketed under this event/message label.
 export var label = 'action'
 
-// Composite action (set of primitive actions)
+// Composite action (set of primitive actions).
 export var composite = label + '.composite';
 
-// Notebook-level actions
+// Notebook-level actions.
 var notebookPrefix = label + '.notebook.';
 export var notebook = {
   clearOutputs: notebookPrefix + 'clearOutputs',
@@ -31,7 +31,7 @@ export var notebook = {
   rename: notebookPrefix + 'rename'
 };
 
-// Worksheet-level actions
+// Worksheet-level actions.
 var worksheetPrefix = label + '.worksheet.';
 export var worksheet = {
   addCell: worksheetPrefix + 'addCell',
@@ -39,7 +39,7 @@ export var worksheet = {
   moveCell: worksheetPrefix + 'moveCell'
 };
 
-// Cell-level actions
+// Cell-level actions.
 var cellPrefix = label + '.cell.';
 export var cell = {
   clearOutput: cellPrefix + 'clearOutput',

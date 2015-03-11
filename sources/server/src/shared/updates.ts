@@ -14,16 +14,16 @@
 
 
 /**
- * Constants used to label notebook updates
+ * Constants used to label notebook updates types.
  */
 
-// Different update event/message types are bucketed under this label
+// All update event/message types are bucketed under this label.
 export var label = 'update'
 
-// Composite update (sequence of updates)
+// Composite update (sequence of updates).
 export var composite = label + '.composite';
 
-// Notebook-level update
+// Notebook-level updates.
 var notebookPrefix = label + '.notebook.';
 export var notebook = {
   snapshot: notebookPrefix + 'snapshot',
@@ -31,7 +31,7 @@ export var notebook = {
   sessionStatus: notebookPrefix + 'sessionStatus'
 };
 
-// Worksheet-level update
+// Worksheet-level updates.
 var worksheetPrefix = label + '.worksheet.';
 export var worksheet = {
   addCell: worksheetPrefix + 'addCell',
@@ -39,7 +39,7 @@ export var worksheet = {
   moveCell: worksheetPrefix + 'moveCell'
 }
 
-// Cell-level update
+// Cell-level updates.
 var cellPrefix = label + '.cell.';
 export var cell = {
   update: cellPrefix + 'update'
