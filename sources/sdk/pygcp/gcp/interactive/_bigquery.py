@@ -237,8 +237,39 @@ def _get_table_rows(line):
 
   table = _get_table(name)
 
+  metadata = {}
+  if start_row == 0 and count >= table.length:
+    # We are fetching the whole table, so it is a candidate for charting.
+    # In this case we do some analysis of the data that we can include in the model,namely
+    # column types, value ranges, and whether a column has invalid fields. We can use this to
+    # determine which fields are candidates for crossfilter dimensions and drive auto-charting.
+    # (crossfilter dimensions cannot have null/Nan values).
+    data = []
+    for field in table.schema():
+      metadata[field.name] = {'type': field.data_type, 'valid': True}
+    first = True
+    for row in table.range(start_row=start_row, max_rows=count):
+      for field in table.schema():
+        field_name = field.name
+        field_metadata = metadata[field_name]
+        val = row[field_name]
+        if val == None:
+          field_metadata['valid'] = False
+        if first:
+          field_metadata['min'] = field_metadata['max'] = val
+        else:
+          if val < field_metadata['min']:
+            field_metadata['min'] = val
+          elif val > field_metadata['max']:
+            field_metadata['max'] = val
+      first = False
+      data.append(row)
+  else:
+    data = [row for row in table.range(start_row=start_row, max_rows=count)]
+
   model = {
-    'data': [row for row in table.range(start_row=start_row, max_rows=count)]
+    'data': data,
+    'metadata': metadata
   }
   return _ipython.core.display.JSON(_json.dumps(model))
 

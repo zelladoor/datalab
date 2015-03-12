@@ -2,7 +2,7 @@
 
 define(['d3', 'crossfilter', 'dc'], function(d3, crossfilter, dc) {
     return {
-        makeTableViewer: function (tableName, tableView, labels, totalRows, rowsPerPage, jobId) {
+        makeTableViewer: function(tableName, tableView, labels, totalRows, rowsPerPage, jobId) {
             if (tableView == undefined) {
                 console.log("NO DIV!");
                 return;
@@ -15,7 +15,15 @@ define(['d3', 'crossfilter', 'dc'], function(d3, crossfilter, dc) {
             }
 
             var viewerDiv = document.createElement('div');
+            var cnum = 0;
             var widget = d3.select(viewerDiv);
+
+            // Make a div for the optional chart. This needs an id (used by dc.js, not us).
+            var chart = widget
+                .append('div')
+                .attr('class', 'bqtv-chart-div')
+                .attr('id', 'bqtv-chart' + cnum++);
+            widget.append('br');
 
             var metaDataDiv = widget.append('div');
             if (totalRows >= 0) {
@@ -47,6 +55,7 @@ define(['d3', 'crossfilter', 'dc'], function(d3, crossfilter, dc) {
                 naviLeft.append('span').attr('class', 'bqtv-meta-text').text(' of ');
                 var totalPagesSpan = naviLeft.append('span').attr('class', 'bqtv-meta-text');
             }
+
 
             var table = widget
                 .append('div').attr('class', 'bqtv-table-div')
@@ -94,7 +103,7 @@ define(['d3', 'crossfilter', 'dc'], function(d3, crossfilter, dc) {
             }
 
             // Update dynamic content.
-            function update(data) {
+            function update(data, metadata) {
                 var numRows = rowsPerPage;
                 var startRow = (model.displayPage - 1) * rowsPerPage;
                 var numPages = -1;
@@ -111,6 +120,7 @@ define(['d3', 'crossfilter', 'dc'], function(d3, crossfilter, dc) {
                         // First time
                         xdata = crossfilter(data);
                         rowDimension = xdata.dimension(rowFunc)
+                        setupChart(xdata, metadata, chart.node());
                     } else {
                         // Replace the data in the crossfilter.
                         rowDimension.filter(null);
@@ -174,11 +184,194 @@ define(['d3', 'crossfilter', 'dc'], function(d3, crossfilter, dc) {
                             tableView.innerHTML = 'Unable to render the table. ' +
                             'The data being displayed could not be retrieved: ' + error;
                         } else {
+                            // TODO(gram): what if the data already has a column named Row?
                             addRows(data['data']);
-                            update(data['data']);
+                            update(data['data'], data['metadata']);
                         }
                     });
                 }
+            }
+
+            function makeLineChart(div, width, height, xfilter, dimProp, plotProps, colors, yLabel) {
+                if (typeof dimProp == 'string') {
+                    var dimFunc = function (r) {
+                        return r[dimProp];
+                    };
+                } else {
+                    var dimFunc = function (r) {
+                        var year = r[dimProp[0]];
+                        var month = r[dimProp[1]];
+                        var day = r[dimProp[2]];
+                        return new Date(year, month, day);
+                    }
+                }
+
+                var dimension = xfilter.dimension(dimFunc);
+                var minX = dimFunc(dimension.bottom(1)[0]);
+                var maxX = dimFunc(dimension.top(1)[0]);
+
+                var groups = [];
+                for (var i = 0; i < plotProps.length; i++) {
+                    groups[i] = function(d, p) {
+                        return d.group().reduceSum(function(d) {
+                            return d[p];
+                        });
+                    }(dimension, plotProps[i]);
+                }
+
+                var lc;
+                if (plotProps.length > 1) {
+                    lc = dc.compositeChart(div);
+                    var subcharts = [];
+                    for (var i = 0; i < plotProps.length; i++) {
+                        subcharts[i] = dc.lineChart(lc)
+                            .dimension(dimension)
+                            .colors([colors[i]])
+                            .group(groups[i], plotProps[i]);
+                    }
+                    lc.dimension(dimension); // Just so caller can get at this.
+                    lc.compose(subcharts)
+                        .brushOn(false);
+
+                } else {
+                    lc = dc.lineChart(div);
+                    lc.dimension(dimension)
+                        .colors(colors)
+                        .group(groups[0], plotProps[0])
+                        .brushOn(true);
+                }
+
+                lc.width(width).height(height)
+                    .legend(dc.legend().x(50).y(10).itemHeight(13).gap(5));
+
+                if (minX instanceof Date) {
+                    lc.x(d3.time.scale().domain([minX, maxX]))
+                } else {
+                    lc.x(d3.scale.linear().domain([minX, maxX]))
+                }
+                if (yLabel) {
+                    lc.yAxisLabel(yLabel);
+                }
+
+                return lc;
+            }
+
+            function setupChart(xfilter, metadata, div) {
+                // 1. If we have no meta-data this is paginated data and we just return.
+
+                if (metadata.length == 0) return;
+
+                // 2. Look at the fields that are valid (no None values) and interesting (not
+                //    single-valued) to pick a suitable dimension. If we have a single timestamp
+                //    field that takes precedence and we do a line chart. Else if we have a single
+                //    string field that takes precedence and we do a bar chart. If we have neither
+                //    a string nor a timestamp field we use the row index as a dimension and use
+                //    a line chart. Anything else we just return.
+                //
+                //    Note that if we have non-unique entries for a timestamp we need to be
+                //    careful. They will get summed which may not make any sense, especially if
+                //    they are broken out categorically.
+
+                var dimField = '';
+                var dateFields = [];
+                var fields = Object.keys(metadata);
+                for (var i = 0; i < fields.length; i++) {
+                    var field = fields[i];
+                    if (metadata[field].type == 'TIMESTAMP') {
+                        console.log('Found timestamp field ' + field);
+                        if (dimField == '') {
+                            dimField = field;
+                        } else {
+                            dimField = null;
+                        }
+                    } else {
+                        var idx = ['year', 'month', 'day'].indexOf(field.toLowerCase());
+                        if (idx >= 0) {
+                            dateFields[idx] = field;
+                        }
+                    }
+                }
+
+                if (dimField == null) {
+                    // We found more than one timestamp field.
+                    console.log('Found multiple timestamp fields; cannot chart');
+                    return;
+                }
+
+                if (dimField == '') {
+                    if (dateFields.length >= 0) {
+                        dimField = dateFields;
+                        for (var i = 0; i < dateFields.length; i++) {
+                            if (dateFields[i] == undefined) {
+                                dimField = 'Row';
+                                break;
+                            } else if (!metadata[dateFields[i]].valid) {
+                                console.log('Found timestamp component field ' + dateFields[i] + ' but it has invalid values; cannot chart');
+                                return;
+                            }
+                        }
+                    } else {
+                        // Use Row for now.
+                        dimField = 'Row';
+                    }
+                    if (dimField == 'Row') {
+                        console.log('Found no timestamp field; falling back to Row dimension');
+                    } else {
+                        console.log('Using composite timestamp: ' + dateFields.join('/'));
+                    }
+                } else if (!metadata[dimField].valid) {
+                    console.log('Found timestamp field ' + dimField + ' but it has invalid values; cannot chart');
+                    return;
+                }
+
+                //dimField = 'Row';
+
+                // 3. Pick the group fields. We find the first numeric field that is not
+                //    the dimension and is not single-valued. We then add any other such fields
+                //    that have similar ranges.
+                //
+                // TODO: Should we drop integer fields with small ranges? They are likely either
+                // categorical or not very interesting.
+
+                var groups = []
+                var allowedMin, allowedMax;
+                var colors = ['red', 'blue', 'green', 'yellow', 'black'];
+                //var colors = ['red'];
+                for (var i = 0; i < fields.length; i++) {
+                    var field = fields[i];
+                    var field_metadata = metadata[field];
+                    if (field == 'Row' || field == dimField || dateFields.indexOf(field) >= 0) {
+                        continue;
+                    }
+                    if (field_metadata.type == 'STRING' || field_metadata.type == 'BOOLEAN') {
+                        continue;
+                    }
+                    var max = field_metadata.max;
+                    var min = field_metadata.min;
+                    if (max == min) {
+                        continue;  // Uninteresting.
+                    }
+                    if (groups.length == 0) {
+                        groups.push(field);
+                        var range = max - min;
+                        allowedMin = min - range;
+                        allowedMax = max + range;
+                    } else {
+                        if (min > allowedMin && max < allowedMax) {
+                            groups.push(field);
+                        }
+                    }
+                    if (groups.length >= colors.length) {
+                        break;
+                    }
+                }
+
+                console.log('Charting, dimension ' + dimField);
+                for (var i = 0; i < groups.length; i++) {
+                    console.log('Group ' + groups[i]);
+                }
+                makeLineChart(div, div.offsetWidth, div.offsetWidth / 3, xfilter, dimField, groups,
+                    colors).render();
             }
 
             // Notify the Python object so we get the first page.
