@@ -27,7 +27,7 @@ export function createEmptyNotebook () {
 }
 
 export function getFirstWorksheet(notebook: app.IActiveNotebook): app.notebook.Worksheet {
-  var notebookData = notebook.getSnapshot();
+  var notebookData = notebook.getNotebookData();
   return notebookData.worksheets[0];
 }
 

@@ -17,7 +17,6 @@
 import actions = require('./app/shared/actions');
 import nb = require('./app/notebooks/index');
 import updates = require('./app/shared/updates');
-import testutil = require('./testutil');
 
 
 describe('Notebook model state', () => {
@@ -25,8 +24,20 @@ describe('Notebook model state', () => {
   var worksheetId: string;
 
   beforeEach(() => {
-    notebook = new nb.ActiveNotebook(testutil.createEmptyNotebook());
-    worksheetId = testutil.getFirstWorksheet(notebook).id;
+    var notebookData: app.notebook.Notebook = {
+      "id": "nb-id",
+      "metadata": {},
+      "worksheets": [
+        {
+          "id": "ws-id",
+          "name": "Untitled Worksheet",
+          "metadata": {},
+          "cells": []
+        }
+      ]
+    };
+    notebook = new nb.ActiveNotebook(notebookData);
+    worksheetId = getFirstWorksheet(notebook).id;
   });
 
   afterEach(() => {
@@ -35,7 +46,7 @@ describe('Notebook model state', () => {
   });
 
   it('should be an empty notebook with one worksheet and zero cells', () => {
-    var notebookData: app.notebook.Notebook = notebook.getSnapshot()
+    var notebookData: app.notebook.Notebook = notebook.getNotebookData()
     expect(notebookData.worksheets.length).toBe(1);
     var worksheet = notebookData.worksheets[0];
     expect(worksheet.cells.length).toBe(0);
@@ -51,7 +62,7 @@ describe('Notebook model state', () => {
         mimetypeBundle: {'text/plain': 'some stdout here'}
       };
 
-      notebookData = notebook.getSnapshot();
+      notebookData = notebook.getNotebookData();
 
       // Add a second worksheet
       notebookData.worksheets.push({
@@ -134,7 +145,7 @@ describe('Notebook model state', () => {
         }]
       }
       // Attach it to the worksheet
-      var worksheet = testutil.getFirstWorksheet(notebook);
+      var worksheet = getFirstWorksheet(notebook);
       worksheet.cells.push(cell);
     });
 
@@ -239,7 +250,7 @@ describe('Notebook model state', () => {
       };
 
       // Create a cell with a non-zero number of outputs to be cleared
-      var worksheet = testutil.getFirstWorksheet(notebook);
+      var worksheet = getFirstWorksheet(notebook);
       worksheet.cells.push({
         id: cellIdToClear,
         type: 'code',
@@ -259,7 +270,7 @@ describe('Notebook model state', () => {
 
     it('should remove specified cell output', () => {
       // Validate that there is a single cell with non-zero number of outputs before clearing
-      var worksheet = testutil.getFirstWorksheet(notebook);
+      var worksheet = getFirstWorksheet(notebook);
       expect(worksheet.cells.length).toBe(1);
       var cell = worksheet.cells[0];
       expect(cell.id).toBe(cellIdToClear);
@@ -289,7 +300,7 @@ describe('Notebook model state', () => {
     var notebookData: app.notebook.Notebook;
 
     beforeEach(() => {
-      worksheet = testutil.getFirstWorksheet(notebook);
+      worksheet = getFirstWorksheet(notebook);
       deleteCellAction = {
         action: actions.worksheet.deleteCell,
         worksheetId: worksheet.id,
@@ -362,7 +373,7 @@ describe('Notebook model state', () => {
     var moveCellAction: app.notebook.action.MoveCell;
     var worksheet: app.notebook.Worksheet;
     beforeEach(() => {
-      worksheet = testutil.getFirstWorksheet(notebook);
+      worksheet = getFirstWorksheet(notebook);
       moveCellAction = {
         action: actions.worksheet.moveCell,
         sourceWorksheetId: worksheet.id,
@@ -440,7 +451,7 @@ describe('Notebook model state', () => {
         type: 'code',
         source: 'some code here'
       };
-      var worksheet = testutil.getFirstWorksheet(notebook);
+      var worksheet = getFirstWorksheet(notebook);
       worksheet.cells.push({
         id: 'A',
         type: 'code',
@@ -473,7 +484,7 @@ describe('Notebook model state', () => {
       expect(addCellUpdate.cell.type).toBe('code');
       expect(addCellUpdate.cell.source).toBe('some code here');
       // Validate that the notebook model was also updated to have the new cell
-      var worksheet = testutil.getFirstWorksheet(notebook);
+      var worksheet = getFirstWorksheet(notebook);
       expect(worksheet.cells.length).toBe(3);
       expect(worksheet.cells.map((cell) => {return cell.id})).toEqual(['NEW', 'A', 'B'])
     });
@@ -482,7 +493,7 @@ describe('Notebook model state', () => {
       addCellAction.insertAfter = 'B';
       notebook.apply(addCellAction);
       // Validate that the notebook model has the added cell where expectedd
-      var worksheet = testutil.getFirstWorksheet(notebook);
+      var worksheet = getFirstWorksheet(notebook);
       expect(worksheet.cells.length).toBe(3);
       expect(worksheet.cells.map((cell) => {return cell.id})).toEqual(['A', 'B', 'NEW'])
     });
@@ -498,3 +509,7 @@ describe('Notebook model state', () => {
   });
 
 });
+
+function getFirstWorksheet (notebook: app.IActiveNotebook) {
+  return notebook.getNotebookData().worksheets[0];
+}

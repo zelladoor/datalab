@@ -36,9 +36,31 @@ declare module app {
     shellPort: number;
   }
 
-  interface IActiveNotebook { // FIXME: better name for this?
+  /**
+   * Manages a single notebook's data and provides an API for applying changes captured by Actions.
+   */
+  interface IActiveNotebook {
+    /**
+     * Applies the Action to the notebook model and returns a corresponding Update message.
+     *
+     * The Update captures the delta necessary for any other copies of the notebook model (e.g.,
+     * that exist on clients) to be synchronized with the notebook model held by this instance
+     * (assuming that they were synchronized before the update arrived).
+     */
     apply (action: notebook.action.Action): notebook.update.Update;
-    getSnapshot (): notebook.Notebook;
+
+    /**
+     * Gets a reference to the notebook data held within the instance.
+     *
+     * Callers should consider the returned reference to be read-only.
+     */
+    getNotebookData (): notebook.Notebook;
+
+    /**
+     * Gets a reference to the specified cell within the notebook.
+     *
+     * Throws an error if the cell does not exist within the specified worksheet.
+     */
     getCell (cellId: string, worksheetId: string): notebook.Cell;
   }
 

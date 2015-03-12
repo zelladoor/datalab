@@ -95,7 +95,7 @@ export class Session implements app.ISession {
     // Send the initial notebook state at the time of connection
     userconn.sendUpdate({
       update: updates.notebook.snapshot,
-      notebook: this._notebook.getSnapshot()
+      notebook: this._notebook.getNotebookData()
     });
   }
 
@@ -226,7 +226,7 @@ export class Session implements app.ISession {
   }
 
   _handleActionExecuteCells (action: app.notebook.action.ExecuteCells) {
-    var notebookData = this._notebook.getSnapshot();
+    var notebookData = this._notebook.getNotebookData();
     // Execute all cells in each worksheet
     notebookData.worksheets.forEach((worksheet) => {
       worksheet.cells.forEach((cell) => {
@@ -301,7 +301,7 @@ export class Session implements app.ISession {
   _persistNotebook () {
     console.log('Saving notebook ' + this._notebookPath + ' ...');
     // Serialize the current notebook model state to the format inferred from the file extension
-    var serializedNotebook = this._notebookSerializer.stringify(this._notebook.getSnapshot());
+    var serializedNotebook = this._notebookSerializer.stringify(this._notebook.getNotebookData());
     this._storage.write(this._notebookPath, serializedNotebook);
   }
 

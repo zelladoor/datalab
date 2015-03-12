@@ -23,18 +23,18 @@ import util = require('../common/util');
 
 
 /**
- * Name for worksheets with unspecified name
+ * Name for worksheets with unspecified name.
  */
 export var defaultWorksheetName = 'Untitled Worksheet';
 
-// Starter notebook default content configuration
+// Starter notebook default content configuration.
 var defaultCodeCellContent = '';
 var defaultHeadingCellLevel = 1;
 var defaultHeadingCellContent = 'This is a heading';
 var defaultMarkdownCellContent = 'You **can** write markdown here';
 
 /**
- * Appends a code cell to the default worksheet within the notebook
+ * Appends a code cell to the default worksheet within the notebook.
  */
 function appendCodeCell (notebook: app.notebook.Notebook) {
   var cell = createCodeCell(uuid.v4(), defaultCodeCellContent);
@@ -42,7 +42,7 @@ function appendCodeCell (notebook: app.notebook.Notebook) {
 }
 
 /**
- * Appends a heading cell to the default worksheet within the notebook
+ * Appends a heading cell to the default worksheet within the notebook.
  */
 function appendHeadingCell (notebook: app.notebook.Notebook) {
   var cell = createHeadingCell(uuid.v4(), defaultHeadingCellContent);
@@ -50,7 +50,7 @@ function appendHeadingCell (notebook: app.notebook.Notebook) {
 }
 
 /**
- * Appends a markdown cell to the default worksheet within the notebook
+ * Appends a markdown cell to the default worksheet within the notebook.
  */
 function appendMarkdownCell (notebook: app.notebook.Notebook) {
   var cell = createMarkdownCell(uuid.v4(), defaultMarkdownCellContent);
@@ -87,7 +87,7 @@ function createMarkdownCell (id: string, source: string): app.notebook.Cell {
 }
 
 /**
- * Create a cell of the specified type with given content.
+ * Creates a cell of the specified type with given content.
  *
  * Throws an Error if the given cell type is unsupported.
  */
@@ -129,7 +129,7 @@ export function createEmptyNotebook (): app.notebook.Notebook {
 }
 
 /**
- * Creates a new notebook with an initial (non-empty) set of cells
+ * Creates a new notebook with an initial (non-empty) set of cells.
  *
  * The purpose of the initial set of cells is to provide the user with some fill-in-the-blank
  * bits to aid in getting started.
@@ -146,12 +146,12 @@ export function createStarterNotebook (): app.notebook.Notebook {
 }
 
 /**
- * Gets the default worksheet from the notebook for appending cells
+ * Gets the default worksheet from the notebook for appending cells.
  */
 function getDefaultWorksheet (notebook: app.notebook.Notebook): app.notebook.Worksheet {
   if (notebook.worksheets.length === 0) {
     throw util.createError('Cannot return a default worksheet for a notebook with zero worksheets');
   }
-  // Return the first worksheet by default
+  // Return the first worksheet by default.
   return notebook.worksheets[0];
 }
