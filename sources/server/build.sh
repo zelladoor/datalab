@@ -22,7 +22,9 @@ build_root="$REPO_DIR/build/server";
 # This module path config feature is being actively discussed within the TypeScript community, so
 # opting to see how it plays out before implementing more complex work-arounds. For discussion,
 # see: https://github.com/Microsoft/TypeScript/issues/293
-staging_path="$build_root/staging/_";
+staging_path="$build_root/staging";
+ui_staging_path="$staging_path/ui";
+node_staging_path="$staging_path/node";
 test_path="$build_root/tests";
 build_path="$build_root/build";
 
@@ -32,21 +34,38 @@ server_root="$REPO_DIR/sources/server";
 # TypeScript compiler args for both backend and frontend code
 common_tsc_args="--removeComments --noImplicitAny";
 
-mkdir -p "$staging_path" "$build_path" "$test_path";
+mkdir -p "$ui_staging_path" "$node_staging_path" "$build_path" "$test_path";
 
 
 ### BUILD
+# NodeJS backend compilation in staging
 echo 'Building DataLab server backend...';
-# Copy node .ts files to staging.
-cp -r "$server_root/src/node/" "$staging_path";
+# Copy node .ts files to the backend staging area.
+cp -r "$server_root/src/node/" "$node_staging_path";
 # Copy shared .ts files to the backend staging area.
-cp -r "$server_root/src/shared" "$staging_path/app";
+cp -r "$server_root/src/shared" "$node_staging_path/app";
 # Compile the typescript code in staging.
-tsc_files=`find $staging_path -name '*.ts' | tr '\n' ' '`;
-tsc $common_tsc_args --module commonjs $tsc_files;
-# Copy everything from staging to build.
-cp -r $staging_path/* $build_path;
-# Remove the unneeded .ts files.
+node_tsc_files=`find $node_staging_path -name '*.ts' | tr '\n' ' '`;
+tsc $common_tsc_args --module commonjs $node_tsc_files;
+
+# UI compilation in staging
+echo 'Building DataLab server frontend...';
+# Copy UI .ts files to the frontend staging area.
+cp -r "$server_root/src/ui/" "$ui_staging_path";
+# Copy shared .ts files to the frontend staging area.
+cp -r "$server_root/src/shared" "$ui_staging_path/scripts/app";
+# Compile the typescript code in staging.
+ui_tsc_files=`find $ui_staging_path -name '*.ts' | tr '\n' ' '`;
+tsc $common_tsc_args --module commonjs $ui_tsc_files;
+
+# Merge the compiled backend and frontend components into a single build where NodeJS is serving
+# the static UI content directly.
+#
+# Copy the compiled backend .js from staging to the server build.
+cp -r $node_staging_path/* $build_path;
+# Copy the built UI with static assets to the /static content path of the server build.
+# cp -r $ui_staging_path/* $build_path/static;
+# Remove the unneeded .ts files from the build path (both ui and node).
 find "$build_path" -name '*.ts' | xargs rm;
 
 
@@ -62,8 +81,8 @@ cp -r "$server_root/src/shared" "$test_path/node/app";
 # Copy the test .ts files to the test area.
 cp -r "$server_root/tests/node/" "$test_path/node";
 # Compile the typescript code in test area (src and tests).
-tsc_files=`find $test_path/node -name '*.ts' | tr '\n' ' '`;
-tsc $common_tsc_args --module commonjs $tsc_files;
+test_tsc_files=`find $test_path/node -name '*.ts' | tr '\n' ' '`;
+tsc $common_tsc_args --module commonjs $test_tsc_files;
 # Install the npm dependencies
 echo 'Installing NPM dependencies for running the unit tests'
 pushd "$test_path/node";
