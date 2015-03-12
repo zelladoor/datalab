@@ -15,7 +15,7 @@
 
 /// <reference path="../../../../externs/ts/jasmine.d.ts"/>
 import actions = require('./app/shared/actions');
-import nb = require('./app/notebooks/index');
+import nb = require('./app/notebooks/notebook');
 import updates = require('./app/shared/updates');
 
 
