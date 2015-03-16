@@ -17,7 +17,7 @@
  * Defines the API of the notebooks module.
  */
 import formats = require('./serializers/formats');
-import notebook = require('./notebook');
+import notebookSession = require('./notebooksession');
 
-export var NotebookSession = notebook.NotebookSession;
+export var NotebookSession = notebookSession.NotebookSession;
 export var selectSerializer = formats.selectSerializer;
