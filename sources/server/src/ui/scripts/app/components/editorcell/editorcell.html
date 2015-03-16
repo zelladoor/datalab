@@ -1,6 +1,4 @@
-<div id="cell-{{cell.id}}" class="datalab-editor-cell row" ng-class="{ 'datalab-editor-cell-active' : cell.active }">
-  <!-- FIXMEACTIVE change the active cell test to compare against a scope active var, rather than an attribute directly on the cell. The controller will maintain the active flag on the scope -->
-
+<div id="cell-{{cell.id}}" class="datalab-editor-cell row" ng-class="{ 'datalab-editor-cell-active' : active }">
   <!-- NOTE: this template assumes that it lives inside of some bootstrap .container as the base grid system -->
 
   <!-- Edit region -->
@@ -12,9 +10,8 @@
         <span class="fa fa-paragraph fa-lg" ng-if="cell.type == 'heading'"></span>
       </div>
 
-      <!-- FIXMEACTIVE update this to use scope.active (or isActive) as well -->
       <div class="datalab-editor-cell-input-content col-md-11">
-        <datalab-code-editor source="cell.source" active="cell.active" keymap='keymap' actions='actions'></datalab-code-editor>
+        <datalab-code-editor source="cell.source" active="active" keymap='keymap' actions='actions'></datalab-code-editor>
       </div>
 
       <!-- Cell toolbar -->

@@ -31,9 +31,6 @@ import _app = require('app/App');
 // FIXME: remove the codemirror dep if type is factored out
 // Try to avoid the codemirror types bleeding out of the code editor directive if possible
 
-// FIXME: rename this "cell editor" since it is a UI for editing cell data (of any type)
-// Likewise, rename the markdown version that builds on top of this "markdown editor"
-
 var log = logging.getLogger(constants.scopes.editorCell);
 
 interface EditorCellScope extends ng.IScope {
@@ -43,53 +40,71 @@ interface EditorCellScope extends ng.IScope {
   enableEditRegion?: boolean;
   enablePreviewRegion?: boolean;
   onPreviewRegionDoubleClick?: Function;
+  notebookData?: app.INotebookData;
 
-  keymap?: any;
   actions?: any;
+  active?: boolean;
+  keymap?: any;
 }
 
 class EditorCellController {
 
+  _notebookData: app.INotebookData;
   _scope: EditorCellScope;
 
-  static $inject = ['$scope'];
-  constructor (scope: EditorCellScope) {
-    // FIXMEACTIVE will need to take the notebook data so that the cell can notify it
-    // when the cell becomes active
-    //
-    // FIXMEACTIVE need to listen for blur event on the outer-most element of the editor cell
-    // (the containing div) and use that event as the deactivate trigger, which is passed to
-    // notebook data
+  static $inject = ['$scope', constants.notebookData.name];
+  constructor (scope: EditorCellScope, notebookData: app.INotebookData) {
+    this._notebookData = notebookData; // FIXME: remove this if it's stored on scope
     this._scope = scope;
 
+    scope.active = false;
     scope.actions = this._createActionHandlers();
     scope.keymap = scope.getKeymap(); // FIXME: see if possible to just pass the getter function through
+    scope.notebookData = notebookData;
   }
 
   // handle events that occur on the editor instance
   _createActionHandlers () {
     return {
-      'focus': this._handleFocus.bind(this),
-      'blur': this._handleBlur.bind(this)
+      'focus': this.activate.bind(this)
     }
   }
 
-  _setActive (isActive: boolean) {
-    // FIXMEACTIVE: this will now updated some global var that labels the active cell
-    var scope = this._scope;
-    scope.$evalAsync(() => {
-      scope.cell.active = isActive;
+  activate () {
+    var that = this;
+    this._scope.$evalAsync(() => {
+      that._scope.notebookData.selectCell(that._scope.cell);
     });
   }
 
-  _handleFocus () {
-    this._setActive(true);
+  deactivate () {
+    // FIXME need to listen for blur event on the outer-most element of the editor cell
+    // (the containing div) and use that event as the deactivate trigger.
+    //
+    // Then, invoke the nbdata.deactivateCell() method here
+    // this._notebookData.deactivateCell();
   }
 
-  _handleBlur () {
-    this._setActive(false);
-  }
+}
 
+function editorCellDirectiveLink (
+    scope: EditorCellScope,
+    element: ng.IAugmentedJQuery,
+    attrs: any,
+    controller: EditorCellController
+    ): void {
+
+  scope.$watch(() => {
+    var activeCell = scope.notebookData.activeCell;
+    // Avoid having the watch recursively compare all of the data within the cell by
+    // returning the cell id as the watched value. If there is no active cell, any constant
+    // sentinel value that is not also a valid cell id can be returned (using undefined here).
+    return (activeCell && activeCell.id) || undefined;
+  }, (newValue: any, oldValue: any) => {
+      // Check to see if the cell for this directive has become active and update the scope
+      // with the current active/inactive status.
+      scope.active = (newValue === scope.cell.id);
+  });
 }
 
 /**
@@ -108,7 +123,8 @@ function editorCellDirective (): ng.IDirective {
     },
     templateUrl: constants.scriptPaths.app + '/components/editorcell/editorcell.html',
     replace: true,
-    controller: EditorCellController
+    controller: EditorCellController,
+    link: editorCellDirectiveLink
   }
 }
 

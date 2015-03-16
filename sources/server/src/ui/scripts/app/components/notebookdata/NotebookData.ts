@@ -43,8 +43,9 @@ var log = logging.getLogger(constants.scopes.notebookData);
  * the danger of causing local and server states to diverge. Thus, any local modifications to the
  * notebook model for responsiveness purposes need to be handled with great caution.
  */
-class NotebookData implements app.INotebookData {
+class NotebookData implements app.INotebookData { // FIXME: rename this class
 
+  activeCell: app.notebook.Cell;
   activeWorksheet: app.notebook.Worksheet;
   notebook: app.notebook.Notebook;
 
@@ -69,6 +70,23 @@ class NotebookData implements app.INotebookData {
     this._sce = sce;
 
     this._registerEventHandlers();
+  }
+
+  /**
+   * Sets the given cell to be active.
+   *
+   * There can only be a single active cell within a notebook at any time; equivalent to the
+   * notion of DOM element focus.
+   */
+  selectCell(cell: app.notebook.Cell) {
+    this.activeCell = cell;
+  }
+
+  /**
+   * Unsets the the currently active cell.
+   */
+  deselectCell() {
+    this.activeCell = undefined;
   }
 
   // TODO(bryantd): decide if we want a local "predictive modification" for the various insert functions
@@ -101,10 +119,6 @@ class NotebookData implements app.INotebookData {
     };
     this._emitAction(addCellAction)
   }
-
-  // FIXMEACTIVE: callbacks for getting notifications about cell activation events
-  // cellActivated(cell: app.notebook.Cell) {};
-  // cellDeactivated(cell: app.notebook.Cell) {};
 
   clearOutput (cellId: string, worksheetId: string) {
     var clearOutputAction: app.notebook.action.ClearOutput = {

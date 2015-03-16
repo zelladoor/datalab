@@ -44,18 +44,22 @@ declare module app {
   }
 
   interface INotebookData {
+    activeCell: app.notebook.Cell;
+    activeWorksheet: app.notebook.Worksheet;
     notebook: app.notebook.Notebook;
 
     addCell (cellType: string, worksheetId: string, insertAfterCellId: string): void;
     clearOutput (cellId: string, worksheetId: string): void;
     clearOutputs (): void;
     deleteCell (cellId: string, worksheetId: string): void;
+    deselectCell (): void;
     evaluateCell (cell: app.notebook.Cell, worksheetId: string): void;
     executeCell (cellId: string, worksheetId: string): void;
     executeCells (): void;
     moveCell (cellId: string, worksheetId: string, insertAfterCellId: string): void;
     moveCellDown (cellId: string, worksheetId: string): void;
     moveCellUp (cellId: string, worksheetId: string): void;
+    selectCell (cell: app.notebook.Cell): void;
     selectWorksheet (workhsheetId: string): void;
     updateCell (cell: app.notebook.Cell, worksheetId: string): void;
   }
