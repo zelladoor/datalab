@@ -35,7 +35,7 @@ export class Session implements app.ISession {
   id: string;
 
   _kernel: app.IKernel;
-  _notebook: app.IActiveNotebook;
+  _notebook: app.INotebookSession;
   _notebookPath: string;
   _notebookSerializer: app.INotebookSerializer;
   _requestIdToCellRef: app.Map<app.CellRef>;
@@ -323,7 +323,7 @@ export class Session implements app.ISession {
       notebookData = this._notebookSerializer.parse(serializedNotebook);
     }
     // Create the notebook wrapper to manage the notebook model state
-    this._notebook = new nb.ActiveNotebook(notebookData);
+    this._notebook = new nb.NotebookSession(notebookData);
   }
 
   _registerUserEventHandlers (userconn: app.IUserConnection) {

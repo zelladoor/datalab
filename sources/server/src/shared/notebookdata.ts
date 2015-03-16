@@ -45,7 +45,8 @@ function createError (format: string, ...formatArgs: string[]) {
 export function getCellIndexOrThrow (worksheet: app.notebook.Worksheet, cellId: string) {
   var index = indexOf(worksheet, cellId);
   if (index === -1) {
-    throw createError('Cannot find insertAfter cell id "%s"', cellId);
+    throw createError('Specified cell id "%s" does not exist within worksheet with id "%s"',
+      cellId, worksheet.id);
   }
   return index;
 }
@@ -68,16 +69,16 @@ export function getCellOrThrow (
   var cell: app.notebook.Cell;
   for (var i = 0; i < worksheet.cells.length; ++i) {
     if (worksheet.cells[i].id == cellId) {
-      cell = worksheet.cells[i];
-      break; // Found the cell of interest.
+      // Found the cell of interest.
+      return worksheet.cells[i];
     }
   }
-  // Verify that the cell was actually found within the worksheet.
+
+  // Cell was not found within the worksheet if we made it here.
   if (cell === undefined) {
     throw createError('Specified cell id "%s" does not exist within worksheet with id "%s"',
         cellId, worksheetId);
   }
-  return cell;
 }
 
 /**

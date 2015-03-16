@@ -20,7 +20,7 @@ import updates = require('./app/shared/updates');
 
 
 describe('Notebook model state', () => {
-  var notebook: app.IActiveNotebook;
+  var notebook: app.INotebookSession;
   var worksheetId: string;
 
   beforeEach(() => {
@@ -36,7 +36,7 @@ describe('Notebook model state', () => {
         }
       ]
     };
-    notebook = new nb.ActiveNotebook(notebookData);
+    notebook = new nb.NotebookSession(notebookData);
     worksheetId = getFirstWorksheet(notebook).id;
   });
 
@@ -510,6 +510,6 @@ describe('Notebook model state', () => {
 
 });
 
-function getFirstWorksheet (notebook: app.IActiveNotebook) {
+function getFirstWorksheet (notebook: app.INotebookSession) {
   return notebook.getNotebookData().worksheets[0];
 }

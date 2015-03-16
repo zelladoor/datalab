@@ -26,7 +26,7 @@ export function createEmptyNotebook () {
   return JSON.parse(emptyNotebookData);
 }
 
-export function getFirstWorksheet(notebook: app.IActiveNotebook): app.notebook.Worksheet {
+export function getFirstWorksheet(notebook: app.INotebookSession): app.notebook.Worksheet {
   var notebookData = notebook.getNotebookData();
   return notebookData.worksheets[0];
 }

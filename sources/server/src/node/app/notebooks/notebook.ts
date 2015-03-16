@@ -23,7 +23,7 @@ import util = require('../common/util');
 /**
  * Wraps raw notebook data and provides an API for applying Actions to the notebook.
  */
-export class ActiveNotebook implements app.IActiveNotebook {
+export class NotebookSession implements app.INotebookSession {
 
   _notebook: app.notebook.Notebook;
 
@@ -176,11 +176,12 @@ export class ActiveNotebook implements app.IActiveNotebook {
     var sourceWorksheet = nbdata.getWorksheetOrThrow(action.sourceWorksheetId, this._notebook);
     var sourceIndex = nbdata.getCellIndexOrThrow(sourceWorksheet, action.cellId);
 
+    var destinationWorksheet = nbdata.getWorksheetOrThrow(action.sourceWorksheetId, this._notebook);
+
     // Remove the cell from the worksheet.
     var cellToMove = sourceWorksheet.cells.splice(sourceIndex, 1)[0];
 
     // Find the insertion point for the cell in the destination worksheet.
-    var destinationWorksheet = nbdata.getWorksheetOrThrow(action.sourceWorksheetId, this._notebook);
     if (action.insertAfter === null) {
       // Then prepend the cell to the destination worksheet.
       destinationWorksheet.cells = [cellToMove].concat(destinationWorksheet.cells);
@@ -219,7 +220,7 @@ export class ActiveNotebook implements app.IActiveNotebook {
     };
 
     // Enumerate the attributes that should be updated on the cell and apply the modifications.
-    if (action.source) {
+    if (action.source || action.source === '') {
       // Then update the cell source attribute and the update message.
       cell.source = cellUpdate.source = action.source;
     }

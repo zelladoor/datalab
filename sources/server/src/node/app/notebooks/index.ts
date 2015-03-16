@@ -19,5 +19,5 @@
 import formats = require('./serializers/formats');
 import notebook = require('./notebook');
 
-export var ActiveNotebook = notebook.ActiveNotebook;
+export var NotebookSession = notebook.NotebookSession;
 export var selectSerializer = formats.selectSerializer;
