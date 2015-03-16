@@ -135,8 +135,8 @@ declare module app {
     id: string;
     getNotebookPath (): string;
     onDisconnect (callback: EventHandler<IUserConnection>): void;
-    onAction (callback: EventHandler<app.notebook.action.Action>): void;
-    sendUpdate (update: notebook.update.Update): void;
+    onAction (callback: EventHandler<notebooks.actions.Action>): void;
+    sendUpdate (update: notebooks.updates.Update): void;
   }
 
   interface IUserConnectionManager {

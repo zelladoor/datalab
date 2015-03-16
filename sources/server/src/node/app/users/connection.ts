@@ -59,7 +59,7 @@ export class UserConnection implements app.IUserConnection {
   /**
    * Registers a callback that is invoked whenever an action message is received
    */
-  onAction (callback: app.EventHandler<app.notebook.action.Action>) {
+  onAction (callback: app.EventHandler<app.notebooks.actions.Action>) {
     this._delegateActionHandler = callback;
   }
 
@@ -73,18 +73,18 @@ export class UserConnection implements app.IUserConnection {
   /**
    * Sends an update message to the user
    */
-  sendUpdate (update: app.notebook.update.Update) {
+  sendUpdate (update: app.notebooks.updates.Update) {
     this._send(updates.label, update);
   }
 
-  _delegateActionHandler (action: app.notebook.action.Action) {}
+  _delegateActionHandler (action: app.notebooks.actions.Action) {}
 
   _delegateDisconnectHandler (connection: app.IUserConnection) {}
 
   /**
    * Handles the received action request by delegating to the session for processing
    */
-  _handleAction (action: app.notebook.action.Action) {
+  _handleAction (action: app.notebooks.actions.Action) {
     this._delegateActionHandler(action);
   }
 

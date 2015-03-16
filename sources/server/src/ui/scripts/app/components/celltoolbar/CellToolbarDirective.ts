@@ -27,7 +27,7 @@ var log = logging.getLogger(constants.scopes.cellToolbar);
 
 interface CellToolbarScope extends ng.IScope {
   notebookData: app.INotebookData;
-  cell: app.notebook.Cell;
+  cell: app.notebooks.Cell;
   worksheetId: string;
 }
 

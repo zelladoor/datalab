@@ -29,7 +29,7 @@ import _app = require('app/App');
 var log = logging.getLogger(constants.scopes.worksheetEditor);
 
 interface WorksheetEditorScope extends ng.IScope {
-  worksheet?: app.notebook.Worksheet;
+  worksheet?: app.notebooks.Worksheet;
 }
 
 function worksheetEditorDirective (): ng.IDirective {

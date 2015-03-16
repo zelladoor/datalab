@@ -17,7 +17,7 @@
 /**
  * Commpm notebook data accessors.
  *
- * TODO(bryantd): could combine these accessors into a class that wraps a app.notebook.Notebook
+ * TODO(bryantd): could combine these accessors into a class that wraps a app.notebooks.Notebook
  * instance, so that indices for direct cell and worksheet access by ID can be built, maintained
  * and used instead of the searching approach implemented currently.
  */
@@ -42,7 +42,7 @@ function createError (format: string, ...formatArgs: string[]) {
  *
  * Throws an error if the specified cell does not exist within the given worksheet.
  */
-export function getCellIndexOrThrow (worksheet: app.notebook.Worksheet, cellId: string) {
+export function getCellIndexOrThrow (worksheet: app.notebooks.Worksheet, cellId: string) {
   var index = indexOf(worksheet, cellId);
   if (index === -1) {
     throw createError('Cell id "%s" does not exist within worksheet with id "%s"',
@@ -59,14 +59,14 @@ export function getCellIndexOrThrow (worksheet: app.notebook.Worksheet, cellId: 
 export function getCellOrThrow (
     cellId: string,
     worksheetId: string,
-    notebook: app.notebook.Notebook
-    ): app.notebook.Cell {
+    notebook: app.notebooks.Notebook
+    ): app.notebooks.Cell {
 
   // Get the worksheet where the cell is expected to exist.
   var worksheet = getWorksheetOrThrow(worksheetId, notebook);
   // Find the cell in the worksheet.
   // Note: may be worthwhile to maintain a {cellId: cell} index if this becomes expensive.
-  var cell: app.notebook.Cell;
+  var cell: app.notebooks.Cell;
   for (var i = 0; i < worksheet.cells.length; ++i) {
     if (worksheet.cells[i].id == cellId) {
       // Found the cell of interest.
@@ -88,10 +88,10 @@ export function getCellOrThrow (
  */
 export function getWorksheetOrThrow (
     worksheetId: string,
-    notebook: app.notebook.Notebook
-    ): app.notebook.Worksheet {
+    notebook: app.notebooks.Notebook
+    ): app.notebooks.Worksheet {
 
-  var worksheet: app.notebook.Worksheet;
+  var worksheet: app.notebooks.Worksheet;
   notebook.worksheets.forEach((ws) => {
     if (worksheetId == ws.id) {
       // Found the worksheet of interest.
@@ -116,7 +116,7 @@ export function getWorksheetOrThrow (
  *
  * Note: same sentinel value as Array.indexOf() for consistency with language built-ins.
  */
-export function indexOf (worksheet: app.notebook.Worksheet, cellId: string): number {
+export function indexOf (worksheet: app.notebooks.Worksheet, cellId: string): number {
   for (var i = 0; i < worksheet.cells.length; ++i) {
     if (cellId == worksheet.cells[i].id) {
       return i;

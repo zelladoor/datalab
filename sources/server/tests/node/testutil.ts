@@ -26,7 +26,7 @@ export function createEmptyNotebook () {
   return JSON.parse(emptyNotebookData);
 }
 
-export function getFirstWorksheet(notebook: app.INotebookSession): app.notebook.Worksheet {
+export function getFirstWorksheet(notebook: app.INotebookSession): app.notebooks.Worksheet {
   var notebookData = notebook.getNotebookData();
   return notebookData.worksheets[0];
 }
@@ -39,6 +39,6 @@ export var mockStorage = {
 
 // Mock serializer always returns a copy of the empty notebook
 export var mockSerializer = {
-  stringify: (notebook: app.notebook.Notebook) => { return 'fake-nb-string-2'; },
+  stringify: (notebook: app.notebooks.Notebook) => { return 'fake-nb-string-2'; },
   parse: (data: string, format: string) => {return createEmptyNotebook();}
 };

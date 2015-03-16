@@ -29,14 +29,14 @@ declare module app {
      * @param session session object from which the message originated
      * @return the processed message or null to indicate message should be filtered
      */
-    (message: any, session: app.ISession, manager: app.ISessionManager): any;
+    (message: any, session: ISession, manager: ISessionManager): any;
   }
 
   interface MessageHandler {
-    (message: any, session: app.ISession, callback: app.EventHandler<any>): void
+    (message: any, session: ISession, callback: EventHandler<any>): void
   }
 
-  interface NotebookUpdate extends app.notebook.Notebook {
+  interface NotebookUpdate extends notebooks.Notebook {
     // Note: eventually this message will contain a set of changes rather than the full notebook
   }
 

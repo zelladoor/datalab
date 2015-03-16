@@ -53,7 +53,7 @@ class Session implements app.ISession {
   /**
    * Handles client-side action events by forwarding them to the server.
    */
-  _handleAction (event: ng.IAngularEvent, action: app.notebook.action.Action) {
+  _handleAction (event: ng.IAngularEvent, action: app.notebooks.actions.Action) {
     log.debug('Sending action message to server', action);
     this._connection.emit('action', action);
   }
@@ -61,9 +61,9 @@ class Session implements app.ISession {
   /**
    * Handles all incoming server updates by publishing them as client-side events.
    */
-  _handleUpdate (update: app.notebook.update.Update) {
+  _handleUpdate (update: app.notebooks.updates.Update) {
     log.debug('Update message received from server:', update);
-    this._rootScope.$emit(update.update, update);
+    this._rootScope.$emit(update.name, update);
   }
 
   /**

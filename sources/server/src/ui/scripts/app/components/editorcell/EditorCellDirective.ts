@@ -34,7 +34,7 @@ import _app = require('app/App');
 var log = logging.getLogger(constants.scopes.editorCell);
 
 interface EditorCellScope extends ng.IScope {
-  cell: app.notebook.Cell;
+  cell: app.notebooks.Cell;
   worksheetId: string;
   getKeymap?: any;
   enableEditRegion?: boolean;

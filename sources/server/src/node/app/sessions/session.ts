@@ -94,7 +94,7 @@ export class Session implements app.ISession {
 
     // Send the initial notebook state at the time of connection
     userconn.sendUpdate({
-      update: updates.notebook.snapshot,
+      name: updates.notebook.snapshot,
       notebook: this._notebook.getNotebookData()
     });
   }
@@ -125,8 +125,8 @@ export class Session implements app.ISession {
     // Convert the execution counter to a string to be used as a cell prompt
     var prompt = message.executionCounter
 
-    var action: app.notebook.action.UpdateCell = {
-      action: actions.cell.update,
+    var action: app.notebooks.actions.UpdateCell = {
+      name: actions.cell.update,
       worksheetId: cellRef.worksheetId,
       cellId: cellRef.cellId,
       prompt: message.executionCounter
@@ -143,7 +143,7 @@ export class Session implements app.ISession {
     this._broadcastUpdate(update);
   }
 
-  _broadcastUpdate (update: app.notebook.update.Update) {
+  _broadcastUpdate (update: app.notebooks.updates.Update) {
     this._userconns.forEach((userconn) => {
       userconn.sendUpdate(update);
     });
@@ -191,18 +191,18 @@ export class Session implements app.ISession {
     }
   }
 
-  _handleActionComposite (action: app.notebook.action.Composite) {
+  _handleActionComposite (action: app.notebooks.actions.Composite) {
     // Process each of the sub-actions, in order
     action.subActions.forEach(this._handleActionPostDelegate.bind(this));
   }
 
-  _handleActionNotebookData (action: app.notebook.action.UpdateCell) {
+  _handleActionNotebookData (action: app.notebooks.actions.UpdateCell) {
     var update = this._notebook.apply(action);
     // Update all clients about the notebook data change
     this._broadcastUpdate(update);
   }
 
-  _handleActionExecuteCell (action: app.notebook.action.ExecuteCell) {
+  _handleActionExecuteCell (action: app.notebooks.actions.ExecuteCell) {
     var requestId = uuid.v4();
 
     // Store the mapping of request ID -> cellref for joining kernel response messages later
@@ -225,14 +225,14 @@ export class Session implements app.ISession {
     });
   }
 
-  _handleActionExecuteCells (action: app.notebook.action.ExecuteCells) {
+  _handleActionExecuteCells (action: app.notebooks.actions.ExecuteCells) {
     var notebookData = this._notebook.getNotebookData();
     // Execute all cells in each worksheet
     notebookData.worksheets.forEach((worksheet) => {
       worksheet.cells.forEach((cell) => {
         if (cell.type == cells.code) {
           this._handleActionExecuteCell({
-            action: actions.cell.execute,
+            name: actions.cell.execute,
             worksheetId: worksheet.id,
             cellId: cell.id
           });
@@ -241,10 +241,10 @@ export class Session implements app.ISession {
     });
   }
 
-  _handleActionRenameNotebook (action: app.notebook.action.Rename) {
+  _handleActionRenameNotebook (action: app.notebooks.actions.Rename) {
     this._setNotebookPath(action.path);
     this._broadcastUpdate({
-      update: updates.notebook.metadata,
+      name: updates.notebook.metadata,
       path: action.path
     })
   }
@@ -261,7 +261,7 @@ export class Session implements app.ISession {
    */
   _handleKernelStatusPostDelegate (message: any) {
     this._broadcastUpdate({
-      update: updates.notebook.sessionStatus,
+      name: updates.notebook.sessionStatus,
       // TODO: add other session metdata here such as connected users, etc. eventually
       kernelState: message.status
     });
@@ -280,7 +280,7 @@ export class Session implements app.ISession {
 
     // Apply the output data update to the notebook model
     var update = this._notebook.apply({
-      action: actions.cell.update,
+      name: actions.cell.update,
       worksheetId: cellRef.worksheetId,
       cellId: cellRef.cellId,
       outputs: [{
@@ -314,7 +314,7 @@ export class Session implements app.ISession {
     console.log('Reading notebook ' + this._notebookPath + ' ...');
     // First, attempt to read in the notebook if it already exists at the defined path
     var serializedNotebook = this._storage.read(this._notebookPath);
-    var notebookData: app.notebook.Notebook;
+    var notebookData: app.notebooks.Notebook;
     if (serializedNotebook === undefined) {
       // Notebook didn't exist, so create a starter notebook
       notebookData = nbutil.createStarterNotebook();

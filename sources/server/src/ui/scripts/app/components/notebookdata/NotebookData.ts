@@ -45,9 +45,9 @@ var log = logging.getLogger(constants.scopes.notebookData);
  */
 class NotebookData implements app.INotebookData { // FIXME: rename this class
 
-  activeCell: app.notebook.Cell;
-  activeWorksheet: app.notebook.Worksheet;
-  notebook: app.notebook.Notebook;
+  activeCell: app.notebooks.Cell;
+  activeWorksheet: app.notebooks.Worksheet;
+  notebook: app.notebooks.Notebook;
 
   _rootScope: ng.IRootScopeService;
   _sce: ng.ISCEService;
@@ -78,7 +78,7 @@ class NotebookData implements app.INotebookData { // FIXME: rename this class
    * There can only be a single active cell within a notebook at any time; equivalent to the
    * notion of DOM element focus.
    */
-  selectCell(cell: app.notebook.Cell) {
+  selectCell(cell: app.notebooks.Cell) {
     this.activeCell = cell;
   }
 
@@ -109,8 +109,8 @@ class NotebookData implements app.INotebookData { // FIXME: rename this class
         source = ''
     }
 
-    var addCellAction: app.notebook.action.AddCell = {
-      action: actions.worksheet.addCell,
+    var addCellAction: app.notebooks.actions.AddCell = {
+      name: actions.worksheet.addCell,
       worksheetId: worksheetId,
       cellId: uuid.v4(),
       type: cellType,
@@ -121,8 +121,8 @@ class NotebookData implements app.INotebookData { // FIXME: rename this class
   }
 
   clearOutput (cellId: string, worksheetId: string) {
-    var clearOutputAction: app.notebook.action.ClearOutput = {
-      action: actions.cell.clearOutput,
+    var clearOutputAction: app.notebooks.actions.ClearOutput = {
+      name: actions.cell.clearOutput,
       worksheetId: worksheetId,
       cellId: cellId
     };
@@ -130,15 +130,15 @@ class NotebookData implements app.INotebookData { // FIXME: rename this class
   }
 
   clearOutputs () {
-    var clearOutputsAction: app.notebook.action.ClearOutputs = {
-      action: actions.notebook.clearOutputs
+    var clearOutputsAction: app.notebooks.actions.ClearOutputs = {
+      name: actions.notebook.clearOutputs
     };
     this._emitAction(clearOutputsAction);
   }
 
   deleteCell (cellId: string, worksheetId: string) {
-    var deleteCellAction: app.notebook.action.DeleteCell = {
-      action: actions.worksheet.deleteCell,
+    var deleteCellAction: app.notebooks.actions.DeleteCell = {
+      name: actions.worksheet.deleteCell,
       cellId: cellId,
       worksheetId: worksheetId
     }
@@ -150,15 +150,15 @@ class NotebookData implements app.INotebookData { // FIXME: rename this class
    *
    * In the case of non-code cells, only an update action will be emitted
    */
-  evaluateCell (cell: app.notebook.Cell, worksheetId: string) {
+  evaluateCell (cell: app.notebooks.Cell, worksheetId: string) {
     if (cell.type != cells.code) {
       // Then we can simply send an update cell action
       this.updateCell(cell, worksheetId);
       return;
     }
 
-    var compositeAction: app.notebook.action.Composite = {
-      action: actions.composite,
+    var compositeAction: app.notebooks.actions.Composite = {
+      name: actions.composite,
       subActions: [
         this._createUpdateCellAction(cell, worksheetId),
         this._createExecuteCellAction(cell.id, worksheetId)
@@ -172,15 +172,15 @@ class NotebookData implements app.INotebookData { // FIXME: rename this class
   }
 
   executeCells () {
-    var executeCellsAction: app.notebook.action.ExecuteCells = {
-      action: actions.notebook.executeCells
+    var executeCellsAction: app.notebooks.actions.ExecuteCells = {
+      name: actions.notebook.executeCells
     };
     this._emitAction(executeCellsAction);
   }
 
   moveCell (cellId: string, worksheetId: string, insertAfterCellId: string) {
-    var moveCellAction: app.notebook.action.MoveCell = {
-      action: actions.worksheet.moveCell,
+    var moveCellAction: app.notebooks.actions.MoveCell = {
+      name: actions.worksheet.moveCell,
       cellId: cellId,
       sourceWorksheetId: worksheetId,
       destinationWorksheetId: worksheetId,
@@ -230,7 +230,7 @@ class NotebookData implements app.INotebookData { // FIXME: rename this class
     this.activeWorksheet = worksheet;
   }
 
-  updateCell (cell: app.notebook.Cell, worksheetId: string) {
+  updateCell (cell: app.notebooks.Cell, worksheetId: string) {
     this._emitAction(this._createUpdateCellAction(cell, worksheetId));
   }
 
@@ -238,22 +238,22 @@ class NotebookData implements app.INotebookData { // FIXME: rename this class
   _createExecuteCellAction (
       cellId: string,
       worksheetId: string
-      ): app.notebook.action.ExecuteCell {
+      ): app.notebooks.actions.ExecuteCell {
 
     return {
-      action: actions.cell.execute,
+      name: actions.cell.execute,
       worksheetId: worksheetId,
       cellId: cellId
     }
   }
 
   _createUpdateCellAction (
-      cell: app.notebook.Cell,
+      cell: app.notebooks.Cell,
       worksheetId: string
-      ): app.notebook.action.UpdateCell {
+      ): app.notebooks.actions.UpdateCell {
 
     return {
-      action: actions.cell.update,
+      name: actions.cell.update,
       worksheetId: worksheetId,
       cellId: cell.id,
       source: cell.source,
@@ -264,8 +264,8 @@ class NotebookData implements app.INotebookData { // FIXME: rename this class
     }
   }
 
-  _emitAction(action: app.notebook.action.Action) {
-    this._rootScope.$emit(action.action, action);
+  _emitAction(action: app.notebooks.actions.Action) {
+    this._rootScope.$emit(action.name, action);
   }
 
   /**
@@ -285,7 +285,7 @@ class NotebookData implements app.INotebookData { // FIXME: rename this class
     return null;
   }
 
-  _handleAddCell (update: app.notebook.update.AddCell) {
+  _handleAddCell (update: app.notebooks.updates.AddCell) {
     var worksheet = nbdata.getWorksheetOrThrow(update.worksheetId, this.notebook);
     // If an insertion point was defined, verify the given cell id exists within the worksheet
     var insertIndex: number;
@@ -302,7 +302,7 @@ class NotebookData implements app.INotebookData { // FIXME: rename this class
     worksheet.cells.splice(insertIndex, 0, update.cell);
   }
 
-  _handleCellUpdate (update: app.notebook.update.CellUpdate) {
+  _handleCellUpdate (update: app.notebooks.updates.CellUpdate) {
     var cell = nbdata.getCellOrThrow(update.cellId, update.worksheetId, this.notebook);
 
     // Update the source content if it was provided in the update
@@ -339,20 +339,20 @@ class NotebookData implements app.INotebookData { // FIXME: rename this class
     }
   }
 
-  _handleCompositeUpdate (update: app.notebook.update.Composite) {
+  _handleCompositeUpdate (update: app.notebooks.updates.Composite) {
     update.subUpdates.forEach((update) => {
-      switch (update.update) {
+      switch (update.name) {
         case updates.cell.update:
-          this._handleCellUpdate(<app.notebook.update.CellUpdate>update);
+          this._handleCellUpdate(<app.notebooks.updates.CellUpdate>update);
         break;
 
         default:
-          throw new Error('Composite update containing type "'+update.update+'" is not supported');
+          throw new Error('Composite update containing type "'+update.name+'" is not supported');
       }
     });
   }
 
-  _handleDeleteCell (update: app.notebook.update.DeleteCell) {
+  _handleDeleteCell (update: app.notebooks.updates.DeleteCell) {
     // Get the worksheet from which the cell should be deleted
     var worksheet = nbdata.getWorksheetOrThrow(update.worksheetId, this.notebook);
     // Find the index of the cell to delete within the worksheet
@@ -362,7 +362,7 @@ class NotebookData implements app.INotebookData { // FIXME: rename this class
     log.debug('Deletec cell from worksheet', removed);
   }
 
-  _handleMoveCell (update: app.notebook.update.MoveCell) {
+  _handleMoveCell (update: app.notebooks.updates.MoveCell) {
     // Find the cell to move within the source worksheet
     var sourceWorksheet = nbdata.getWorksheetOrThrow(update.sourceWorksheetId, this.notebook);
     var sourceIndex = nbdata.getCellIndexOrThrow(sourceWorksheet, update.cellId);
@@ -410,7 +410,7 @@ class NotebookData implements app.INotebookData { // FIXME: rename this class
   /**
    * Selects a mimetype for the cell output out of possibilities within mimetype bundle
    */
-  _selectMimetype (output: app.notebook.AugmentedCellOutput) {
+  _selectMimetype (output: app.notebooks.AugmentedCellOutput) {
     var bundle = output.mimetypeBundle;
     if (!bundle) {
       log.warn('Received an output with no mimetype bundle: ', output);
@@ -435,7 +435,7 @@ class NotebookData implements app.INotebookData { // FIXME: rename this class
    *
    * Also sets the first worksheet to be active
    */
-  _setNotebook(snapshot: app.notebook.update.Snapshot) {
+  _setNotebook(snapshot: app.notebooks.updates.Snapshot) {
     log.debug('setting notebook to snapshot value');
 
     // Snapshots are used to fully init/overwrite the client-side notebook state
