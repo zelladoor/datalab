@@ -130,6 +130,12 @@ function codeEditorDirectiveLink (
     });
   }
   if (actions.blur) {
+    // FIXMEACTIVE: may need to disable this because really want to maintain
+    // the cell active as long as the user hasn't clicked outside of the entire
+    // cell region, not just the code mirror region. Current issue is that clicking
+    // the cell toolbar deactivates the cell, which immediately hides the toolbar,
+    // which prevents the toolbar button from getting the event (and has the weird ux
+    // of hiding the toolbar/removing focus from the cell).
     cmInstance.on('blur', (cm: CodeMirror.Editor) => {
       actions.blur(cm);
       scope.active = false;

@@ -19,6 +19,7 @@ import cells = require('app/shared/cells');
 import constants = require('app/common/Constants');
 import logging = require('app/common/Logging');
 import updates = require('app/shared/updates');
+import nbdata = require('app/shared/notebookdata');
 import uuid = require('app/common/uuid');
 import _app = require('app/App');
 
@@ -74,10 +75,6 @@ class NotebookData implements app.INotebookData {
   // to make the UI more responsive given the latency in getting back a server response with the
   // inserted cell.
 
-  // TODO(bryantd): many of the handlers below share a non-trivial amount of logic with server-side node
-  // code for applying modifications to the notebook model. Consider pulling out common pieces
-  // into a util library to be shared between client/server.
-
   addCell (cellType: string, worksheetId: string, insertAfterCellId: string) {
     // Define default source strings per cell type
     var source: string;
@@ -104,6 +101,10 @@ class NotebookData implements app.INotebookData {
     };
     this._emitAction(addCellAction)
   }
+
+  // FIXMEACTIVE: callbacks for getting notifications about cell activation events
+  // cellActivated(cell: app.notebook.Cell) {};
+  // cellDeactivated(cell: app.notebook.Cell) {};
 
   clearOutput (cellId: string, worksheetId: string) {
     var clearOutputAction: app.notebook.action.ClearOutput = {
@@ -175,8 +176,8 @@ class NotebookData implements app.INotebookData {
   }
 
   moveCellUp (cellId: string, worksheetId: string) {
-    var worksheet = this._getWorksheetOrThrow(worksheetId);
-    var cellIndexToMove = this._getCellIndexOrThrow(worksheet, cellId);
+    var worksheet = nbdata.getWorksheetOrThrow(worksheetId, this.notebook);
+    var cellIndexToMove = nbdata.getCellIndexOrThrow(worksheet, cellId);
 
     switch (cellIndexToMove) {
       case 0:
@@ -197,8 +198,8 @@ class NotebookData implements app.INotebookData {
   }
 
   moveCellDown (cellId: string, worksheetId: string) {
-    var worksheet = this._getWorksheetOrThrow(worksheetId);
-    var cellIndexToMove = this._getCellIndexOrThrow(worksheet, cellId);
+    var worksheet = nbdata.getWorksheetOrThrow(worksheetId, this.notebook);
+    var cellIndexToMove = nbdata.getCellIndexOrThrow(worksheet, cellId);
 
     if (cellIndexToMove == (worksheet.cells.length - 1)) {
       // Then this the cell to move is already last, so no-op
@@ -211,7 +212,7 @@ class NotebookData implements app.INotebookData {
   }
 
   selectWorksheet (worksheetId: string) {
-    var worksheet = this._getWorksheetOrThrow(worksheetId);
+    var worksheet = nbdata.getWorksheetOrThrow(worksheetId, this.notebook);
     this.activeWorksheet = worksheet;
   }
 
@@ -270,75 +271,13 @@ class NotebookData implements app.INotebookData {
     return null;
   }
 
-  /**
-   * Gets the specified cell or throws an error
-   *
-   * TODO(bryantd): create a common util library. duplicate function exists in ActiveNotebook
-   */
-  _getCellOrThrow (cellId: string, worksheetId: string): app.notebook.Cell {
-    // Get the worksheet where the cell is expected to exist
-    var worksheet = this._getWorksheetOrThrow(worksheetId);
-
-    // Find the cell in the worksheet
-    //
-    // Note: may be worthwhile to maintain a {cellId: cell} index if this gets expensive, or
-    // mirror the worksheet structure with a cells + cellIds field to capture both an index and the
-    // ordering of cells within the worksheet
-    //
-    // As opposed to the current direct list-based cell storage approach
-    // (cells: [<cell1>, <cell2>, ...]).
-    var cell: app.notebook.Cell;
-    for (var i = 0; i < worksheet.cells.length; ++i) {
-      if (worksheet.cells[i].id == cellId) {
-        cell = worksheet.cells[i];
-        break; // Found the cell of interest
-      }
-    }
-    // Verify that the cell was actually found within the worksheet
-    if (cell === undefined) {
-      throw new Error('Specified cell id "' + cellId
-        + '" does not exist within worksheet with id "' + worksheetId + '"');
-    }
-    return cell;
-  }
-
-  /**
-   * Searches for the given cell id within the worksheet and returns its index if it is found
-   *
-   * Throws an error if the given cell does not exist within the given worksheet
-   *
-   * TODO(bryantd): create a common util library. duplicate function in ActiveNotebook
-   *
-   * FIXME: switch argument order to be (cell, worksheet) for consistency
-   */
-  _getCellIndexOrThrow (worksheet: app.notebook.Worksheet, cellId: string) {
-    var index = this._indexOf(worksheet, cellId);
-    if (index === -1) {
-      throw new Error('Cannot find insertAfter cell id "'+cellId+'"');
-    }
-    return index;
-  }
-
-  /**
-   * Gets the specified worksheet or throws an error
-   *
-   * TODO(bryantd): create a common util library. duplicate function exists in ActiveNotebook
-   */
-  _getWorksheetOrThrow (worksheetId: string): app.notebook.Worksheet {
-    var worksheet = this.notebook.worksheets[worksheetId];
-    if (worksheet === undefined) {
-      throw new Error('Specified worksheet id "'+worksheetId+'" does not exist');
-    }
-    return worksheet;
-  }
-
   _handleAddCell (update: app.notebook.update.AddCell) {
-    var worksheet = this._getWorksheetOrThrow(update.worksheetId);
+    var worksheet = nbdata.getWorksheetOrThrow(update.worksheetId, this.notebook);
     // If an insertion point was defined, verify the given cell id exists within the worksheet
     var insertIndex: number;
     if (update.insertAfter) {
       // Find the cell to insert after in the worksheet
-      insertIndex = this._getCellIndexOrThrow(worksheet, update.insertAfter);
+      insertIndex = nbdata.getCellIndexOrThrow(worksheet, update.insertAfter);
       // Increment the index because we want to insert after the "insertAfter" cell id
       ++insertIndex;
     } else {
@@ -350,7 +289,7 @@ class NotebookData implements app.INotebookData {
   }
 
   _handleCellUpdate (update: app.notebook.update.CellUpdate) {
-    var cell = this._getCellOrThrow(update.cellId, update.worksheetId);
+    var cell = nbdata.getCellOrThrow(update.cellId, update.worksheetId, this.notebook);
 
     // Update the source content if it was provided in the update
     if (update.source) {
@@ -401,9 +340,9 @@ class NotebookData implements app.INotebookData {
 
   _handleDeleteCell (update: app.notebook.update.DeleteCell) {
     // Get the worksheet from which the cell should be deleted
-    var worksheet = this._getWorksheetOrThrow(update.worksheetId);
+    var worksheet = nbdata.getWorksheetOrThrow(update.worksheetId, this.notebook);
     // Find the index of the cell to delete within the worksheet
-    var cellIndex = this._getCellIndexOrThrow(worksheet, update.cellId);
+    var cellIndex = nbdata.getCellIndexOrThrow(worksheet, update.cellId);
     // Remove the cell from the worksheet
     var removed = worksheet.cells.splice(cellIndex, 1);
     log.debug('Deletec cell from worksheet', removed);
@@ -411,45 +350,25 @@ class NotebookData implements app.INotebookData {
 
   _handleMoveCell (update: app.notebook.update.MoveCell) {
     // Find the cell to move within the source worksheet
-    var sourceWorksheet = this._getWorksheetOrThrow(update.sourceWorksheetId);
-    var sourceIndex = this._getCellIndexOrThrow(sourceWorksheet, update.cellId);
+    var sourceWorksheet = nbdata.getWorksheetOrThrow(update.sourceWorksheetId, this.notebook);
+    var sourceIndex = nbdata.getCellIndexOrThrow(sourceWorksheet, update.cellId);
 
     // Remove the cell from the worksheet
     var cellToMove = sourceWorksheet.cells.splice(sourceIndex, 1)[0];
 
     // Find the insertion point for the cell in the destination worksheet
-    var destinationWorksheet = this._getWorksheetOrThrow(update.sourceWorksheetId);
+    var destinationWorksheet = nbdata.getWorksheetOrThrow(update.sourceWorksheetId, this.notebook);
     if (update.insertAfter === null) {
       // Then prepend the cell to the destination worksheet
       destinationWorksheet.cells = [cellToMove].concat(destinationWorksheet.cells);
     } else {
       // Otherwise insert the cell after the specified insertAfter cell id
-      var destinationIndex = this._getCellIndexOrThrow(sourceWorksheet, update.insertAfter);
+      var destinationIndex = nbdata.getCellIndexOrThrow(sourceWorksheet, update.insertAfter);
       // The insertion index is one after the "insertAfter" cell's index
       ++destinationIndex;
       // Insert the cell into the destination index
       destinationWorksheet.cells.splice(destinationIndex, 0, cellToMove);
     }
-  }
-
-  /**
-   * Find the index of the cell with given id within the worksheet
-   *
-   * Returns the index of the cell matching the given id if it is found.
-   * Otherwise, returns -1 to indicate that a cell with specified cell id doesn't exist in the
-   * given worksheet, so return sentinel value to indicate the id was not found.
-   * Note: same sentinel value as Array.indexOf()
-   *
-   * TODO(bryantd): create common lib. duplicate method in node code for ActiveNotebook
-   */
-  _indexOf (worksheet: app.notebook.Worksheet, cellId: string): number {
-    for (var i = 0; i < worksheet.cells.length; ++i) {
-      if (cellId == worksheet.cells[i].id) {
-        return i;
-      }
-    }
-    // No cell with the specified id exists within the worksheet
-    return -1;
   }
 
   /**
@@ -509,8 +428,8 @@ class NotebookData implements app.INotebookData {
     this.notebook = snapshot.notebook;
 
     // Makes the first worksheet active, if it exists
-    if (this.notebook.worksheetIds.length > 0) {
-      this.selectWorksheet(this.notebook.worksheetIds[0]);
+    if (this.notebook.worksheets.length > 0) {
+      this.selectWorksheet(this.notebook.worksheets[0].id);
     } else {
       log.error('Notebook snapshot update contains zero worksheets! snapshot:', snapshot);
     }

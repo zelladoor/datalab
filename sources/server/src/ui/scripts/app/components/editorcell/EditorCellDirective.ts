@@ -54,6 +54,12 @@ class EditorCellController {
 
   static $inject = ['$scope'];
   constructor (scope: EditorCellScope) {
+    // FIXMEACTIVE will need to take the notebook data so that the cell can notify it
+    // when the cell becomes active
+    //
+    // FIXMEACTIVE need to listen for blur event on the outer-most element of the editor cell
+    // (the containing div) and use that event as the deactivate trigger, which is passed to
+    // notebook data
     this._scope = scope;
 
     scope.actions = this._createActionHandlers();
@@ -69,6 +75,7 @@ class EditorCellController {
   }
 
   _setActive (isActive: boolean) {
+    // FIXMEACTIVE: this will now updated some global var that labels the active cell
     var scope = this._scope;
     scope.$evalAsync(() => {
       scope.cell.active = isActive;

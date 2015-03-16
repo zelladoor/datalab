@@ -59,6 +59,8 @@ declare module app {
       outputs?: CellOutput[];
 
       prompt?: string; // Prompt to display (e.g., execution counter value, busy symbol, etc.)
+
+      active?: boolean; // FIXMEACTIVE adding this back until it can be refactored
     }
 
 

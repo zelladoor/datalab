@@ -46,34 +46,53 @@ class Session implements app.ISession {
     this._connection = connection;
     this._rootScope = rootScope;
 
-    // Register server-side message handlers
-    connection.on(updates.label, this._handleUpdate.bind(this));
-
-    // Register client-side event handlers for each action scope
-    var actionHandler = this._handleAction.bind(this);
-    [actions.cell, actions.notebook, actions.worksheet].forEach((actionScope) => {
-      Object.keys(actionScope).forEach((action) => {
-        // Add an event listener for each action type
-        this._rootScope.$on(actionScope[action], actionHandler);
-      }, this);
-    }, this);
-    this._rootScope.$on(actions.composite, actionHandler);
+    this._registerEventHandlers();
+    this._registerMessageHandlers();
   }
 
   /**
-   * Handles action messages by forwarding them to the server
+   * Handles client-side action events by forwarding them to the server.
    */
   _handleAction (event: ng.IAngularEvent, action: app.notebook.action.Action) {
-    log.debug('Sending action to server', action);
+    log.debug('Sending action message to server', action);
     this._connection.emit('action', action);
   }
 
   /**
-   * Handles all incoming server updates by publishing them as client-side events
+   * Handles all incoming server updates by publishing them as client-side events.
    */
   _handleUpdate (update: app.notebook.update.Update) {
-    log.debug('update message received:', update);
+    log.debug('Update message received from server:', update);
     this._rootScope.$emit(update.update, update);
+  }
+
+  /**
+   * Register client-side event handlers for each notebook action.
+   */
+  _registerEventHandlers () {
+    // Add an event listener for each action type
+    var eventNames = [
+      actions.composite,
+      actions.notebook.clearOutputs,
+      actions.notebook.executeCells,
+      actions.notebook.rename,
+      actions.worksheet.addCell,
+      actions.worksheet.deleteCell,
+      actions.worksheet.moveCell,
+      actions.cell.clearOutput,
+      actions.cell.update,
+      actions.cell.execute
+    ];
+    eventNames.forEach((eventName) => {
+      this._rootScope.$on(eventName, this._handleAction.bind(this));
+    }, this);
+  }
+
+  /**
+   * Register server-side message handlers for update events
+   */
+  _registerMessageHandlers () {
+    this._connection.on(updates.label, this._handleUpdate.bind(this));
   }
 }
 
