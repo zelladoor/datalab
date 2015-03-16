@@ -45,7 +45,7 @@ function createError (format: string, ...formatArgs: string[]) {
 export function getCellIndexOrThrow (worksheet: app.notebook.Worksheet, cellId: string) {
   var index = indexOf(worksheet, cellId);
   if (index === -1) {
-    throw createError('Specified cell id "%s" does not exist within worksheet with id "%s"',
+    throw createError('Cell id "%s" does not exist within worksheet with id "%s"',
       cellId, worksheet.id);
   }
   return index;
@@ -76,7 +76,7 @@ export function getCellOrThrow (
 
   // Cell was not found within the worksheet if we made it here.
   if (cell === undefined) {
-    throw createError('Specified cell id "%s" does not exist within worksheet with id "%s"',
+    throw createError('Cell id "%s" does not exist within worksheet with id "%s"',
         cellId, worksheetId);
   }
 }
@@ -100,7 +100,7 @@ export function getWorksheetOrThrow (
   });
 
   if (worksheet === undefined) {
-    throw createError('Specified worksheet id "%s" does not exist', worksheetId);
+    throw createError('Worksheet id "%s" does not exist', worksheetId);
   }
 
   return worksheet;
