@@ -17,6 +17,7 @@ import uuid = require('node-uuid');
 import utils = require('../common/util');
 import sessions = require('./session');
 import notebooks = require('../notebooks/index');
+import nbpersist = require('../notebooks/notebookpersister');
 
 
 /**
@@ -33,20 +34,17 @@ export class SessionManager implements app.ISessionManager {
   _idToSession: app.Map<app.ISession>;
   _kernelManager: app.IKernelManager;
   _messageProcessors: app.MessageProcessor[];
-  _notebookSerializer: app.INotebookSerializer;
   _storage: app.IStorage;
   _userconnManager: app.IUserConnectionManager;
 
   constructor (
       kernelManager: app.IKernelManager,
       messageProcessors: app.MessageProcessor[],
-      notebookSerializer: app.INotebookSerializer,
       storage: app.IStorage,
       userconnManager: app.IUserConnectionManager) {
 
     this._kernelManager = kernelManager;
     this._messageProcessors = messageProcessors;
-    this._notebookSerializer = notebookSerializer;
     this._storage = storage;
     this._userconnManager = userconnManager;
 
@@ -80,13 +78,13 @@ export class SessionManager implements app.ISessionManager {
       shellPort: utils.getAvailablePort()
     });
 
+    var persister = new nbpersist.NotebookPersister(connection.getNotebookPath(), this._storage);
+
     return new sessions.Session(
       sessionId,
       kernel,
       this._handleMessage.bind(this),
-      connection.getNotebookPath(),
-      this._notebookSerializer,
-      this._storage,
+      persister,
       connection);
   }
 

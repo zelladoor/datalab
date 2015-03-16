@@ -37,6 +37,24 @@ declare module app {
   }
 
   /**
+   * Manages the persistence of notebook data to/from a given storage path.
+   */
+  interface INotebookPersister {
+    getNotebookPath (): string;
+    setNotebookPath (notebookPath: string): void;
+
+    /**
+     * Reads a notebook session from storage if it exists, or creates a new notebook if needed.
+     */
+    readOrCreate (): app.INotebookSession;
+
+    /**
+     * Writes the given notebook session to storage.
+     */
+    write (notebook: app.INotebookSession): void;
+  }
+
+  /**
    * Manages a single notebook's data and provides an API for applying changes captured by Actions.
    */
   interface INotebookSession {

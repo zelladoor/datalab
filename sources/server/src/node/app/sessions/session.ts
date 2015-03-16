@@ -16,9 +16,6 @@
 /// <reference path="../../../../../../externs/ts/node/node-uuid.d.ts" />
 import actions = require('../shared/actions');
 import cells = require('../shared/cells');
-import formats = require('../notebooks/serializers/formats');
-import nb = require('../notebooks/notebooksession');
-import nbutil = require('../notebooks/util');
 import updates = require('../shared/updates');
 import util = require('../common/util');
 import uuid = require('node-uuid');
@@ -36,11 +33,8 @@ export class Session implements app.ISession {
 
   _kernel: app.IKernel;
   _notebook: app.INotebookSession;
-  _notebookPath: string;
-  _notebookSerializer: app.INotebookSerializer;
+  _notebookPersister: app.INotebookPersister;
   _requestIdToCellRef: app.Map<app.CellRef>;
-  _serializedNotebookFormat: string;
-  _storage: app.IStorage;
   _userconns: app.IUserConnection[];
 
   /**
@@ -52,21 +46,16 @@ export class Session implements app.ISession {
       id: string,
       kernel: app.IKernel,
       messageHandler: app.MessageHandler,
-      notebookPath: string,
-      notebookSerializer: app.INotebookSerializer,
-      storage: app.IStorage,
+      notebookPersister: app.INotebookPersister,
       userconn: app.IUserConnection) {
     this.id = id;
     this._kernel = kernel;
     this._messageHandler = messageHandler;
-    this._notebookSerializer = notebookSerializer;
     this._requestIdToCellRef = {};
-    this._storage = storage;
     this._userconns = [];
+    this._notebook = this._notebookPersister.readOrCreate();
 
     this._registerKernelEventHandlers();
-    this._setNotebookPath(notebookPath);
-    this._readOrCreateNotebook();
     this.updateUserConnection(userconn);
   }
 
@@ -242,7 +231,7 @@ export class Session implements app.ISession {
   }
 
   _handleActionRenameNotebook (action: app.notebooks.actions.Rename) {
-    this._setNotebookPath(action.path);
+    this._notebookPersister.setNotebookPath(action.path);
     this._broadcastUpdate({
       name: updates.notebook.metadata,
       path: action.path
@@ -293,39 +282,6 @@ export class Session implements app.ISession {
     this._broadcastUpdate(update);
   }
 
-  /**
-   * Persist the current state of the notebook model to the storage system
-   *
-   * FIXME: move to Persister
-   */
-  _persistNotebook () {
-    console.log('Saving notebook ' + this._notebookPath + ' ...');
-    // Serialize the current notebook model state to the format inferred from the file extension
-    var serializedNotebook = this._notebookSerializer.stringify(this._notebook.getNotebookData());
-    this._storage.write(this._notebookPath, serializedNotebook);
-  }
-
-  /**
-   * Reads in the notebook if it exists or creates a blank notebook if not.
-   *
-   * FIXME: move to Persister
-   */
-  _readOrCreateNotebook () {
-    console.log('Reading notebook ' + this._notebookPath + ' ...');
-    // First, attempt to read in the notebook if it already exists at the defined path
-    var serializedNotebook = this._storage.read(this._notebookPath);
-    var notebookData: app.notebooks.Notebook;
-    if (serializedNotebook === undefined) {
-      // Notebook didn't exist, so create a starter notebook
-      notebookData = nbutil.createStarterNotebook();
-    } else {
-      // Notebook already existed. Deserialize the notebook data
-      notebookData = this._notebookSerializer.parse(serializedNotebook);
-    }
-    // Create the notebook wrapper to manage the notebook model state
-    this._notebook = new nb.NotebookSession(notebookData);
-  }
-
   _registerUserEventHandlers (userconn: app.IUserConnection) {
     userconn.onAction(this._handleActionPreDelegate.bind(this));
   }
@@ -334,14 +290,6 @@ export class Session implements app.ISession {
     this._kernel.onExecuteReply(this._handleExecuteReplyPreDelegate.bind(this));
     this._kernel.onKernelStatus(this._handleKernelStatusPreDelegate.bind(this));
     this._kernel.onOutputData(this._handleOutputDataPreDelegate.bind(this));
-  }
-
-  /**
-   * Sets the notebook path and selects a notebook format based upon the file extension
-   */
-  _setNotebookPath (notebookPath: string) {
-    this._notebookPath = notebookPath;
-    this._notebookSerializer = formats.selectSerializer(notebookPath);
   }
 
   /* Methods for managing request <-> cell reference mappings */
