@@ -13,9 +13,9 @@
  */
 
 
-import formats = require('../notebooks/serializers/formats');
-import nb = require('../notebooks/notebooksession');
-import nbutil = require('../notebooks/util');
+import formats = require('./serializers/formats');
+import nb = require('./session');
+import nbutil = require('./util');
 
 
 /**
