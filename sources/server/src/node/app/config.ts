@@ -23,15 +23,6 @@ import nbstorage = require('./notebooks/storage');
 
 
 /**
- * Default server configuration with support for environment variable overrides.
- *
- * TODO(bryantd): This should be configured from an external settings file eventually
- */
-var settings: app.Settings = {
-  httpPort: parseInt(process.env['SERVER_HTTP_PORT'] || 9000)
-};
-
-/**
  * Gets the set of HTTP API route handlers that should be enabled for the server.
  */
 export function getApiRouter (): express.Router {
@@ -44,39 +35,43 @@ export function getApiRouter (): express.Router {
 }
 
 /**
- * A single, server-wide kernel manager instance
+ * Default server configuration with support for environment variable overrides.
+ *
+ * TODO(bryantd): This should be configured from an external settings file eventually.
  */
-var kernelManager: app.IKernelManager = new kernels.Manager();
+var settings: app.Settings = {
+  httpPort: parseInt(process.env['SERVER_HTTP_PORT'] || 9000)
+};
 
 /**
- * Gets the kernel manager singleton
+ * Gets the configurable settings.
  */
-export function getKernelManager (): app.IKernelManager {
-  return kernelManager;
-}
-
 export function getSettings (): app.Settings {
   return settings;
 }
 
 /**
- * Gets a notebook serializer instance
+ * A single, server-wide kernel manager instance.
  */
-export function getNotebookSerializer (): app.INotebookSerializer {
-  // return notebooks.serializer;
-  // FIXME: this config will morph to return a "Persister", which is made
-  // up of a Storage + Serializer(s) and provides api for persisting entities
-  // without needing to know the details of how that happens
-  //
-  // Session manager will take this and provide it to session instances
-  return null;
+var kernelManager: app.IKernelManager = new kernels.Manager();
+
+/**
+ * Gets the kernel manager singleton.
+ */
+export function getKernelManager (): app.IKernelManager {
+  return kernelManager;
 }
 
 /**
  * Path to the root of the notebook storage location on the local file system
  */
 var notebookStoragePath = './notebooks';
+
+/**
+ * Initializes the storage system for reading/writing.
+ */
 export function initStorage () {
+  // Ensure that the notebook storage path exists.
   mkdirp.sync(notebookStoragePath);
 }
 
