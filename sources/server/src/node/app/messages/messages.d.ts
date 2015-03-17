@@ -40,31 +40,8 @@ declare module app {
     // Note: eventually this message will contain a set of changes rather than the full notebook
   }
 
-  // FIXME: have other event message types inherit from this base interface to avoid repetition
-  // of common fields like "requestId" (and other future common fields if any)
-  interface InternalMessage {
-    requestId: string;
-  }
-
-  interface KernelStatus {
-    status: string;
-    requestId: string;
-  }
-
-  interface SessionStatus {
-    kernelStatus: string;
-    // additional session metadata fields go here eventually (e.g., connected users)
-  }
-
-  interface OutputData {
-    type: string; // 'stdout' | 'stderr' | 'result' | 'error'
-    mimetypeBundle: any;
-    requestId: string;
-  }
-
-  interface ExecuteReply {
+  interface ExecuteReply extends KernelMessage {
     success: boolean;
-    requestId: string;
     // When execute has not been aborted, we get back an execution count
     executionCounter?: string;
     // When an error has occurred, the following are populated
@@ -73,17 +50,36 @@ declare module app {
     traceback?: string[];
   }
 
-  interface ExecuteRequest {
+  interface ExecuteRequest extends KernelMessage {
     code: string;
     // Note: user_variables and user_expressions are slated for removal/reworking in upcoming versions
     // https://github.com/ipython/ipython/wiki/IPEP-13:-Updating-the-Message-Spec
-    requestId: string;
     cellId: string; // FIXME: is there code that reads this value?
   }
 
-  interface ExecuteResult {
+  interface ExecuteResult extends KernelMessage {
     result: any;
+  }
+
+  /**
+   * Common fields for kernel messages.
+   */
+  interface KernelMessage {
     requestId: string;
+  }
+
+  interface KernelStatus extends KernelMessage {
+    status: string;
+  }
+
+  interface OutputData extends KernelMessage {
+    type: string; // 'stdout' | 'stderr' | 'result' | 'error'
+    mimetypeBundle: any;
+  }
+
+  interface SessionStatus {
+    kernelStatus: string;
+    // additional session metadata fields go here eventually (e.g., connected users)
   }
 
   module ipy {
