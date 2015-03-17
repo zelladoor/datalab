@@ -127,11 +127,31 @@ declare module app {
     stringify (notebook: notebooks.Notebook): string;
   }
 
+  /**
+   * A session binds together a notebook with connected users and a kernel.
+   */
   interface ISession {
     id: string;
+
+    /**
+     * Associates a user connection with the session.
+     */
+    addUserConnection (connection: IUserConnection): void;
+
+    /**
+     * Gets the id of the kernel currently assocated with the session.
+     */
     getKernelId (): string;
+
+    /**
+     * Gets the set of user connections currently associated with the session.
+     */
     getUserConnectionIds (): string[];
-    updateUserConnection (connection: IUserConnection): void;
+
+    /**
+     * Disassociates a user connection with the session.
+     */
+    removeUserConnection (connection: IUserConnection): void;
   }
 
   interface ISessionManager {
@@ -148,7 +168,7 @@ declare module app {
 
   interface IUserConnection {
     id: string;
-    getNotebookPath (): string;
+    getHandshakeNotebookPath (): string;
     onDisconnect (callback: EventHandler<IUserConnection>): void;
     onAction (callback: EventHandler<notebooks.actions.Action>): void;
     sendUpdate (update: notebooks.updates.Update): void;

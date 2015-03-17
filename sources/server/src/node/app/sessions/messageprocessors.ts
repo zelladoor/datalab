@@ -14,13 +14,13 @@
 
 
 /**
- * Functions for processing messages flowing through sessions
+ * Functions for processing messages flowing through sessions.
  */
 import actions = require('../shared/actions');
 
 
 /**
- * Gets the ordered list of message processors
+ * Gets the ordered list of message processors.
  */
 export function getMessageProcessors (): app.MessageProcessor[] {
   return [
@@ -30,7 +30,7 @@ export function getMessageProcessors (): app.MessageProcessor[] {
 }
 
 /**
- * Logs all messages to the console
+ * Logs all messages to the console.
  */
 function logMessage (message: any, session: app.ISession): any {
   console.log('Message: ', JSON.stringify(message));
@@ -38,7 +38,7 @@ function logMessage (message: any, session: app.ISession): any {
 }
 
 /**
- * Renames session ids to match whenever a notebook path rename occurs
+ * Renames session ids to whenever a notebook path rename occurs.
  */
 function processSessionRename (
     message: any,

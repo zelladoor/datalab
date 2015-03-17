@@ -20,14 +20,9 @@ import actions = require('../shared/actions');
 
 
 /**
- * Implements server-side portion of client-server DataLab message protocol
+ * Server-side portion of client-server DataLab websocket message protocol
  *
  * Instances of this class also own the socket.io socket instance for the user connection.
- *
- * Because type information is lost when messages are sent over socket.io connections
- * the message protocol implemented here uses the socket.io *event* name to carry type information.
- * This allows the messaging protocol be typed on both sides (without doing message introspection)
- * at the cost of having one event per type.
  */
 export class UserConnection implements app.IUserConnection {
 
@@ -38,7 +33,8 @@ export class UserConnection implements app.IUserConnection {
   constructor (id: string, socket: socketio.Socket) {
     this.id = id;
     this._socket = socket;
-    this._registerHandlers()
+
+    this._registerHandlers();
   }
 
   /**
@@ -52,7 +48,7 @@ export class UserConnection implements app.IUserConnection {
    * So, only assume the notebook path returned here to match the session notebook path at the
    * time of connection establishment.
    */
-  getNotebookPath (): string {
+  getHandshakeNotebookPath (): string {
     return this._socket.handshake.query.notebookPath;
   }
 
@@ -103,7 +99,7 @@ export class UserConnection implements app.IUserConnection {
    */
   _registerHandlers () {
     this._socket.on('disconnect', this._handleDisconnect.bind(this));
-    this._socket.on('action', this._handleAction.bind(this));
+    this._socket.on(actions.label, this._handleAction.bind(this));
   }
 
   _send (type: string, message: any) {

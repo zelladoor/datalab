@@ -15,13 +15,13 @@
 
 /// <reference path="../../../../../../externs/ts/node/node-uuid.d.ts" />
 import uuid = require('node-uuid');
-import utils = require('../common/util');
+import util = require('../common/util');
 import sessions = require('./session');
 import notebooks = require('../notebooks/index');
 
 
 /**
- * Manages the lifecycles of a set of sessions between users and kernels
+ * Manages the lifecycles of a set of sessions between users and kernels.
  *
  * When a user connects, the session manager specifies which session the user should
  * join, which may involve creating a new session or joining an existing one.
@@ -31,7 +31,8 @@ import notebooks = require('../notebooks/index');
  */
 export class SessionManager implements app.ISessionManager {
 
-  _idToSession: app.Map<app.ISession>;
+  _connectionIdToSession: app.Map<app.ISession>;
+  _sessionIdToSession: app.Map<app.ISession>;
   _kernelManager: app.IKernelManager;
   _messageProcessors: app.MessageProcessor[];
   _notebookStorage: app.INotebookStorage;
@@ -48,20 +49,30 @@ export class SessionManager implements app.ISessionManager {
     this._notebookStorage = notebookStorage;
     this._userconnManager = userconnManager;
 
-    this._idToSession = {};
+    this._connectionIdToSession = {};
+    this._sessionIdToSession = {};
     this._registerHandlers();
   }
 
   /**
-   * Rename a session by modifying its id to be the new session id
+   * Rename a session by modifying its id to be the new session id.
    */
   renameSession (oldId: string, newId: string) {
-    this._idToSession[newId] = this._idToSession[oldId];
-    delete this._idToSession[oldId];
+    // Retrieve the existing session if it exists.
+    var session = this._sessionIdToSession[oldId];
+    if (!session) {
+      throw util.createError('Session id "%s" was not found.', oldId);
+    }
+    // Rename the session by updating the id.
+    session.id = newId;
+    // Store the session under the new id.
+    this._sessionIdToSession[newId] = session;
+    // Remove the old id mapping for the session.
+    delete this._sessionIdToSession[oldId];
   }
 
   /**
-   * Binds the user connection to a new kernel instance via a newly created session object
+   * Binds the user connection to a new kernel instance via a newly created session object.
    *
    * TODO(bryantd): Consider making this entire session creation call path async
    * to avoid blocking the server on file i/o (reading in notebook state). Persisting notebooks
@@ -74,24 +85,24 @@ export class SessionManager implements app.ISessionManager {
   _createSession (sessionId: string, connection: app.IUserConnection) {
 
     var kernel = this._kernelManager.create({
-      iopubPort: utils.getAvailablePort(),
-      shellPort: utils.getAvailablePort()
+      iopubPort: util.getAvailablePort(),
+      shellPort: util.getAvailablePort()
     });
 
     return new sessions.Session(
       sessionId,
       kernel,
       this._handleMessage.bind(this),
-      connection.getNotebookPath(),
+      connection.getHandshakeNotebookPath(),
       this._notebookStorage,
       connection);
   }
 
   /**
-   * Gets the session id for the given user connection
+   * Gets the session id for the given user connection.
    */
   _getSessionId (connection: app.IUserConnection): string {
-    // TODO(bryantd): evaluate if there are any cases where the sessionId really needs to be a uuid
+    // TODO(bryantd): evaluate if there are any cases where the sessionId must be a uuid.
     //
     // For now, ensure that all use cases of the session ID only assume it to be a opaque
     // string-based identifier so that it's trivial to switch to something like uuid.v5 in the
@@ -100,14 +111,11 @@ export class SessionManager implements app.ISessionManager {
     // uuid.v5(notebookPath) would be one way of ensuring session id collision whenever the
     // notebookPath is the same for multiple clients, while still having a fixed-size, known
     // character-set, string-based identifier.
-    //
-    // Note: because sessionId may change to something other than the notebookPath in the future
-    // a separate notebookPath field is passed
-    return connection.getNotebookPath();
+    return connection.getHandshakeNotebookPath();
   }
 
   /**
-   * Receives and processes all messages flowing through all sessions owned by this instance
+   * Receives and processes all messages flowing through all sessions owned by this instance.
    *
    * Session objects that pass control to this method also supply a "next action" callback for
    * returning control to the session after the middleware stack has had an opportunity
@@ -122,42 +130,57 @@ export class SessionManager implements app.ISessionManager {
     for (var i = 0; i < this._messageProcessors.length; ++i) {
       processedMessage = this._messageProcessors[i](processedMessage, session, this);
       if (processedMessage === null) {
-        // Then this message has been filtered, no further processing
+        // Then this message has been filtered, no further processing.
         console.log('Filtered: ', JSON.stringify(message));
         break;
       }
     }
 
     // Return control to the messaging stack via Session object that corresponds to this message
-    // if the message was not filtered by one of the message handlers
+    // if the message was not filtered by one of the message handlers.
     if (processedMessage !== null) {
       callback(processedMessage);
     }
   }
 
   /**
-   * Binds the new user connection to a session and configures session event handling
+   * Binds the new user connection to a session and configures session event handling.
    *
    * If the session for the given connection already exists, the new connection reconnects to the
    * existing session.
    */
   _handleUserConnect (connection: app.IUserConnection) {
     var sessionId = this._getSessionId(connection);
-    var session = this._idToSession[sessionId];
+
+    // Retrieve an existing session for the specified session id if it exists.
+    var session = this._sessionIdToSession[sessionId];
     if (!session) {
-      // Create a brand new session object
+      // No existing session with given id, so create a new session.
       session = this._createSession(sessionId, connection);
-      this._idToSession[sessionId] = session;
+      this._sessionIdToSession[sessionId] = session;
     } else {
-      // Update existing session object with new user connection
-      session.updateUserConnection(connection);
+      // Update existing session object with new user connection.
+      session.addUserConnection(connection);
     }
+
+    // Store a mapping from connection to the associated session so that the session can be
+    // retrieved on disconnect.
+    this._connectionIdToSession[connection.id] = session;
   }
 
   _handleUserDisconnect (connection: app.IUserConnection) {
-    // TODO(bryantd): implement procedure for tear down after user disconnect such that if the
-    // same user (as identified by session id) reconnects, the previous kernel instance is re-used,
-    // (i.e., implement disconnect such that reconnect is possible).
+    // Find the session associated with this connection.
+    var session = this._connectionIdToSession[connection.id];
+
+    if (!session) {
+      throw util.createError(
+        'Associated session not found when attempting to close connection id "%s"', connection.id);
+    }
+
+    // Remove the connection from the session.
+    session.removeUserConnection(connection);
+    // Remove the connection => session mapping
+    delete this._connectionIdToSession[connection.id];
   }
 
   _registerHandlers () {
