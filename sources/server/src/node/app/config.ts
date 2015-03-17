@@ -19,6 +19,8 @@ import express = require('express');
 import mkdirp = require('mkdirp');
 import kernels = require('./kernels/index');
 import storage = require('./storage/local');
+import nbstorage = require('./notebooks/storage');
+
 
 /**
  * Default server configuration with support for environment variable overrides.
@@ -79,13 +81,25 @@ export function initStorage () {
 }
 
 /**
- * A single, server-wide storage backend instance
+ * A single stateless server-wide storage backend instance.
  */
 var fsStorage = new storage.LocalFileSystemStorage(notebookStoragePath);
 
 /**
- * Get the configured storage backend for persisting content (e.g., notebooks)
+ * Gets the configured storage backend for persisting arbitrary content.
  */
 export function getStorage (): app.IStorage {
   return fsStorage;
+}
+
+/**
+ * A single stateless server-wide notebook storage backend instance.
+ */
+var notebookStorage = new nbstorage.NotebookStorage(fsStorage);
+
+/**
+ * Gets the configured notebook storage backend for persisting notebooks.
+ */
+export function getNotebookStorage (): app.INotebookStorage {
+  return notebookStorage;
 }

@@ -12,12 +12,12 @@
  * the License.
  */
 
+
 /// <reference path="../../../../../../externs/ts/node/node-uuid.d.ts" />
 import uuid = require('node-uuid');
 import utils = require('../common/util');
 import sessions = require('./session');
 import notebooks = require('../notebooks/index');
-import nbpersist = require('../notebooks/notebookpersister');
 
 
 /**
@@ -34,18 +34,18 @@ export class SessionManager implements app.ISessionManager {
   _idToSession: app.Map<app.ISession>;
   _kernelManager: app.IKernelManager;
   _messageProcessors: app.MessageProcessor[];
-  _storage: app.IStorage;
+  _notebookStorage: app.INotebookStorage;
   _userconnManager: app.IUserConnectionManager;
 
   constructor (
       kernelManager: app.IKernelManager,
       messageProcessors: app.MessageProcessor[],
-      storage: app.IStorage,
+      notebookStorage: app.INotebookStorage,
       userconnManager: app.IUserConnectionManager) {
 
     this._kernelManager = kernelManager;
     this._messageProcessors = messageProcessors;
-    this._storage = storage;
+    this._notebookStorage = notebookStorage;
     this._userconnManager = userconnManager;
 
     this._idToSession = {};
@@ -78,13 +78,12 @@ export class SessionManager implements app.ISessionManager {
       shellPort: utils.getAvailablePort()
     });
 
-    var persister = new nbpersist.NotebookPersister(connection.getNotebookPath(), this._storage);
-
     return new sessions.Session(
       sessionId,
       kernel,
       this._handleMessage.bind(this),
-      persister,
+      connection.getNotebookPath(),
+      this._notebookStorage,
       connection);
   }
 

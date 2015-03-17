@@ -18,61 +18,54 @@ import nb = require('../notebooks/notebooksession');
 import nbutil = require('../notebooks/util');
 
 
-export class NotebookPersister implements app.INotebookPersister {
+/**
+ * Manages the reading and writing of notebooks from/to a storage backend.
+ *
+ * Provides notebook-specific content serialization and default content generation when reading or
+ * writing to a storage backend.
+ */
+export class NotebookStorage implements app.INotebookStorage {
 
-  _notebookPath: string;
-  _notebookSerializer: app.INotebookSerializer;
   _storage: app.IStorage;
 
-  constructor (notebookPath: string, storage: app.IStorage) {
+  constructor (storage: app.IStorage) {
     this._storage = storage;
-
-    this.setNotebookPath(notebookPath);
-  }
-
-  /**
-   * Gets the current notebook path.
-   */
-  getNotebookPath () {
-    return this._notebookPath;
   }
 
   /**
    * Reads in the notebook if it exists or creates a starter notebook if not.
    */
-  readOrCreate (): app.INotebookSession {
-    console.log('Reading notebook ' + this._notebookPath + ' ...');
+  readOrCreate (path: string): app.INotebookSession {
+    console.log('Reading notebook ' + path + ' ...');
+
+    // Selects the serializer that has been assigned to the notebook path extension.
+    var serializer = formats.selectSerializer(path);
+
     // First, attempt to read in the notebook if it already exists at the defined path.
-    var serializedNotebook = this._storage.read(this._notebookPath);
+    var serializedNotebook = this._storage.read(path);
     var notebookData: app.notebooks.Notebook;
     if (serializedNotebook === undefined) {
       // Notebook didn't exist, so create a starter notebook.
       notebookData = nbutil.createStarterNotebook();
     } else {
       // Notebook already existed. Deserialize the notebook data.
-      notebookData = this._notebookSerializer.parse(serializedNotebook);
+      notebookData = serializer.parse(serializedNotebook);
     }
     // Create the notebook wrapper to manage the notebook model state.
     return new nb.NotebookSession(notebookData);
   }
 
   /**
-   * Updates the notebook path and selects a serializer for the given extension.
-   */
-  setNotebookPath (notebookPath: string) {
-    this._notebookPath = notebookPath;
-    // Selects the serializer that has been assigned to the notebook path extension.
-    this._notebookSerializer = formats.selectSerializer(this._notebookPath);
-  }
-
-  /**
    * Serializes the given notebook and writes it to storage.
    */
-  write (notebook: app.INotebookSession) {
-    console.log('Saving notebook ' + this._notebookPath + ' ...');
+  write (path: string, notebook: app.INotebookSession) {
+    console.log('Saving notebook ' + path + ' ...');
+    // Selects the serializer that has been assigned to the notebook path extension.
+    var serializer = formats.selectSerializer(path);
+
     // Serialize the current notebook model state to the format inferred from the file extension
-    var serializedNotebook = this._notebookSerializer.stringify(notebook.getNotebookData());
-    this._storage.write(this._notebookPath, serializedNotebook);
+    var serializedNotebook = serializer.stringify(notebook.getNotebookData());
+    this._storage.write(path, serializedNotebook);
   }
 
 }

@@ -22,7 +22,7 @@ import uuid = require('node-uuid');
 
 
 /**
- * Binds a user connection to a kernel and routes communication between them
+ * Binds a user connection to a kernel and routes communication between them.
  *
  * A session also provides hooks for routing messages through the message pipeline/middleware
  * before sending the messages to their final destination (either kernel or user).
@@ -33,7 +33,8 @@ export class Session implements app.ISession {
 
   _kernel: app.IKernel;
   _notebook: app.INotebookSession;
-  _notebookPersister: app.INotebookPersister;
+  _notebookPath: string;
+  _notebookStorage: app.INotebookStorage;
   _requestIdToCellRef: app.Map<app.CellRef>;
   _userconns: app.IUserConnection[];
 
@@ -46,14 +47,17 @@ export class Session implements app.ISession {
       id: string,
       kernel: app.IKernel,
       messageHandler: app.MessageHandler,
-      notebookPersister: app.INotebookPersister,
+      notebookPath: string,
+      notebookStorage: app.INotebookStorage,
       userconn: app.IUserConnection) {
+
     this.id = id;
     this._kernel = kernel;
     this._messageHandler = messageHandler;
     this._requestIdToCellRef = {};
     this._userconns = [];
-    this._notebook = this._notebookPersister.readOrCreate();
+    this._notebookPath = notebookPath;
+    this._notebook = this._notebookStorage.readOrCreate(notebookPath);
 
     this._registerKernelEventHandlers();
     this.updateUserConnection(userconn);
@@ -152,15 +156,15 @@ export class Session implements app.ISession {
     switch (action.action) {
       case actions.composite:
         this._handleActionComposite(action);
-      break;
+        break;
 
       case actions.cell.execute:
         this._handleActionExecuteCell(action);
-      break;
+        break;
 
       case actions.notebook.executeCells:
         this._handleActionExecuteCells(action);
-      break;
+        break;
 
       case actions.cell.clearOutput:
       case actions.cell.update:
@@ -169,11 +173,11 @@ export class Session implements app.ISession {
       case actions.worksheet.moveCell:
       case actions.notebook.clearOutputs:
         this._handleActionNotebookData(action);
-      break;
+        break;
 
       case actions.notebook.rename:
         this._handleActionRenameNotebook(action);
-      break;
+        break;
 
       default:
         console.log('WARNING No handler for action message type "' + action.action + '"');
@@ -231,7 +235,7 @@ export class Session implements app.ISession {
   }
 
   _handleActionRenameNotebook (action: app.notebooks.actions.Rename) {
-    this._notebookPersister.setNotebookPath(action.path);
+    this._notebookPath = action.path;
     this._broadcastUpdate({
       name: updates.notebook.metadata,
       path: action.path

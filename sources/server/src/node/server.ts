@@ -46,7 +46,7 @@ export function start (settings: app.Settings, apiRouter: express.Router) {
   var sessionManager = new sessions.SessionManager(
     config.getKernelManager(),
     msgproc.getMessageProcessors(),
-    config.getStorage(),
+    config.getNotebookStorage(),
     new wsServer.UserConnectionManager(socketio.listen(httpServer))
   );
 }
