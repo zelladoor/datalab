@@ -17,7 +17,7 @@
  * FIXME: docs here
  */
 /// <reference path="../../../../../../../../externs/ts/angularjs/angular.d.ts" />
-/// <amd-dependency path="app/components/session/SessionConnection" />
+/// <amd-dependency path="app/components/sessions/SessionConnection" />
 import logging = require('app/common/Logging');
 import constants = require('app/common/Constants');
 import _app = require('app/App');
