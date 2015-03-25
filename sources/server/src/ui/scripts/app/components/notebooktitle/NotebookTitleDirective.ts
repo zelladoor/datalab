@@ -35,7 +35,7 @@ class NotebookTitleController {
   static $inject = ['$scope', '$route'];
   constructor (scope: NotebookTitleScope, route: ng.route.IRouteService) {
     this._scope = scope;
-    this._scope.title = route.current.params.notebookId;
+    this._scope.title = route.current.params.notebookPath;
   }
 }
 

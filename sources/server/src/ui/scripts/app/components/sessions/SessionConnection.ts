@@ -37,8 +37,7 @@ function sessionConnectionFactory (
     route: ng.route.IRouteService) {
 
   var socket: Socket = socketio(location.host(), {
-    // FIXME: any reason not to refer to the notebookId as notebookPath throughout UI-side too?
-    query: 'notebookPath=' + route.current.params.notebookId
+    query: 'notebookPath=' + route.current.params.notebookPath
   });
 
   return {

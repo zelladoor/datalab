@@ -32,7 +32,7 @@ var log = logging.getLogger(constants.scopes.notebooks.edit.page);
 
 export class EditPageController {
   notebookData: app.INotebookData;
-  notebookId: string; // The ID of the notebook to edit
+  notebookPath: string; // The path of the notebook to edit
   sessionStatus: any; // FIXME: TYPE
 
   _rootScope: ng.IRootScopeService;
