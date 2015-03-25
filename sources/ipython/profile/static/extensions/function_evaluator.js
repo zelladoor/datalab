@@ -12,13 +12,27 @@
  * the License.
  */
 
-allprojects {
-    repositories {
-        mavenCentral()
+define(['extensions/tableviewer'], function(tv) {
+  return {
+    evaluate_function: function(dom, udf, data) {
+
+      var results = [];
+      data.forEach(function(row) {
+        udf(row, function(result) {
+          results.push(result);
+        });
+      });
+
+      if (results.length == 0) {
+        return;
+      }
+
+      var labels = [];
+      for (var name in results[0]) {
+        labels.push(name);
+      }
+
+      tv.makeTableViewer('', dom, labels, results);
     }
-}
-
-subprojects {
-    buildDir = new File(rootProject.projectDir, "../build/" + project.name)
-}
-
+  }
+});

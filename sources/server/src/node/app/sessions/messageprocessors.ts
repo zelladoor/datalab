@@ -25,32 +25,14 @@ import util = require('../common/util');
  */
 export function getMessageProcessors (): app.MessageProcessor[] {
   return [
-    logMessage,
-    processSessionRename
+    logMessage
   ];
 }
 
 /**
  * Logs all messages to the console.
  */
-function logMessage (message: any, session: app.ISession): any {
+function logMessage (message: app.Map<any>, session: app.ISession): app.Map<any> {
   console.log('Message: ', JSON.stringify(message));
-  return message;
-}
-
-/**
- * Renames session ids to whenever a notebook path rename occurs.
- */
-function processSessionRename (
-    message: any,
-    session: app.ISession,
-    sessionManager: app.ISessionManager): any {
-  // For any notebook rename messages, also update the session id to match
-  if (message.action == actions.notebook.rename) {
-    if (!message.path) {
-      throw util.createError('Invalid session id for renaming "%s"', message.path);
-    }
-    sessionManager.renameSession(session.id, message.path);
-  }
   return message;
 }

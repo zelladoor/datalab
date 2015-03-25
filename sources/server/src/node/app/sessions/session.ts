@@ -32,11 +32,12 @@ export class Session implements app.ISession {
   id: string;
 
   _kernel: app.IKernel;
+  _kernelManager: app.IKernelManager;
   _notebook: app.INotebookSession;
   _notebookPath: string;
   _notebookStorage: app.INotebookStorage;
   _requestIdToCellRef: app.Map<app.CellRef>;
-  _userconns: app.IUserConnection[];
+  _connections: app.IClientConnection[];
 
   /**
    * All messages flowing in either direction between user<->kernel will pass through this handler.
@@ -45,37 +46,37 @@ export class Session implements app.ISession {
 
   constructor (
       id: string,
-      kernel: app.IKernel,
+      kernelManager: app.IKernelManager,
       messageHandler: app.MessageHandler,
       notebookPath: string,
-      notebookStorage: app.INotebookStorage,
-      userconn: app.IUserConnection) {
+      notebookStorage: app.INotebookStorage) {
 
     this.id = id;
-    this._kernel = kernel;
+    this._kernelManager = kernelManager;
     this._messageHandler = messageHandler;
     this._requestIdToCellRef = {};
-    this._userconns = [];
+    this._connections = [];
     this._notebookPath = notebookPath;
-    this._notebook = this._notebookStorage.readOrCreate(notebookPath);
 
-    this._registerKernelEventHandlers();
-    this.addUserConnection(userconn);
+    // Read the notebook if it exists.
+    this._notebook = this._notebookStorage.read(notebookPath, /* create if needed */ true);
+    // Spawn an appropriate kernel for the given notebook.
+    this._spawnKernel();
   }
 
   /**
    * Gets the id of the kernel currently associated with this session.
    */
   getKernelId (): string {
-    return this._kernel.id;
+    return (this._kernel && this._kernel.id) || undefined;
   }
 
   /**
    * Gets the set of user connections currently associated with this session.
    */
-  getUserConnectionIds (): string[] {
-    return this._userconns.map((userconn) => {
-      return userconn.id;
+  getClientConnectionIds (): string[] {
+    return this._connections.map((connection) => {
+      return connection.id;
     });
   }
 
@@ -88,16 +89,46 @@ export class Session implements app.ISession {
    * This method allows a user to reestablish connection with an existing/running kernel, because
    * the kernel is associated with the session, rather than the user connection.
    */
-  addUserConnection (userconn: app.IUserConnection) {
+  addClientConnection (connection: app.IClientConnection) {
     // Add the connection to the "connected" set
-    this._userconns.push(userconn);
-    // Register event handlers for processing messages arriving from the connection.
-    this._registerUserEventHandlers(userconn);
+    this._connections.push(connection);
     // Send the initial notebook state at the time of connection.
-    userconn.sendUpdate({
+    connection.sendUpdate({
       name: updates.notebook.snapshot,
       notebook: this._notebook.getNotebookData()
     });
+  }
+
+  /**
+   * Delegates an incoming action request (from client) to the middleware stack.
+   */
+  processAction (action: app.notebooks.actions.Action) {
+    var nextAction = this._handleAction.bind(this);
+    this._messageHandler(action, this, nextAction);
+  }
+
+  /**
+   * Delegates an incoming execute reply (from kernel) to the middleware stack.
+   */
+  processExecuteReply (reply: app.ExecuteReply) {
+    var nextAction = this._handleExecuteReply.bind(this);
+    this._messageHandler(reply, this, nextAction);
+  }
+
+  /**
+   * Delegates in incoming kernel status (from kernel) to the middleware stack.
+   */
+  processKernelStatus (status: app.KernelStatus) {
+    var nextAction = this._handleKernelStatus.bind(this);
+    this._messageHandler(status, this, nextAction);
+  }
+
+  /**
+   * Delegates incoming kernel output data message to the middleware stack.
+   */
+  processOutputData (outputData: app.OutputData) {
+    var nextAction = this._handleOutputData.bind(this);
+    this._messageHandler(outputData, this, nextAction);
   }
 
   /**
@@ -105,19 +136,29 @@ export class Session implements app.ISession {
    *
    * Typically called when the connection has been closed.
    */
-  removeUserConnection (userconn: app.IUserConnection) {
+  removeClientConnection (connection: app.IClientConnection) {
     // Find the index of the connection and remove it.
-    for (var i = 0; i < this._userconns.length; ++i) {
-      if (this._userconns[i].id == userconn.id) {
+    for (var i = 0; i < this._connections.length; ++i) {
+      if (this._connections[i].id == connection.id) {
         // Found the connection. Remove it.
-        this._userconns.splice(i, 1);
+        this._connections.splice(i, 1);
         return;
       }
     }
 
     // Unexpectedly, the specified connection was not participating in the session.
     throw util.createError(
-      'Connection id "%s" was not found in session id "%s"', userconn.id, this.id);
+      'Connection id "%s" was not found in session id "%s"', connection.id, this.id);
+  }
+
+
+  /**
+   * Sends the given update message to all user connections associated with this session.
+   */
+  _broadcastUpdate (update: app.notebooks.updates.Update) {
+    this._connections.forEach((connection) => {
+      connection.sendUpdate(update);
+    });
   }
 
   // Handlers for messages flowing in either direction between user<->kernel.
@@ -127,16 +168,9 @@ export class Session implements app.ISession {
   // (where "entity" is either a kernel or a user connection).
 
   /**
-   * Delegates an incoming execute reply (from kernel) to the middleware stack.
-   */
-  _handleExecuteReplyPreDelegate (reply: app.ExecuteReply) {
-    var nextAction = this._handleExecuteReplyPostDelegate.bind(this);
-    this._messageHandler(reply, this, nextAction);
-  }
-  /**
    * Applies execute reply data to the notebook model and broadcasts an update message.
    */
-  _handleExecuteReplyPostDelegate (message: any) {
+  _handleExecuteReply (message: any) {
     // Lookup the notebook cell to which this message corresponds.
     var cellRef = this._getCellRefForRequestId(message.requestId);
     if (!cellRef) {
@@ -160,31 +194,16 @@ export class Session implements app.ISession {
 
     // Request that the notebook apply the cell update
     var update = this._notebook.apply(action);
+    // Persist the notebook state to storage
+    this._save();
     // Update connected clients that a change has occured.
     this._broadcastUpdate(update);
-    this._save();
   }
 
-  /**
-   * Sends the given update message to all user connections associated with this session.
-   */
-  _broadcastUpdate (update: app.notebooks.updates.Update) {
-    this._userconns.forEach((userconn) => {
-      userconn.sendUpdate(update);
-    });
-  }
-
-  /**
-   * Delegates an incoming action request (from user) to the middleware stack.
-   */
-  _handleActionPreDelegate (request: app.ExecuteRequest) {
-    var nextAction = this._handleActionPostDelegate.bind(this);
-    this._messageHandler(request, this, nextAction);
-  }
   /**
    * Handles the action request by updating the notebook model, issuing kernel requests, etc.
    */
-  _handleActionPostDelegate (action: any) {
+  _handleAction (action: any) {
     switch (action.name) {
       case actions.composite:
         this._handleActionComposite(action);
@@ -207,10 +226,6 @@ export class Session implements app.ISession {
         this._handleActionNotebookData(action);
         break;
 
-      case actions.notebook.rename:
-        this._handleActionRenameNotebook(action);
-        break;
-
       default:
         throw util.createError('No handler found for action message type "%s"', action.name);
     }
@@ -220,7 +235,7 @@ export class Session implements app.ISession {
    * Handles a composite action by sequentially applying each contained sub-action.
    */
   _handleActionComposite (action: app.notebooks.actions.Composite) {
-    action.subActions.forEach(this._handleActionPostDelegate.bind(this));
+    action.subActions.forEach(this._handleAction.bind(this));
   }
 
   /**
@@ -228,9 +243,10 @@ export class Session implements app.ISession {
    */
   _handleActionNotebookData (action: app.notebooks.actions.UpdateCell) {
     var update = this._notebook.apply(action);
+    // Persist the notebook state to storage
+    this._save();
     // Update all clients about the notebook data change.
     this._broadcastUpdate(update);
-    this._save();
   }
 
   /**
@@ -276,30 +292,9 @@ export class Session implements app.ISession {
   }
 
   /**
-   * Handles a notebook rename by updating local metadata.
-   *
-   * See also the message middleware stack for further handling of the notebook rename event at the
-   * session manager level.
-   */
-  _handleActionRenameNotebook (action: app.notebooks.actions.Rename) {
-    this._notebookPath = action.path;
-    this._broadcastUpdate({
-      name: updates.notebook.metadata,
-      path: action.path
-    })
-  }
-
-  /**
-   * Delegates in incoming kernel status (from kernel) to the middleware stack.
-   */
-  _handleKernelStatusPreDelegate (status: app.KernelStatus) {
-    var nextAction = this._handleKernelStatusPostDelegate.bind(this);
-    this._messageHandler(status, this, nextAction);
-  }
-  /**
    * Forwards the kernel status to the user, post-middleware stack processing.
    */
-  _handleKernelStatusPostDelegate (message: any) {
+  _handleKernelStatus (message: any) {
     this._broadcastUpdate({
       name: updates.notebook.sessionStatus,
       // TODO(bryantd): add other session metdata here such as connected users, etc. eventually.
@@ -308,16 +303,9 @@ export class Session implements app.ISession {
   }
 
   /**
-   * Delegates incoming kernel output data message to the middleware stack.
-   */
-  _handleOutputDataPreDelegate (outputData: app.OutputData) {
-    var nextAction = this._handleOutputDataPostDelegate.bind(this);
-    this._messageHandler(outputData, this, nextAction);
-  }
-  /**
    * Handles a kernel output data message by attaching the output data to the appropriate cell.
    */
-  _handleOutputDataPostDelegate (message: any) {
+  _handleOutputData (message: any) {
     // Lookup the notebook cell to which this kernel message corresponds.
     var cellRef = this._getCellRefForRequestId(message.requestId);
     if (!cellRef) {
@@ -336,25 +324,10 @@ export class Session implements app.ISession {
       }]
     });
 
+    // Persist the notebook state to storage
+    this._save();
     // Broadcast the update to connectec clients.
     this._broadcastUpdate(update);
-    this._save();
-  }
-
-  /**
-   * Registers event handlers for messages arriving from the given user connection.
-   */
-  _registerUserEventHandlers (userconn: app.IUserConnection) {
-    userconn.onAction(this._handleActionPreDelegate.bind(this));
-  }
-
-  /**
-   * Registers event handlers for messages arriving from the kernel associated with the session.
-   */
-  _registerKernelEventHandlers () {
-    this._kernel.onExecuteReply(this._handleExecuteReplyPreDelegate.bind(this));
-    this._kernel.onKernelStatus(this._handleKernelStatusPreDelegate.bind(this));
-    this._kernel.onOutputData(this._handleOutputDataPreDelegate.bind(this));
   }
 
   /**
@@ -364,8 +337,35 @@ export class Session implements app.ISession {
     this._notebookStorage.write(this._notebookPath, this._notebook);
   }
 
+  /**
+   * Spawns an appropriate kernel for the current notebook.
+   *
+   * TODO(bryantd): eventually it will become necessary to read kernel config metadata from
+   * the persisted notebook file (e.g., kernel language + version). For now, all kernels are
+   * simply Python 2.7+ kernels.
+   */
+  _spawnKernel () {
+    // Eventually, the logic here will be replaced and the ability to respawn kernels will be
+    // available. For now, it is unexpected for a respawn to occur, so throw an error.
+    if (this._kernel) {
+      throw util.createError(
+        'Attempted to (re)spawn kernel for session "%s". Kernel respawn not supported currently.',
+        this.id);
+    }
 
-  /* Methods for managing request <-> cell reference mappings */
+    // Associate a kernel with the session.
+    this._kernel = this._kernelManager.create(
+        uuid.v4(),
+        {
+          iopubPort: util.getAvailablePort(),
+          shellPort: util.getAvailablePort()
+        },
+        this.processExecuteReply.bind(this),
+        this.processKernelStatus.bind(this),
+        this.processOutputData.bind(this));
+  }
+
+  // Methods for managing request <-> cell reference mappings
 
   /**
    * Gets the cell id that corresponds to the given request id.
