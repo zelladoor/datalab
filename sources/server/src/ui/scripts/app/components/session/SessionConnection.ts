@@ -24,11 +24,12 @@ import _app = require('app/App');
 var log = logging.getLogger(constants.scopes.sessionConnection);
 
 /**
- * Creates a (singleton) socket.io connection with wrappers for triggering the Angular digest cycle
+ * Creates a (singleton) socket.io connection to the server.
  *
- * TODO(bryantd): Add ability to spawn a new session connection on route/location change, or add
- * the ability to disassociate this connection from the session and have it join a new session.
- * For detecting, see the angular events: $locationChangeStart and $routeChangeStart
+ * TODO(bryantd): Add the ability to disassociate this connection from the session and have it
+ * join a new session. For detecting, see the angular events: $locationChangeStart and
+ * $routeChangeStart. Could be implemented by sending some sort of JoinSession message
+ * without require the underlying web socket connection to be torn down and recreated.
  */
 function sessionConnectionFactory (
     rootScope: ng.IRootScopeService,

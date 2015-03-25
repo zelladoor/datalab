@@ -26,17 +26,17 @@ import updates = require('app/shared/updates');
 import uuid = require('app/common/uuid');
 
 
-var log = logging.getLogger(constants.scopes.session);
+var log = logging.getLogger(constants.scopes.sessionEventDispatcher);
 
 /**
- * Manages the two-way connection between client and server and associated session message traffic
+ * Manages the two-way connection between client and server and associated session message traffic.
  *
  * Publishes incoming messages (from the server) as client-side events.
  *
  * Subscribes to client-side event types that map to session messages and forwards these
- * messages to the server (with some transformation/message wrapping applied)
+ * messages to the server (with some transformation/message wrapping applied).
  */
-class Session implements app.ISession {
+class SessionEventDispatcher implements app.ISessionEventDispatcher {
 
   _connection: app.ISessionConnection;
   _rootScope: ng.IRootScopeService;
@@ -70,12 +70,11 @@ class Session implements app.ISession {
    * Register client-side event handlers for each notebook action.
    */
   _registerEventHandlers () {
-    // Add an event listener for each action type
+    // Add an event listener for each action type.
     var eventNames = [
       actions.composite,
       actions.notebook.clearOutputs,
       actions.notebook.executeCells,
-      actions.notebook.rename,
       actions.worksheet.addCell,
       actions.worksheet.deleteCell,
       actions.worksheet.moveCell,
@@ -96,5 +95,5 @@ class Session implements app.ISession {
   }
 }
 
-_app.registrar.service(constants.session.name, Session);
-log.debug('Registered ', constants.scopes.session);
+_app.registrar.service(constants.session.name, SessionEventDispatcher);
+log.debug('Registered ', constants.scopes.sessionEventDispatcher);

@@ -75,20 +75,18 @@ declare module app {
     filter (name: string, filterFactory: Function): void;
   }
 
-  interface ISession {
-
-  }
-
   interface ISessionConnection {
     on (messageType: string, callback: SessionMessageHandler): void;
     emit (messageType: string, message: any): void;
   }
 
+  interface ISessionEventDispatcher {}
+
   interface SessionMessageHandler {
     (message: any): void;
   }
 
-  // UI-specific extensions to the datalab notebook types
+  // UI-specific extensions to the datalab notebook types.
   module notebooks {
     interface AugmentedCellOutput extends notebooks.CellOutput {
       preferredMimetype?: string;

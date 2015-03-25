@@ -14,25 +14,33 @@
 
 
 /**
- * Cross-module constants
+ * App-wide constants.
  */
 
 
 /**
- * Path to the root of the Angular app
+ * Path to the root of the Angular app.
  */
 export var scriptPaths = {
   app: 'scripts/app'
 };
 
+/**
+ * The (Angular) module name for the app.
+ */
 export var appModuleName = 'app';
 
-// Generic angular component names used for dependency injection
 export var layouts = {
   sidebar: {
     directiveName: 'sidebarLayout'
   }
 };
+
+// Angular directive names.
+//
+// Note: When using these directive names within templates, the names are expected to be in
+// snake-case; e.g., directiveName:"fooBarBaz" is referred to as <foo-bar-baz /> within
+// an Angular template.
 export var cellInserter = {
   directiveName: 'datalabCellInserter'
 };
@@ -76,19 +84,20 @@ export var worksheetEditor = {
   directiveName: 'datalabWorksheetEditor'
 };
 
-
-export var notebookData = {
-  name: 'notebookData'
-};
-export var session = {
-  name: 'session'
-};
+// Generic angular component names used for dependency injection (e.g., services, factories,
+// providers, etc.).
 export var sessionConnection = {
   name: 'sessionConnection'
 };
+export var sessionEventDispatcher = {
+  name: 'sessionEventDispatcher'
+};
+export var notebookData = {
+  name: 'notebookData'
+};
 
 
-// Route-specific angular component names used for dependency injection
+// Route-specific angular component names.
 export var notebooks = {
   pageControllerName: 'NotebooksPageController',
   edit: {
@@ -96,15 +105,15 @@ export var notebooks = {
   }
 };
 
-// Logging scope names
+// Logging scope names.
 export var scopes = {
-  // Cell directives
+  // Cell directives.
   codeCell: 'codeCell',
   editorCell: 'editorCell',
   headingCell: 'headingCell',
   markdownCell: 'markdownCell',
 
-  // Generic directives
+  // Generic directives.
   cellInserter: 'cellInserter',
   cellOutputViewer: 'cellOutputViewer',
   cellToolbar: 'cellToolbar',
@@ -117,7 +126,7 @@ export var scopes = {
   notebookToolbar: 'notebookToolbar',
   worksheetEditor: 'worksheetEditor',
 
-  // Route-specific components
+  // Route-specific components.
   notebooks: {
     page: 'notebooks.page',
     edit: {
@@ -125,9 +134,9 @@ export var scopes = {
     }
   },
 
-  // Other injectables (services, factories, providers, etc.)
-  notebookData: notebookData.name,
-  session: session.name,
-  sessionConnection: sessionConnection.name
+  // Other injectables (services, factories, providers, etc.).
+  sessionConnection: sessionConnection.name,
+  sessionEventDispatcher: sessionEventDispatcher.name,
+  notebookData: notebookData.name
 };
 
