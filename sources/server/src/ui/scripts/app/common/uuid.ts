@@ -1,12 +1,9 @@
-// FIXME: either replace the uuid generation bit below or get the correct license to use for
-// StackOverflow content (cc-by license?)
-
-
 /**
- * Generates a v4 UUID
- * Source: http://stackoverflow.com/a/8809472
+ * Generates a sufficiently random v4 UUID.
  */
 export function v4 () {
+  // Source: http://stackoverflow.com/a/8809472
+  // License: CC-BY (Attribution): https://creativecommons.org/licenses/by/3.0/us
   var d = new Date().getTime();
   var uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
       var r = (d + Math.random()*16)%16 | 0;
