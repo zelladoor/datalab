@@ -20,7 +20,7 @@
  * output content, and disappears is the output content is falsey (undefined/null/empty).
  */
 /// <reference path="../../../../../../../../externs/ts/angularjs/angular.d.ts" />
-/// <reference path="../../../../../../../../externs/ts/codemirror/codemirror.d.ts" />
+/// <amd-dependency path="app/components/cellinserter/CellInserterDirective" />
 /// <amd-dependency path="app/components/celloutputviewer/CellOutputViewerDirective" />
 /// <amd-dependency path="app/components/celltoolbar/CellToolbarDirective" />
 /// <amd-dependency path="app/components/codeeditor/CodeEditorDirective" />
@@ -28,8 +28,6 @@ import logging = require('app/common/Logging');
 import constants = require('app/common/Constants');
 import _app = require('app/App');
 
-// FIXME: remove the codemirror dep if type is factored out
-// Try to avoid the codemirror types bleeding out of the code editor directive if possible
 
 var log = logging.getLogger(constants.scopes.editorCell);
 

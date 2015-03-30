@@ -22,12 +22,14 @@
  * FIXME: switch to .min version of codemirror deps
  */
 /// <reference path="../../../../../../../../externs/ts/angularjs/angular.d.ts" />
+/// <reference path="../../../../../../../../externs/ts/codemirror/codemirror.d.ts" />
 /// <amd-dependency path="codeMirror/mode/python/python" />
 /// <amd-dependency path="codeMirror/addon/edit/matchbrackets" />
 import logging = require('app/common/Logging');
 import constants = require('app/common/Constants');
 import app = require('app/App');
-import codeMirror = require('codeMirror'); // FIXME: where is this str constant value defined???
+import codeMirror = require('codeMirror');
+
 
 var log = logging.getLogger(constants.scopes.codeEditor);
 
