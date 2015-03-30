@@ -247,7 +247,7 @@ class ClientNotebookSession implements app.IClientNotebookSession {
    */
   moveCellDown (cellId: string, worksheetId: string) {
     var worksheet = nbdata.getWorksheetOrThrow(worksheetId, this.notebook);
-    var cellIndexToMove = nbdata.getCellIndexOrThrow(worksheet, cellId);
+    var cellIndexToMove = nbdata.getCellIndexOrThrow(cellId, worksheet);
 
     if (cellIndexToMove == (worksheet.cells.length - 1)) {
       // Then this the cell to move is already last, so no-op
@@ -267,7 +267,7 @@ class ClientNotebookSession implements app.IClientNotebookSession {
    */
   moveCellUp (cellId: string, worksheetId: string) {
     var worksheet = nbdata.getWorksheetOrThrow(worksheetId, this.notebook);
-    var cellIndexToMove = nbdata.getCellIndexOrThrow(worksheet, cellId);
+    var cellIndexToMove = nbdata.getCellIndexOrThrow(cellId, worksheet);
 
     switch (cellIndexToMove) {
       case 0:
@@ -389,7 +389,7 @@ class ClientNotebookSession implements app.IClientNotebookSession {
     var insertIndex: number;
     if (update.insertAfter) {
       // Find the cell to insert after in the worksheet
-      insertIndex = nbdata.getCellIndexOrThrow(worksheet, update.insertAfter);
+      insertIndex = nbdata.getCellIndexOrThrow(update.insertAfter, worksheet);
       // Increment the index because we want to insert after the "insertAfter" cell id
       ++insertIndex;
     } else {
@@ -471,7 +471,7 @@ class ClientNotebookSession implements app.IClientNotebookSession {
     // Get the worksheet from which the cell should be deleted.
     var worksheet = nbdata.getWorksheetOrThrow(update.worksheetId, this.notebook);
     // Find the index of the cell to delete within the worksheet.
-    var cellIndex = nbdata.getCellIndexOrThrow(worksheet, update.cellId);
+    var cellIndex = nbdata.getCellIndexOrThrow(update.cellId, worksheet);
     // Remove the cell from the worksheet.
     var removed = worksheet.cells.splice(cellIndex, 1);
     log.debug('Deleted cell from worksheet', removed);
@@ -485,7 +485,7 @@ class ClientNotebookSession implements app.IClientNotebookSession {
   _handleMoveCell(update: app.notebooks.updates.MoveCell) {
     // Find the cell to move within the source worksheet.
     var sourceWorksheet = nbdata.getWorksheetOrThrow(update.sourceWorksheetId, this.notebook);
-    var sourceIndex = nbdata.getCellIndexOrThrow(sourceWorksheet, update.cellId);
+    var sourceIndex = nbdata.getCellIndexOrThrow(update.cellId, sourceWorksheet);
 
     // Find the insertion point for the cell in the destination worksheet.
     var destinationWorksheet = nbdata.getWorksheetOrThrow(update.sourceWorksheetId, this.notebook);
@@ -498,7 +498,7 @@ class ClientNotebookSession implements app.IClientNotebookSession {
       destinationWorksheet.cells = [cellToMove].concat(destinationWorksheet.cells);
     } else {
       // Otherwise insert the cell after the specified insertAfter cell id.
-      var destinationIndex = nbdata.getCellIndexOrThrow(sourceWorksheet, update.insertAfter);
+      var destinationIndex = nbdata.getCellIndexOrThrow(update.insertAfter, sourceWorksheet);
       // The insertion index is one after the "insertAfter" cell's index.
       ++destinationIndex;
       // Insert the cell into the destination index.

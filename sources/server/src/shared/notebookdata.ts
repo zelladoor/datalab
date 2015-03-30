@@ -41,9 +41,13 @@ function createError (format: string, ...formatArgs: string[]) {
  * Gets the index of the specified cell within the given worksheet.
  *
  * Throws an error if the specified cell does not exist within the given worksheet.
+ *
+ * @param cellId The cell id for which to find the index.
+ * @param worksheet The worksheet from which to retrieve the cell.
+ * @return The index of the specified cell.
  */
-export function getCellIndexOrThrow (worksheet: app.notebooks.Worksheet, cellId: string) {
-  var index = indexOf(worksheet, cellId);
+export function getCellIndexOrThrow (cellId: string, worksheet: app.notebooks.Worksheet) {
+  var index = indexOf(cellId, worksheet);
   if (index === -1) {
     throw createError('Cell id "%s" does not exist within worksheet with id "%s"',
       cellId, worksheet.id);
@@ -115,8 +119,12 @@ export function getWorksheetOrThrow (
  * given worksheet, so return sentinel value to indicate the id was not found.
  *
  * Note: same sentinel value as Array.indexOf() for consistency with language built-ins.
+ *
+ * @param cellId The cell id to get the index of.
+ * @param worksheet The worksheet to search for the specified cell within.
+ * @return Index of the cell (>= 0) if found, or -1 if the cell was not found.
  */
-export function indexOf (worksheet: app.notebooks.Worksheet, cellId: string): number {
+export function indexOf (cellId: string, worksheet: app.notebooks.Worksheet): number {
   for (var i = 0; i < worksheet.cells.length; ++i) {
     if (cellId == worksheet.cells[i].id) {
       return i;
