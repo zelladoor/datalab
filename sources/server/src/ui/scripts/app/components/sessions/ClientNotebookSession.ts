@@ -150,7 +150,7 @@ class ClientNotebookSession implements app.IClientNotebookSession {
    * @param cellId The id of the cell to delete.
    * @param worksheetId The id of the worksheet containing the specified cell.
    */
-  deleteCell (cellId: string, worksheetId: string) {
+  deleteCell(cellId: string, worksheetId: string) {
     var deleteCellAction: app.notebooks.actions.DeleteCell = {
       name: actions.worksheet.deleteCell,
       cellId: cellId,
@@ -178,7 +178,7 @@ class ClientNotebookSession implements app.IClientNotebookSession {
    * @param cell The cell to evaluate (i.e., source update + execute).
    * @param worksheetId The id of the worksheet containing the specified cell.
    */
-  evaluateCell (cell: app.notebooks.Cell, worksheetId: string) {
+  evaluateCell(cell: app.notebooks.Cell, worksheetId: string) {
     if (cell.type != cells.code) {
       // Then we can simply send an update cell action
       this.updateCell(cell, worksheetId);
@@ -201,7 +201,7 @@ class ClientNotebookSession implements app.IClientNotebookSession {
    * @param cell The cell to execute (i.e., execute-only, no source update).
    * @param worksheetId The id of the worksheet containing the specified cell.
    */
-  executeCell (cell: app.notebooks.Cell, worksheetId: string) {
+  executeCell(cell: app.notebooks.Cell, worksheetId: string) {
     if (cell.type != cells.code) {
       // Then this is a no-op. Nothing to execute for non-code cells currently.
       return;
@@ -213,7 +213,7 @@ class ClientNotebookSession implements app.IClientNotebookSession {
   /**
    * Executes all code cells within the notebook.
    */
-  executeCells () {
+  executeCells() {
     var executeCellsAction: app.notebooks.actions.ExecuteCells = {
       name: actions.notebook.executeCells
     };
@@ -228,7 +228,7 @@ class ClientNotebookSession implements app.IClientNotebookSession {
    * @param insertAfterCellId The cell id after which the cell should be inserted. A value of
    *     null indicates that the cell should be insert at the head of the worksheet.
    */
-  moveCell (cellId: string, worksheetId: string, insertAfterCellId: string) {
+  moveCell(cellId: string, worksheetId: string, insertAfterCellId: string) {
     var moveCellAction: app.notebooks.actions.MoveCell = {
       name: actions.worksheet.moveCell,
       cellId: cellId,
@@ -245,7 +245,7 @@ class ClientNotebookSession implements app.IClientNotebookSession {
    * @param cellId The id of the cell to move.
    * @param worksheetId The id of the worksheet containing the specified cell.
    */
-  moveCellDown (cellId: string, worksheetId: string) {
+  moveCellDown(cellId: string, worksheetId: string) {
     var worksheet = nbdata.getWorksheetOrThrow(worksheetId, this.notebook);
     var cellIndexToMove = nbdata.getCellIndexOrThrow(cellId, worksheet);
 
@@ -265,7 +265,7 @@ class ClientNotebookSession implements app.IClientNotebookSession {
    * @param cellId The id of the cell to move.
    * @param worksheetId The id of the worksheet containing the specified cell.
    */
-  moveCellUp (cellId: string, worksheetId: string) {
+  moveCellUp(cellId: string, worksheetId: string) {
     var worksheet = nbdata.getWorksheetOrThrow(worksheetId, this.notebook);
     var cellIndexToMove = nbdata.getCellIndexOrThrow(cellId, worksheet);
 
@@ -292,7 +292,7 @@ class ClientNotebookSession implements app.IClientNotebookSession {
    *
    * @param worksheetId The id of the worksheet to select.
    */
-  selectWorksheet (worksheetId: string) {
+  selectWorksheet(worksheetId: string) {
     var worksheet = nbdata.getWorksheetOrThrow(worksheetId, this.notebook);
     this.activeWorksheet = worksheet;
   }
@@ -303,7 +303,7 @@ class ClientNotebookSession implements app.IClientNotebookSession {
    * @param cellId The id of the cell to update.
    * @param worksheetId The id of the worksheet containing the specified cell.
    */
-  updateCell (cell: app.notebooks.Cell, worksheetId: string) {
+  updateCell(cell: app.notebooks.Cell, worksheetId: string) {
     this._emitAction(this._createUpdateCellAction(cell, worksheetId));
   }
 
@@ -313,7 +313,7 @@ class ClientNotebookSession implements app.IClientNotebookSession {
    * @param cellId The id of the cell to execute.
    * @param worksheetId The id of the worksheet containing the specified cell.
    */
-  _createExecuteCellAction (
+  _createExecuteCellAction(
       cellId: string,
       worksheetId: string
       ): app.notebooks.actions.ExecuteCell {
@@ -334,7 +334,7 @@ class ClientNotebookSession implements app.IClientNotebookSession {
    * @param cellId The id of the cell to update.
    * @param worksheetId The id of the worksheet containing the specified cell.
    */
-  _createUpdateCellAction (
+  _createUpdateCellAction(
       cell: app.notebooks.Cell,
       worksheetId: string
       ): app.notebooks.actions.UpdateCell {
@@ -368,7 +368,7 @@ class ClientNotebookSession implements app.IClientNotebookSession {
    * @param mimetypeBundle A map of mime-type string (e.g., 'text/html') to a content string.
    * @return Null if none of the preferred mimetypes are available within the bundle.
    */
-  _findPreferredMimetype (mimetypeBundle: app.Map<string>) {
+  _findPreferredMimetype(mimetypeBundle: app.Map<string>) {
     for (var i = 0; i < preferredMimetypes.length; ++i) {
       var mimetype = preferredMimetypes[i];
       if (mimetypeBundle.hasOwnProperty(mimetype)) {
@@ -383,7 +383,7 @@ class ClientNotebookSession implements app.IClientNotebookSession {
    *
    * @param update An AddCell Update message containing the cell and where it should be inserted.
    */
-  _handleAddCell (update: app.notebooks.updates.AddCell) {
+  _handleAddCell(update: app.notebooks.updates.AddCell) {
     var worksheet = nbdata.getWorksheetOrThrow(update.worksheetId, this.notebook);
     // If an insertion point was defined, verify the given cell id exists within the worksheet
     var insertIndex: number;
@@ -405,7 +405,7 @@ class ClientNotebookSession implements app.IClientNotebookSession {
    *
    * @param update A CellUpdate Update message.
    */
-  _handleCellUpdate (update: app.notebooks.updates.CellUpdate) {
+  _handleCellUpdate(update: app.notebooks.updates.CellUpdate) {
     var cell = nbdata.getCellOrThrow(update.cellId, update.worksheetId, this.notebook);
 
     // Update the source content if it was provided in the update.
@@ -449,7 +449,7 @@ class ClientNotebookSession implements app.IClientNotebookSession {
    *
    * @param update A Composite Update message.
    */
-  _handleCompositeUpdate (update: app.notebooks.updates.Composite) {
+  _handleCompositeUpdate(update: app.notebooks.updates.Composite) {
     update.subUpdates.forEach((update) => {
       switch (update.name) {
         case updates.cell.update:
