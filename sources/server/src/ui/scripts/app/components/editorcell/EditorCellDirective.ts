@@ -20,7 +20,6 @@
  * output content, and disappears is the output content is falsey (undefined/null/empty).
  */
 /// <reference path="../../../../../../../../externs/ts/angularjs/angular.d.ts" />
-/// <amd-dependency path="app/components/cellinserter/CellInserterDirective" />
 /// <amd-dependency path="app/components/celloutputviewer/CellOutputViewerDirective" />
 /// <amd-dependency path="app/components/celltoolbar/CellToolbarDirective" />
 /// <amd-dependency path="app/components/codeeditor/CodeEditorDirective" />

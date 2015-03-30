@@ -8,7 +8,8 @@
       ng-show="enableEditRegion" >
     <div class="datalab-editor-cell-input row">
       <div class="datalab-editor-cell-identifier datalab-editor-cell-identifier-input col-md-1">
-        <!-- TODO(bryantd): These are stand-in icons; replace icons once finalized/available -->
+        <!-- Cell indicator -->
+        <!-- TODO(bryantd): currently displaying cell type-specific icon; update to match mocks -->
         <span class="fa fa-terminal fa-lg" ng-if="cell.type == 'code'"></span>
         <span class="fa fa-edit fa-lg" ng-if="cell.type == 'markdown'"></span>
         <span class="fa fa-paragraph fa-lg" ng-if="cell.type == 'heading'"></span>
@@ -31,11 +32,6 @@
             cell="cell"
             worksheet-id="worksheetId">
         </datalab-cell-toolbar>
-        <!-- TODO(bryantd): merge inserter into '...' menu of toolbar according to mocks -->
-        <datalab-cell-inserter
-            insert-after-cell-id="cell.id"
-            worksheet-id="worksheetId">
-        </datalab-cell-inserter>
       </div>
     </div>
   </div>

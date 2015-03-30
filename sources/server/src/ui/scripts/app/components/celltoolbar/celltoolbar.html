@@ -4,6 +4,24 @@
   <i class="datalab-toolbar-button fa-play fa"
       ng-click="notebookData.evaluateCell(cell, worksheetId)"></i>
 
+  <!-- TODO(bryantd): all following actions will move into cell  toolbar drop down menu -->
+
+  <!-- Add code cell -->
+  <i class="datalab-toolbar-button fa-terminal fa"
+      ng-click="notebookData.addCell('code', worksheetId, cell.id)"></i>
+
+  <!-- Add markdown cell -->
+  <i class="datalab-toolbar-button fa-edit fa"
+      ng-click="notebookData.addCell('markdown', worksheetId, cell.id)"></i>
+
+  <!-- Add heading cell -->
+  <i class="datalab-toolbar-button fa-paragraph fa"
+      ng-click="notebookData.addCell('heading', worksheetId, cell.id)"></i>
+
+  <!-- Delete cell -->
+  <i class="datalab-toolbar-button fa-trash fa"
+      ng-click="notebookData.deleteCell(cell.id, worksheetId)"></i>
+
   <!-- Move cell up -->
   <i class="datalab-toolbar-button fa-level-up fa"
       ng-click="notebookData.moveCellUp(cell.id, worksheetId)"></i>
@@ -11,14 +29,4 @@
   <!-- Move cell down -->
   <i class="datalab-toolbar-button fa-level-down fa"
       ng-click="notebookData.moveCellDown(cell.id, worksheetId)"></i>
-
-  <!-- Clear cell output -->
-  <i class="datalab-toolbar-button fa-eraser fa"
-      ng-click="notebookData.clearOutput(cell.id, worksheetId)"
-      ng-if="cell.type == 'code'"></i>
-
-  <!-- Delete cell -->
-  <i class="datalab-toolbar-button fa-trash fa"
-      ng-click="notebookData.deleteCell(cell.id, worksheetId)"></i>
-
 </div>
