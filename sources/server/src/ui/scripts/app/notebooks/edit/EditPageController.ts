@@ -18,9 +18,9 @@
  */
 /// <reference path="../../../../../../../../externs/ts/angularjs/angular.d.ts" />
 /// <amd-dependency path="app/components/worksheeteditor/WorksheetEditorDirective" />
-/// <amd-dependency path="app/components/notebookdata/NotebookData" />
 /// <amd-dependency path="app/components/notebooktitle/NotebookTitleDirective" />
 /// <amd-dependency path="app/components/notebooktoolbar/NotebookToolbarDirective" />
+/// <amd-dependency path="app/components/sessions/ClientNotebookSession" />
 /// <amd-dependency path="app/components/sessions/SessionEventDispatcher" />
 import actions = require('app/shared/actions');
 import constants = require('app/common/Constants');
@@ -31,29 +31,26 @@ import _app = require('app/App');
 var log = logging.getLogger(constants.scopes.notebooks.edit.page);
 
 export class EditPageController {
-  notebookData: app.INotebookData;
-  notebookPath: string; // The path of the notebook to edit
-  sessionStatus: any; // FIXME: TYPE
+  clientNotebookSession: app.IClientNotebookSession;
+  notebookPath: string; // The path of the notebook to edit.
 
   _rootScope: ng.IRootScopeService;
   _requestId: string;
   _sessionEventDispatcher: app.ISessionEventDispatcher;
 
-  /**
-   * Constructor and arguments for Angular to inject
-   */
   static $inject: string[] = [
       '$routeParams',
       '$rootScope',
-      constants.notebookData.name,
+      constants.clientNotebookSession.name,
       constants.sessionEventDispatcher.name];
+
   constructor (
       routeParams: ng.route.IRouteParamsService,
       rootScope: ng.IRootScopeService,
-      notebookData: any,
+      clientNotebookSession: any,
       sessionEventDispatcher: app.ISessionEventDispatcher) {
     this._rootScope = rootScope;
-    this.notebookData = notebookData;
+    this.clientNotebookSession = clientNotebookSession;
     this._sessionEventDispatcher = sessionEventDispatcher;
   }
 }

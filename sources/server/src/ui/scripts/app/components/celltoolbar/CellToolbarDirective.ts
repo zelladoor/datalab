@@ -17,7 +17,7 @@
  * Directive for rendering a cell-level toolbar
  */
 /// <reference path="../../../../../../../../externs/ts/angularjs/angular.d.ts" />
-/// <amd-dependency path="app/components/notebookdata/NotebookData" />
+/// <amd-dependency path="app/components/sessions/ClientNotebookSession" />
 import logging = require('app/common/Logging');
 import constants = require('app/common/Constants');
 import _app = require('app/App');
@@ -26,20 +26,20 @@ import _app = require('app/App');
 var log = logging.getLogger(constants.scopes.cellToolbar);
 
 interface CellToolbarScope extends ng.IScope {
-  notebookData: app.INotebookData;
+  clientNotebookSession: app.IClientNotebookSession;
   cell: app.notebooks.Cell;
   worksheetId: string;
 }
 
 class CellToolbarController {
-  _notebookData: app.INotebookData;
+  _clientNotebookSession: app.IClientNotebookSession;
   _scope: CellToolbarScope;
 
-  static $inject = ['$scope', constants.notebookData.name];
-  constructor (scope: CellToolbarScope, notebookData: app.INotebookData) {
+  static $inject = ['$scope', constants.clientNotebookSession.name];
+  constructor (scope: CellToolbarScope, clientNotebookSession: app.IClientNotebookSession) {
     this._scope = scope;
 
-    this._scope.notebookData = notebookData;
+    this._scope.clientNotebookSession = clientNotebookSession;
   }
 }
 

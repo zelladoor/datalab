@@ -17,7 +17,7 @@
  * Directive for rendering a notebook-level toolbar
  */
 /// <reference path="../../../../../../../../externs/ts/angularjs/angular.d.ts" />
-/// <amd-dependency path="app/components/notebookdata/NotebookData" />
+/// <amd-dependency path="app/components/sessions/ClientNotebookSession" />
 import logging = require('app/common/Logging');
 import constants = require('app/common/Constants');
 import _app = require('app/App');
@@ -26,17 +26,17 @@ import _app = require('app/App');
 var log = logging.getLogger(constants.scopes.notebookToolbar);
 
 interface NotebookToolbarScope extends ng.IScope {
-  notebookData: app.INotebookData;
+  clientNotebookSession: app.IClientNotebookSession;
 }
 
 class NotebookToolbarController {
-  _notebookData: app.INotebookData;
+  _clientNotebookSession: app.IClientNotebookSession;
   _scope: NotebookToolbarScope;
 
-  static $inject = ['$scope', constants.notebookData.name];
-  constructor (scope: NotebookToolbarScope, notebookData: app.INotebookData) {
+  static $inject = ['$scope', constants.clientNotebookSession.name];
+  constructor (scope: NotebookToolbarScope, clientNotebookSession: app.IClientNotebookSession) {
     this._scope = scope;
-    this._scope.notebookData = notebookData
+    this._scope.clientNotebookSession = clientNotebookSession
   }
 }
 

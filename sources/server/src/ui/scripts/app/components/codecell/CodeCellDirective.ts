@@ -18,7 +18,7 @@
  */
 /// <reference path="../../../../../../../../externs/ts/angularjs/angular.d.ts" />
 /// <amd-dependency path="app/components/editorcell/EditorCellDirective" />
-/// <amd-dependency path="app/components/notebookdata/NotebookData" />
+/// <amd-dependency path="app/components/sessions/ClientNotebookSession" />
 import actions = require('app/shared/actions');
 import constants = require('app/common/Constants');
 import logging = require('app/common/Logging');
@@ -28,16 +28,21 @@ import _app = require('app/App');
 var log = logging.getLogger(constants.scopes.codeCell);
 
 class CodeCellController implements app.ICellController {
-  _notebookData: app.INotebookData;
+
+  _clientNotebookSession: app.IClientNotebookSession;
   _rootScope: ng.IRootScopeService;
   _scope: app.CellScope;
 
   showEditRegion: boolean;
   showPreviewRegion: boolean;
 
-  static $inject: string[] = ['$scope', '$rootScope', constants.notebookData.name];
-  constructor (scope: app.CellScope, rootScope: ng.IRootScopeService, notebookData: app.INotebookData) {
-    this._notebookData = notebookData;
+  static $inject: string[] = ['$scope', '$rootScope', constants.clientNotebookSession.name];
+  constructor (
+      scope: app.CellScope,
+      rootScope: ng.IRootScopeService,
+      clientNotebookSession: app.IClientNotebookSession) {
+
+    this._clientNotebookSession = clientNotebookSession;
     this._rootScope = rootScope;
     this._scope = scope;
 
@@ -63,7 +68,7 @@ class CodeCellController implements app.ICellController {
     // TODO(bryantd): apply a subset of the updates below as "predictive modifications" (e.g.,
     // clear the cell output immediately)
     // TODO(bryantd): apply a visual treatment to show that the cell is in an "executing" state
-    this._notebookData.evaluateCell(this._scope.cell, this._scope.worksheetId);
+    this._clientNotebookSession.evaluateCell(this._scope.cell, this._scope.worksheetId);
   }
 }
 

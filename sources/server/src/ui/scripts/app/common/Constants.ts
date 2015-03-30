@@ -83,14 +83,14 @@ export var worksheetEditor = {
 
 // Generic angular component names used for dependency injection (e.g., services, factories,
 // providers, etc.).
+export var clientNotebookSession = {
+  name: 'clientNotebookSession'
+};
 export var sessionConnection = {
   name: 'sessionConnection'
 };
 export var sessionEventDispatcher = {
   name: 'sessionEventDispatcher'
-};
-export var notebookData = {
-  name: 'notebookData'
 };
 
 
@@ -131,8 +131,8 @@ export var scopes = {
   },
 
   // Other injectables (services, factories, providers, etc.).
+  clientNotebookSession: clientNotebookSession.name,
   sessionConnection: sessionConnection.name,
-  sessionEventDispatcher: sessionEventDispatcher.name,
-  notebookData: notebookData.name
+  sessionEventDispatcher: sessionEventDispatcher.name
 };
 

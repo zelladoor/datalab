@@ -7,14 +7,14 @@
  * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software distributed under the License
- * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * is distributed on an "AS IS" BASIS, WITHOUT W/ARRANTIES OR CONDITIONS OF ANY KIND, either express
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
 
 
 /**
- * Directive for creating a single editor cell
+ * Directive for creating a single editor cell.
  *
  * The input region provides and editable text region. The output region appears if there is any
  * output content, and disappears is the output content is falsey (undefined/null/empty).
@@ -37,7 +37,7 @@ interface EditorCellScope extends ng.IScope {
   enableEditRegion?: boolean;
   enablePreviewRegion?: boolean;
   onPreviewRegionDoubleClick?: Function;
-  notebookData?: app.INotebookData;
+  clientNotebookSession?: app.IClientNotebookSession;
 
   actions?: any;
   active?: boolean;
@@ -46,17 +46,17 @@ interface EditorCellScope extends ng.IScope {
 
 class EditorCellController {
 
-  _notebookData: app.INotebookData;
+  _clientNotebookSession: app.IClientNotebookSession;
   _scope: EditorCellScope;
 
-  static $inject = ['$scope', constants.notebookData.name];
-  constructor (scope: EditorCellScope, notebookData: app.INotebookData) {
+  static $inject = ['$scope', constants.clientNotebookSession.name];
+  constructor (scope: EditorCellScope, clientNotebookSession: app.IClientNotebookSession) {
     this._scope = scope;
 
     scope.active = false;
     scope.actions = this._createActionHandlers();
     scope.keymap = scope.getKeymap();
-    scope.notebookData = notebookData;
+    scope.clientNotebookSession = clientNotebookSession;
   }
 
   // handle events that occur on the editor instance
@@ -69,7 +69,7 @@ class EditorCellController {
   activate () {
     var that = this;
     this._scope.$evalAsync(() => {
-      that._scope.notebookData.selectCell(that._scope.cell);
+      that._scope.clientNotebookSession.selectCell(that._scope.cell);
     });
   }
 
@@ -91,7 +91,7 @@ function editorCellDirectiveLink (
     ): void {
 
   scope.$watch(() => {
-    var activeCell = scope.notebookData.activeCell;
+    var activeCell = scope.clientNotebookSession.activeCell;
     // Avoid having the watch recursively compare all of the data within the cell by
     // returning the cell id as the watched value. If there is no active cell, any constant
     // sentinel value that is not also a valid cell id can be returned (using undefined here).
