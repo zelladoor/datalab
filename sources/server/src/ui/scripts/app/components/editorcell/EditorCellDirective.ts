@@ -51,12 +51,11 @@ class EditorCellController {
 
   static $inject = ['$scope', constants.notebookData.name];
   constructor (scope: EditorCellScope, notebookData: app.INotebookData) {
-    this._notebookData = notebookData; // FIXME: remove this if it's stored on scope
     this._scope = scope;
 
     scope.active = false;
     scope.actions = this._createActionHandlers();
-    scope.keymap = scope.getKeymap(); // FIXME: see if possible to just pass the getter function through
+    scope.keymap = scope.getKeymap();
     scope.notebookData = notebookData;
   }
 
@@ -75,11 +74,11 @@ class EditorCellController {
   }
 
   deactivate () {
-    // FIXME need to listen for blur event on the outer-most element of the editor cell
+    // TODO(bryantd): Support programmatic cell deactivation.
+    // Need to listen for blur event on the outer-most element of the editor cell
     // (the containing div) and use that event as the deactivate trigger.
     //
     // Then, invoke the nbdata.deactivateCell() method here
-    // this._notebookData.deactivateCell();
   }
 
 }
