@@ -37,20 +37,24 @@ export class EditPageController {
 
   _rootScope: ng.IRootScopeService;
   _requestId: string;
-  _session: app.ISession;
+  _sessionEventDispatcher: app.ISessionEventDispatcher;
 
   /**
    * Constructor and arguments for Angular to inject
    */
-  static $inject: string[] = ['$routeParams', '$rootScope', constants.notebookData.name, constants.session.name];
+  static $inject: string[] = [
+      '$routeParams',
+      '$rootScope',
+      constants.notebookData.name,
+      constants.sessionEventDispatcher.name];
   constructor (
       routeParams: ng.route.IRouteParamsService,
       rootScope: ng.IRootScopeService,
       notebookData: any,
-      session: app.ISession) {
+      sessionEventDispatcher: app.ISessionEventDispatcher) {
     this._rootScope = rootScope;
     this.notebookData = notebookData;
-    this._session = session;
+    this._sessionEventDispatcher = sessionEventDispatcher;
   }
 }
 
