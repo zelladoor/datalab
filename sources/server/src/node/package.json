@@ -14,5 +14,9 @@
     "mkdirp": "0.5.x"
   },
   "author": "Google DataLab Team",
-  "license": "Apache 2.0"
+  "license": "Apache 2.0",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/GoogleCloudPlatform/datalab"
+  }
 }
