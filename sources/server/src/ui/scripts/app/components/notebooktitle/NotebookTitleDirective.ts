@@ -30,10 +30,18 @@ interface NotebookTitleScope extends ng.IScope {
 }
 
 class NotebookTitleController {
+
   _scope: NotebookTitleScope;
 
   static $inject = ['$scope', '$route'];
-  constructor (scope: NotebookTitleScope, route: ng.route.IRouteService) {
+
+  /**
+   * Constructor.
+   *
+   * @param scope The directive scope.
+   * @param route Angular's $route service.
+   */
+  constructor(scope: NotebookTitleScope, route: ng.route.IRouteService) {
     this._scope = scope;
     this._scope.title = route.current.params.notebookPath;
   }
@@ -41,8 +49,10 @@ class NotebookTitleController {
 
 /**
  * Creates a directive definition.
+ *
+ * @return An Angular directive definition.
  */
-function notebookTitleDirective (): ng.IDirective {
+function notebookTitleDirective(): ng.IDirective {
   return {
     restrict: 'E',
     templateUrl: constants.scriptPaths.app + '/components/notebooktitle/notebooktitle.html',
@@ -52,4 +62,4 @@ function notebookTitleDirective (): ng.IDirective {
 }
 
 _app.registrar.directive(constants.notebookTitle.directiveName, notebookTitleDirective);
-log.debug('Registered ' + constants.notebookTitle.directiveName);
+log.debug('Registered notebook title directive.');

@@ -21,8 +21,10 @@ import _app = require('app/App');
  * e.g., "/path/to/foo.bar" => "/path/to/foo"
  *
  * Example usage in a template: {{ somePath | trimExtension }}
+ *
+ * @return A filter function for trimming file path extensions.
  */
-function trimExtension () {
+function trimExtension() {
   return (path: string) => {
     var match = /(.*)\.[^.]+$/.exec(path);
     if (!match) {

@@ -30,11 +30,21 @@ interface NotebookToolbarScope extends ng.IScope {
 }
 
 class NotebookToolbarController {
+
   _clientNotebookSession: app.IClientNotebookSession;
   _scope: NotebookToolbarScope;
 
   static $inject = ['$scope', constants.clientNotebookSession.name];
-  constructor (scope: NotebookToolbarScope, clientNotebookSession: app.IClientNotebookSession) {
+
+  /**
+   * Constructor.
+   *
+   * @param scope The directive scope.
+   * @param clientNotebookSession The client's notebook session.
+   */
+  constructor(
+      scope: NotebookToolbarScope,
+      clientNotebookSession: app.IClientNotebookSession) {
     this._scope = scope;
     this._scope.clientNotebookSession = clientNotebookSession
   }
@@ -42,8 +52,10 @@ class NotebookToolbarController {
 
 /**
  * Creates a directive definition.
+ *
+ * @return An Angular directive definition.
  */
-function notebookToolbarDirective (): ng.IDirective {
+function notebookToolbarDirective(): ng.IDirective {
   return {
     restrict: 'E',
     scope: {
