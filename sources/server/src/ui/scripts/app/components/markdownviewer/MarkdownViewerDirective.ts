@@ -37,16 +37,37 @@ class MarkdownViewerController {
   _scope: MarkdownViewerScope;
 
   static $inject: string[] = ['$scope', '$sce'];
+
+  /**
+   * Constructor.
+   *
+   * @param scope The directive scope.
+   * @param sce Angular's $sce (string contextual escaping) service.
+   */
   constructor (scope: MarkdownViewerScope, sce: ng.ISCEService) {
     this._sce = sce;
     this._scope = scope;
   }
 
+  /**
+   * Converts a given Markdown string to a trusted HTML object.
+   *
+   * @param markdown Markdown-formatted content.
+   * @return Rendered HTML content within a trusted HTML container object.
+   */
   renderMarkdownAsTrustedHtml (markdown: string) {
     return this._sce.trustAsHtml(marked(markdown))
   }
 }
 
+/**
+ * Markdown viewer directive link function.
+ *
+ * @param scope The directive scope.
+ * @param element The directive element.
+ * @param attrs The directive compile-time attributes.
+ * @param ctrl The controller instance.
+ */
 function markdownViewerDirectiveLink (
     scope: MarkdownViewerScope,
     element: ng.IAugmentedJQuery,
@@ -62,6 +83,8 @@ function markdownViewerDirectiveLink (
 
 /**
  * Creates a directive definition.
+ *
+ * @return An Angular directive definition.
  */
 function markdownViewerDirective (): ng.IDirective {
   return {
