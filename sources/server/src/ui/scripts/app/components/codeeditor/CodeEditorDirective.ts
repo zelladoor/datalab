@@ -33,22 +33,21 @@ import codeMirror = require('codeMirror');
 
 var log = logging.getLogger(constants.scopes.codeEditor);
 
-// TODO: enable dynamic language selection based upon directive attributes
+// TODO(bryantd): enable dynamic language selection based upon directive attributes.
 var codeMirrorOptions: CodeMirror.EditorConfiguration = {
+  // TODO(bryantd): add hook to enable line numbers when containing cell becomes active.
   lineNumbers: false,
   indentUnit: 4,
 
-  // Language mode requires additional assets be requested via amd-dependency
+  // Note: themes require additional css imports containing the CodeMirror syntax css rules.
+  theme: 'googley',
+
+  // Language mode requires additional assets be requested via amd-dependency.
   mode: {
     name: "python",
   },
 
-  // Themes require additional css imports
-  // TODO(bryantd): load these async, currently static-defined in index.html
-  // theme: "mdn-like",
-  theme: 'googley',
-
-  // Options below require addons to be loaded via amd-dep as well
+  // Options below require addons to be loaded via amd-dep as well.
   matchBrackets: true,
 };
 
@@ -60,13 +59,6 @@ interface CodeEditorScope extends ng.IScope {
   active?: boolean;
   getKeymap?: Function;
   getActionHandlers?: Function; // FIXME: prob rename, type
-}
-
-class CodeEditorController {
-  static $inject = ['$scope'];
-  constructor (scope: any) {
-    // FIXME: get rid of this controller if there's no logic needed here
-  }
 }
 
 /**
@@ -141,9 +133,9 @@ function codeEditorDirectiveLink (
 };
 
 /**
- * Creates a code editor directive
+ * Creates a code editor directive.
  *
- * @return a directive definition
+ * @return A directive definition.
  */
 function codeEditorDirective (): ng.IDirective {
   return {
@@ -155,7 +147,6 @@ function codeEditorDirective (): ng.IDirective {
       getActionHandlers: '&actions'
     },
     link: codeEditorDirectiveLink,
-    controller: CodeEditorController
   }
 }
 
