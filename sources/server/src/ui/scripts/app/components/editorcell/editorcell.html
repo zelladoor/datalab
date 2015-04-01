@@ -7,6 +7,8 @@
   <div class="datalab-editor-cell-edit-region col-lg-12 col-md-12 col-sm-12 col-xs-12"
       ng-show="enableEditRegion" >
     <div class="datalab-editor-cell-input row">
+
+      <!-- Cell "prompt"/indicator/identifier -->
       <div class="datalab-editor-cell-identifier datalab-editor-cell-identifier-input col-md-1">
         <!-- Cell indicator -->
         <!-- TODO(bryantd): currently displaying cell type-specific icon; update to match mocks -->
@@ -42,15 +44,20 @@
   <!-- Cell preview region -->
   <div class="datalab-editor-cell-preview-region col-lg-12 col-md-12 col-sm-12 col-xs-12"
       ng-dblclick="onPreviewRegionDoubleClick()" ng-if="enablePreviewRegion">
+
+    <!-- Show a markdown renderer if this is a Markdown cell -->
     <datalab-markdown-viewer
         ng-if="cell.type == 'markdown'"
         source="cell.source">
     </datalab-markdown-viewer>
+
+    <!-- Show a heading renderer if this is a Heading cell -->
     <datalab-heading-viewer
         ng-if="cell.type == 'heading'"
         source="cell.source"
         level="cell.metadata.level">
     </datalab-heading-viewer>
   </div>
+
 </div>
 
