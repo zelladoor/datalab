@@ -15,7 +15,7 @@
 
 
 /**
- * Renders the outputs of a cell
+ * Renders the list of outputs for a cell.
  */
 /// <reference path="../../../../../../../../externs/ts/angularjs/angular.d.ts" />
 import logging = require('app/common/Logging');
@@ -26,13 +26,15 @@ import _app = require('app/App');
 var log = logging.getLogger(constants.scopes.cellOutputViewer);
 
 /**
- * Creates a directive definition.
+ * Creates a cell output viewer directive definition.
+ *
+ * @return A directive definition.
  */
 function cellOutputViewerDirective (): ng.IDirective {
   return {
     restrict: 'E',
     scope: {
-      outputs: '=' // TODO(bryantd): possible to make this a one-way binding?
+      outputs: '='
     },
     templateUrl: constants.scriptPaths.app + '/components/celloutputviewer/celloutputviewer.html',
     replace: true,
