@@ -53,9 +53,44 @@ var codeMirrorOptions: CodeMirror.EditorConfiguration = {
  * Defines the shape of the directive scope.
  */
 interface CodeEditorScope extends ng.IScope {
+  /**
+   * The source content for the editor (i.e., the displayed text)
+   */
   source: string;
+
+  /**
+   * Boolean to indicate whether the this editor instance is currently active.
+   *
+   * A user of this component (e.g., an enclosing directive, template, controller, etc.) can
+   * programmatically give focus to the editor element by setting the scope.active attribute to
+   * true.
+   *
+   * Likewise, this also works in the reverse direction. If a user focuses the editor element,
+   * the scope.active attribute becomes true and external components that are bound to this value
+   * will be updated/notified.
+   */
   active: boolean;
+
+  /**
+   * Getter for the mapping of key commands to callbacks.
+   *
+   * The set of valid keys and key/modifier combinations is dictated by CodeMirror.
+   * For details, see: https://codemirror.net/doc/manual.html#keymaps
+   *
+   * For example:
+   * keymap = {
+   *   'Shift+Enter': <callback for Shift+Enter>
+   *   'Tab': <callback for Tab>,
+   *   // etc.
+   * }
+   */
   getKeymap: Function;
+
+  /**
+   * Getter for the mapping of editor region DOM events to callbacks.
+   *
+   * An example of a valid DOM event would be 'focus', 'mouseover', etc.
+   */
   getActionHandlers: Function;
 }
 
@@ -112,7 +147,7 @@ function codeEditorDirectiveLink(
     });
   });
 
-  // Register handlers for each CodeMirror event we're interested in exposing.
+  // Register handlers for each DOM event we're interested in exposing.
   var actions: any = scope.getActionHandlers();
   // If a focus event handler was provided, register it.
   if (actions.focus) {
