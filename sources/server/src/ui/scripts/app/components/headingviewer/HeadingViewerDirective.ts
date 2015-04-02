@@ -15,7 +15,7 @@
 
 
 /**
- * Renders string content an an HTML heading
+ * Renders string content an an HTML heading element.
  */
 /// <reference path="../../../../../../../../externs/ts/angularjs/angular.d.ts" />
 import logging = require('app/common/Logging');
@@ -26,20 +26,22 @@ import app = require('app/App');
 var log = logging.getLogger(constants.scopes.headingViewer);
 
 interface HeadingViewerScope extends ng.IScope {
-  source: string;
   // The level attribute controls the heading level (h1 vs h2 vs h3 vs etc.)
   level: number;
+  source: string;
 }
 
 /**
- * Creates a directive definition.
+ * Creates a heading viewer directive definition.
+ *
+ * @return A directive definition.
  */
 function headingViewerDirective (): ng.IDirective {
   return {
     restrict: 'E',
     scope: {
-      source: '=', // FIXME: possible to make this a one-way (read-only) binding?
       level: '='
+      source: '=',
     },
     templateUrl: constants.scriptPaths.app + '/components/headingviewer/headingviewer.html',
     replace: true
