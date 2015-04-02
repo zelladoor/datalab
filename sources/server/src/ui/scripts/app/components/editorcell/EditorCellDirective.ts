@@ -42,13 +42,12 @@ interface EditorCellScope extends ng.IScope {
   // Internally assigned scope attributes.
   actions?: app.Map<Function>;
   active?: boolean;
-  clientNotebookSession?: app.IClientNotebookSession;
   keymap?: app.Map<Function>;
+  notebook?: app.IClientNotebookSession;
 }
 
 class EditorCellController {
 
-  _clientNotebookSession: app.IClientNotebookSession;
   _scope: EditorCellScope;
 
   static $inject = ['$scope', constants.clientNotebookSession.name];
@@ -65,7 +64,7 @@ class EditorCellController {
     scope.active = false;
     scope.actions = this._createActionHandlers();
     scope.keymap = scope.getKeymap();
-    scope.clientNotebookSession = clientNotebookSession;
+    scope.notebook = clientNotebookSession;
   }
 
   /**
@@ -90,7 +89,7 @@ class EditorCellController {
       //
       // Request that this cell become the currently selected cell, which will deselect any other
       // cell that is currently selected (i.e., cell selection is mutually exclusive).
-      that._scope.clientNotebookSession.selectCell(that._scope.cell);
+      that._scope.notebook.selectCell(that._scope.cell);
     });
   }
 
@@ -129,7 +128,7 @@ function editorCellDirectiveLink(
   // Watch the active cell (session global) for changes. If this cell becomes the currently
   // assigned active cell, then propagate this "active" status to the directive scope.
   scope.$watch(() => {
-    var activeCell = scope.clientNotebookSession.activeCell;
+    var activeCell = scope.notebook.activeCell;
     // Avoid having the watch recursively compare all of the data within the cell by
     // returning the cell id as the watched value. If there is no active cell, any constant
     // sentinel value that is not also a valid cell id can be returned (using undefined here).

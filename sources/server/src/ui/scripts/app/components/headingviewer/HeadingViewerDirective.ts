@@ -40,8 +40,8 @@ function headingViewerDirective (): ng.IDirective {
   return {
     restrict: 'E',
     scope: {
-      level: '='
-      source: '=',
+      level: '=',
+      source: '='
     },
     templateUrl: constants.scriptPaths.app + '/components/headingviewer/headingviewer.html',
     replace: true

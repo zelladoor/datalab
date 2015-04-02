@@ -135,4 +135,3 @@ export var scopes = {
   sessionConnection: sessionConnection.name,
   sessionEventDispatcher: sessionEventDispatcher.name
 };
-
