@@ -37,7 +37,15 @@ class CodeCellController implements app.ICellController {
   showPreviewRegion: boolean;
 
   static $inject: string[] = ['$scope', '$rootScope', constants.clientNotebookSession.name];
-  constructor (
+
+  /**
+   * Constructor.
+   *
+   * @param scope The directive's scope.
+   * @param rootScope The root scope for the page.
+   * @param clientNotebookSession Client's notebook session.
+   */
+  constructor(
       scope: app.CellScope,
       rootScope: ng.IRootScopeService,
       clientNotebookSession: app.IClientNotebookSession) {
@@ -46,36 +54,46 @@ class CodeCellController implements app.ICellController {
     this._rootScope = rootScope;
     this._scope = scope;
 
-    this.showPreviewRegion = false; // always-off for code cell
-    this.showEditRegion = true; // always-on for code cell
+    // Preview region is never shown for code cells.
+    this.showPreviewRegion = false;
+    // Edit region is always shown for code cells.
+    this.showEditRegion = true;
 
     scope.keymap = this._createKeymap();
     scope.ctrl = this;
   }
 
-  switchToEditMode () { /* noop: code cell always in edit mode */ }
+  /**
+   * Switches the cell to edit mode.
+   */
+  switchToEditMode() { /* noop: code cell always in edit mode */ }
 
-  _createKeymap () {
+  /**
+   * Creates a map of key stroke to callback for handling key stroke events on the code editor.
+   *
+   * @return Map of editor key stroke to callback.
+   */
+  _createKeymap() {
     return {
       'Shift-Enter': this._handleExecute.bind(this)
     };
   }
 
   /**
-   * Requests that the notebook evaluate the given cell (update + execute)
+   * Requests that the notebook evaluate the given cell.
    */
-  _handleExecute () {
-    // TODO(bryantd): apply a subset of the updates below as "predictive modifications" (e.g.,
-    // clear the cell output immediately)
-    // TODO(bryantd): apply a visual treatment to show that the cell is in an "executing" state
+  _handleExecute() {
+    // TODO(bryantd): apply a visual treatment to show that the cell is in an "executing" state.
     this._clientNotebookSession.evaluateCell(this._scope.cell, this._scope.worksheetId);
   }
 }
 
 /**
- * Creates a directive definition.
+ * Creates a code cell directive definition.
+ *
+ * @return A directive definition.
  */
-function codeCellDirective (): ng.IDirective {
+function codeCellDirective(): ng.IDirective {
   return {
     restrict: 'E',
     scope: {
