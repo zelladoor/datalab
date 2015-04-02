@@ -14,7 +14,15 @@
 
 
 /**
- * Directive controller for document-based cells (markdown and heading)
+ * Directive controller for document-based cells (markdown and heading).
+ *
+ * A document cell has two modes: view and edit.
+ *
+ * In "view" mode:
+ * - Double-clicking the cell switches the cell to edit mode
+ *
+ * In "edit" mode:
+ * - "Executing" the cell (shift-enter currently) switches the cell to view mode
  */
 /// <reference path="../../../../../../../../externs/ts/angularjs/angular.d.ts" />
 /// <amd-dependency path="app/components/sessions/ClientNotebookSession" />
@@ -31,7 +39,15 @@ export class DocumentCellController implements app.ICellController {
   showPreviewRegion: boolean;
 
   static $inject: string[] = ['$scope', '$rootScope', constants.clientNotebookSession.name];
-  constructor (
+
+  /**
+   * Constructor.
+   *
+   * @param scope The directive scope.
+   * @param rootScope The root scope for the page.
+   * @param clientNotebookSession The client's notebook session.
+   */
+  constructor(
       scope: app.CellScope,
       rootScope: ng.IRootScopeService,
       clientNotebookSession: app.IClientNotebookSession) {
@@ -43,34 +59,45 @@ export class DocumentCellController implements app.ICellController {
     scope.keymap = this._createKeymap();
     scope.ctrl = this;
 
-    this.showPreviewRegion = true; // always-on for heading cell
-    this.showEditRegion = false; // hide the edit region until the cell is put in edit mode
+    // Show the rendered preview of the heading cell by default.
+    this.showPreviewRegion = true;
+    // Hide the edit region until the cell is put in edit mode.
+    this.showEditRegion = false;
   }
 
-  switchToEditMode () {
+  /**
+   * Switches the cell to edit mode.
+   */
+  switchToEditMode() {
     var that = this;
     this._rootScope.$evalAsync(() => {
       that.showEditRegion = true;
     });
   }
 
-  switchToViewMode () {
+  /**
+   * Switches the cell to view-only mode (no editor shown).
+   */
+  switchToViewMode() {
     var that = this;
     this._rootScope.$evalAsync(() => {
       that.showEditRegion = false;
     });
   }
 
-  _createKeymap () {
+  /**
+   * Creates a map of key stroke to callback for handling key stroke events on the code editor.
+   */
+  _createKeymap() {
     return {
       'Shift-Enter': this._handleFinishedEditing.bind(this)
     }
   }
 
   /**
-   * Switches the cell to view mode and issues an update for the modified cell content
+   * Switches the cell to view mode and issues an update for the modified cell content.
    */
-  _handleFinishedEditing () {
+  _handleFinishedEditing() {
     this._clientNotebookSession.updateCell(this._scope.cell, this._scope.worksheetId);
     this.switchToViewMode();
   }

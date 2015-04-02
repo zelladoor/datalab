@@ -14,15 +14,7 @@
 
 
 /**
- * Directive for creating a single markdown cell
- *
- * A Markdown cell has two modes: view and edit
- *
- * In "view" mode:
- * - Double-clicking the cell switches the cell to edit mode
- *
- * In "edit" mode:
- * - "Executing" the cell (shift-enter currently) switches the cell to view mode
+ * Directive for creating a single markdown cell.
  */
 /// <reference path="../../../../../../../../externs/ts/angularjs/angular.d.ts" />
 /// <amd-dependency path="app/components/editorcell/EditorCellDirective" />
@@ -36,7 +28,9 @@ import _app = require('app/App');
 var log = logging.getLogger(constants.scopes.markdownCell);
 
 /**
- * Creates a directive definition.
+ * Creates a markdown cell directive definition.
+ *
+ * @return A directive definition.
  */
 function markdownCellDirective (): ng.IDirective {
   return {
