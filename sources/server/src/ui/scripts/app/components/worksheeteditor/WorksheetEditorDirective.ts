@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Google Inc. All rights reserved.
+ * Copyright 2015 Google Inc. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  * in compliance with the License. You may obtain a copy of the License at
@@ -14,23 +14,28 @@
 
 
 /**
- * Directive for rendering a single notebook
+ * Directive for rendering a single worksheet.
  */
 /// <reference path="../../../../../../../../externs/ts/angularjs/angular.d.ts" />
 /// <amd-dependency path="app/components/codecell/CodeCellDirective" />
 /// <amd-dependency path="app/components/markdowncell/MarkdownCellDirective" />
 /// <amd-dependency path="app/components/headingcell/HeadingCellDirective" />
-import logging = require('app/common/Logging');
 import constants = require('app/common/Constants');
+import logging = require('app/common/Logging');
 import _app = require('app/App');
 
 
 var log = logging.getLogger(constants.scopes.worksheetEditor);
 
 interface WorksheetEditorScope extends ng.IScope {
-  worksheet?: app.notebooks.Worksheet;
+  worksheet: app.notebooks.Worksheet;
 }
 
+/**
+ * Creates a worksheet editor directive definition.
+ *
+ * @return A directive definition.
+ */
 function worksheetEditorDirective (): ng.IDirective {
   return {
     restrict: 'E',
