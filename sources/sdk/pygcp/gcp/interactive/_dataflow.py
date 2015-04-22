@@ -253,7 +253,7 @@ def dataflow(line, cell=None):
   # for describing the selected graph node, and a <div> to contain a table
   # rendering of the selected node's output.
   markup = """
-    <svg class="df-pipeline"><g /><svg>
+    <svg class="df-pipeline"><g /></svg>
     <label class="df-title"></label>
     <div class="df-data"></div>
     """

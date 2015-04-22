@@ -32,6 +32,7 @@ setup(
     packages=['gcp',
               'gcp._util',
               'gcp.bigquery',
+              'gcp.dataflow',
               'gcp.storage',
               'gcp.interactive'
              ],
