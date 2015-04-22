@@ -16,3 +16,4 @@
 
 import gcp.interactive._bigquery
 import gcp.interactive._chart
+import gcp.interactive._dataflow
