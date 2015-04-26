@@ -27,8 +27,10 @@ from cloud.dataflow.transforms.window import BoundedWindow
 from gcp.dataflow import Catalog
 
 from ._html import Html as _Html
+import argparse as _argparse
 import inspect as _inspect
 import json as _json
+import sys as _sys
 
 try:
   import IPython as _ipython
@@ -40,11 +42,21 @@ except ImportError:
 class Dataflow(object):
 
   def __init__(self, ns):
-    self._init_pipeline, args = Dataflow._find_function(ns, 'init_pipeline', 2,
-                                                        '(pipeline[, catalog])')
-    if args == 2:
-      self._init_catalog, _ = Dataflow._find_function(ns, 'init_catalog', 1, '(catalog)')
+    self._init_pipeline, args = Dataflow._find_function(ns, 'init_pipeline', 3,
+                                                        '(pipeline[, catalog[, options]])')
+    self._catalog = None
+    self._options = None
+
+    if args > 1:
+      # init_pipeline takes in a catalog object; look for init_catalog method
+      self._init_catalog, _ = Dataflow._find_function(ns, 'init_catalog', 2, '(catalog[, options])')
       self._catalog = LocalCatalog(ns)
+    if args > 2:
+      # init_pipeline takes in an options object; look for init_options method
+      init_options, _ = Dataflow._find_function(ns, 'init_options', 1, '(options)')
+
+      self._options_parser = DataflowOptionsParser()
+      init_options(self._options_parser)
 
   @property
   def data(self):
@@ -56,15 +68,26 @@ class Dataflow(object):
     graph_builder = Dataflow.GraphBuilder()
     return graph_builder.visit(self._pipeline)
 
-  def run(self):
+  def run(self, args):
     self._runner = DirectPipelineRunner()
     self._pipeline = Pipeline(self._runner)
 
+    options = None
+    if self._options_parser is not None:
+      options = self._options_parser._parse(args)
+
     if self._catalog is None:
-      self._init_pipeline(self._pipeline)
+      if options is None:
+        self._init_pipeline(self._pipeline)
+      else:
+        self._init_pipeline(self._pipeline, options)
     else:
-      self._init_catalog(self._catalog)
-      self._init_pipeline(self._pipeline, self._catalog)
+      if options is None:
+        self._init_catalog(self._catalog)
+        self._init_pipeline(self._pipeline, self._catalog)
+      else:
+        self._init_catalog(self._catalog, options)
+        self._init_pipeline(self._pipeline, self._catalog, options)
 
     self._pipeline.run()
 
@@ -228,6 +251,7 @@ class LocalCatalog(Catalog):
       def Write(self, o):
         self._data.append(o)
 
+
 class DataflowJSONEncoder(_json.JSONEncoder):
 
   def default(self, obj):
@@ -237,14 +261,38 @@ class DataflowJSONEncoder(_json.JSONEncoder):
       return super(DataflowJSONEncoder, self).default(obj)
 
 
+class DataflowOptionsParser(_argparse.ArgumentParser):
+
+  def __init__(self):
+    super(DataflowOptionsParser, self).__init__(add_help=False, prog='%dataflow run')
+
+  def add_option(self, *args, **kwargs):
+    self.add_argument(*args, **kwargs)
+
+  def error(self, message):
+    _sys.stderr.write('%s\n%s' % (message, self.format_usage()))
+    raise Exception(message)
+
+  def _parse(self, args):
+    return self.parse_args(args)
+
 
 @_magic.register_line_cell_magic
 def dataflow(line, cell=None):
   ipy = _ipython.get_ipython()
   ns = ipy.user_ns
 
+  args = filter(None, line.split(' '))
+  if args[0] != 'run':
+    return
+
+  args = args[1:]
+
   dataflow = Dataflow(ns)
-  dataflow.run()
+  try:
+    dataflow.run(args)
+  except Exception:
+    return None
 
   graph = _json.dumps(dataflow.graph)
   data = _json.dumps(dataflow.data, cls=DataflowJSONEncoder)
