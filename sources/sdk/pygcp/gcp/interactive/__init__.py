@@ -27,6 +27,7 @@ import gcp.interactive._bigquery
 import gcp.interactive._chart
 import gcp.interactive._dataflow
 import gcp.interactive._modules
+import gcp.interactive._tests
 
 
 # Inject our user agent on all requests by monkey-patching a wrapper around httplib2.Http.request.
