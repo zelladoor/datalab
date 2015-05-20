@@ -14,11 +14,15 @@
 
 """Google Cloud Platform library - Dataflow IPython Functionality."""
 
+import inspect as _inspect
 import json as _json
-import google.cloud.dataflow as df
+import sys as _sys
 import IPython as _ipython
 import IPython.core.magic as _magic
+from ._commands import CommandParser as _CommandParser
 from ._html import Html as _Html
+
+import gcp.dataflow as df
 
 
 class DataflowDataCollector(df.pipeline.PipelineVisitor):
@@ -39,6 +43,7 @@ class DataflowDataCollector(df.pipeline.PipelineVisitor):
   def visit(self, pipeline):
     pipeline.visit(self)
     return self._data
+
 
 class DataflowGraphBuilder(df.pipeline.PipelineVisitor):
 
@@ -97,6 +102,81 @@ class DataflowGraphBuilder(df.pipeline.PipelineVisitor):
     pipeline.visit(self)
     return self._nodes
 
+
+class DataflowLocalCatalog(object):
+
+  def __init__(self, catalog, ns, args):
+    self.sources = dict()
+    self.sinks = dict()
+
+    if catalog is not None:
+      for name in catalog.sources.names:
+        source = catalog.sources.get(name)
+        if callable(source):
+          source = source(args)
+        self._add_source(name, source, ns)
+
+      for name in catalog.sinks.names:
+        self._add_sink(name, ns)
+
+  def _add_sink(self, name, ns):
+    data = ns[name] = list()
+    self.sinks[name] = DataflowLocalCatalog.ListSink(data)
+
+  def _add_source(self, name, source, ns):
+    data = ns.get(name, None)
+    if data is not None:
+      if type(data) != list:
+        raise TypeError('"%s" does not represent a list' % name)
+      source = DataflowLocalCatalog.ListSource(data)
+
+    self.sources[name] = source
+
+  class ListSource(df.io.iobase.Source):
+
+    def __init__(self, data):
+      self._data = data
+
+    def reader(self):
+      return DataflowLocalCatalog.ListSource.Reader(self._data)
+
+    class Reader(df.io.iobase.SourceReader):
+
+      def __init__(self, data):
+        self._data = data
+
+      def __enter__(self):
+        return self
+
+      def __exit__(self, exception_type, exception_value, traceback):
+        pass
+
+      def __iter__(self):
+        return self._data.__iter__()
+
+  class ListSink(df.io.iobase.Sink):
+
+    def __init__(self, data):
+      self._data = data
+
+    def writer(self):
+      return DataflowLocalCatalog.ListSink.Writer(self._data)
+
+    class Writer(df.io.iobase.SinkWriter):
+
+      def __init__(self, data):
+        self._data = data
+
+      def __enter__(self):
+        return self
+
+      def __exit__(self, exception_type, exception_value, traceback):
+        pass
+
+      def Write(self, o):
+        self._data.append(o)
+
+
 class DataflowJSONEncoder(_json.JSONEncoder):
 
   def default(self, obj):
@@ -106,9 +186,69 @@ class DataflowJSONEncoder(_json.JSONEncoder):
       return super(DataflowJSONEncoder, self).default(obj)
 
 
-def _repr_html_pipeline(pipeline):
-  graph = _json.dumps(DataflowGraphBuilder().visit(pipeline))
-  data = _json.dumps(DataflowDataCollector().visit(pipeline), cls=DataflowJSONEncoder)
+class Dataflow(object):
+
+  def __init__(self, dataflow_method, ns):
+    self._create_dataflow = dataflow_method
+    self._ns = ns
+
+    self._catalog = dataflow_method.catalog if hasattr(dataflow_method, 'catalog') else None
+    self._args = dataflow_method.args if hasattr(dataflow_method, 'args') else None
+
+  @staticmethod
+  def from_namespace(ns):
+    module = ns.get('dataflow', None)
+    if module is None:
+      raise Exception('A module named "dataflow" was not found in this notebook.')
+
+    dataflow_method = module.__dict__.get('dataflow', None)
+    if ((dataflow_method is None) or not callable(dataflow_method) or
+        (len(_inspect.getargspec(dataflow_method)[0]) != 3)):
+      raise Exception('The dataflow module defined does not contain a ' +
+                      '"dataflow(pipeline, catalog, args)" method.')
+
+    return Dataflow(dataflow_method, ns)
+
+  def execute(self, command_line):
+    parser = _CommandParser.create('dataflow')
+
+    run_parser = parser.subcommand('run', self._run, 'runs the dataflow')
+    run_parser.add_argument('--execution', choices=['local', 'remote'], default='local',
+                            help='whether the dataflow should be executed locally or remotely')
+    if self._args is not None:
+      for args, kwargs in self._args:
+        run_parser.add_argument(*args, **kwargs)
+
+    args = parser.parse(command_line)
+    if args is not None:
+      return args.func(args)
+
+  def _run(self, args):
+    args = vars(args)
+
+    runner = df.runners.DirectPipelineRunner()
+    pipeline = df.Pipeline(runner)
+
+    self._create_dataflow(pipeline,
+                          DataflowLocalCatalog(self._catalog, self._ns, args),
+                          args)
+    pipeline.run()
+    return pipeline
+
+
+@_magic.register_line_cell_magic
+def dataflow(line, cell=None):
+  try:
+    dataflow = Dataflow.from_namespace(_ipython.get_ipython().user_ns)
+    return dataflow.execute(line)
+  except Exception as e:
+    _sys.stderr.write(e.message)
+    return None
+
+
+def _pipeline_repr_html_(self):
+  graph = _json.dumps(DataflowGraphBuilder().visit(self))
+  data = _json.dumps(DataflowDataCollector().visit(self), cls=DataflowJSONEncoder)
 
   # Markup consists of an <svg> element for graph rendering, a <label> element
   # for describing the selected graph node, and a <div> to contain a table
@@ -126,12 +266,8 @@ def _repr_html_pipeline(pipeline):
 
   return html._repr_html_()
 
-def _register_html_formatters():
-  ipy = _ipython.get_ipython()
-  html_formatter = ipy.display_formatter.formatters['text/html']
+def _pipeline_repr_str_(self):
+  return ''
 
-  html_formatter.for_type_by_name('google.cloud.dataflow.pipeline', 'Pipeline',
-                                  _repr_html_pipeline)
-
-
-_register_html_formatters()
+df.Pipeline._repr_html_ = _pipeline_repr_html_
+df.Pipeline._repr_str_ = _pipeline_repr_str_
