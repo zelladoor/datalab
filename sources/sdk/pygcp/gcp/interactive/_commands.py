@@ -62,6 +62,7 @@ class CommandParser(_argparse.ArgumentParser):
       self._subcommands = self.add_subparsers(help='commands')
 
     parser = self._subcommands.add_parser(name, help=help)
-    parser.set_defaults(func=fn)
+    if fn is not None:
+      parser.set_defaults(func=fn)
 
     return parser
