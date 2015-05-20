@@ -48,17 +48,20 @@ class CommandParser(_argparse.ArgumentParser):
     """
     args = filter(None, line.split())
     try:
-      return vars(self.parse_args(args))
+      return self.parse_args(args)
     except Exception as e:
       args = None
       if e.message:
         print e.message
       return None
 
-  def subcommand(self, name, help):
+  def subcommand(self, name, fn, help):
     """Creates a parser for a sub-command.
     """
     if self._subcommands is None:
       self._subcommands = self.add_subparsers(help='commands')
-    return self._subcommands.add_parser(name, help=help)
 
+    parser = self._subcommands.add_parser(name, help=help)
+    parser.set_defaults(func=fn)
+
+    return parser

@@ -34,7 +34,7 @@ def pymodule(line, cell=None):
       print 'The code for the module must be included'
       return
 
-    name = str(args['name'])
+    name = str(args.name)
     module = _create_python_module(name, cell)
 
     # Automatically import the newly created module by assigning it to a variable
@@ -53,4 +53,3 @@ def _create_python_module(name, code):
   # Hold on to the module if the code executed successfully
   _sys.modules[name] = module
   return module
-
