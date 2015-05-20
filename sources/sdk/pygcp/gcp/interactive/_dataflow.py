@@ -105,7 +105,7 @@ class DataflowGraphBuilder(df.pipeline.PipelineVisitor):
 
 class DataflowLocalCatalog(object):
 
-  def __init__(self, catalog, ns, args):
+  def __init__(self, catalog=None, ns=None, args=None):
     self.sources = dict()
     self.sinks = dict()
 
@@ -114,16 +114,16 @@ class DataflowLocalCatalog(object):
         source = catalog.sources.get(name)
         if callable(source):
           source = source(args)
-        self._add_source(name, source, ns)
+        self.add_source(name, source, ns)
 
       for name in catalog.sinks.names:
-        self._add_sink(name, ns)
+        self.add_sink(name, ns)
 
-  def _add_sink(self, name, ns):
+  def add_sink(self, name, ns):
     data = ns[name] = list()
     self.sinks[name] = DataflowLocalCatalog.ListSink(data)
 
-  def _add_source(self, name, source, ns):
+  def add_source(self, name, source, ns):
     data = ns.get(name, None)
     if data is not None:
       if type(data) != list:
@@ -186,7 +186,7 @@ class DataflowJSONEncoder(_json.JSONEncoder):
       return super(DataflowJSONEncoder, self).default(obj)
 
 
-class Dataflow(object):
+class DataflowExecutor(object):
 
   def __init__(self, dataflow_method, ns):
     self._create_dataflow = dataflow_method
@@ -194,20 +194,6 @@ class Dataflow(object):
 
     self._catalog = dataflow_method.catalog if hasattr(dataflow_method, 'catalog') else None
     self._args = dataflow_method.args if hasattr(dataflow_method, 'args') else None
-
-  @staticmethod
-  def from_namespace(ns):
-    module = ns.get('dataflow', None)
-    if module is None:
-      raise Exception('A module named "dataflow" was not found in this notebook.')
-
-    dataflow_method = module.__dict__.get('dataflow', None)
-    if ((dataflow_method is None) or not callable(dataflow_method) or
-        (len(_inspect.getargspec(dataflow_method)[0]) != 3)):
-      raise Exception('The dataflow module defined does not contain a ' +
-                      '"dataflow(pipeline, catalog, args)" method.')
-
-    return Dataflow(dataflow_method, ns)
 
   def execute(self, command_line):
     parser = _CommandParser.create('dataflow')
@@ -223,6 +209,22 @@ class Dataflow(object):
     if args is not None:
       return args.func(args)
 
+  @staticmethod
+  def from_namespace(ns):
+    module = ns.get('dataflow', None)
+    if module is None:
+      raise Exception('A module named "dataflow" was not found in this notebook.')
+
+    dataflow_method = module.__dict__.get('dataflow', None)
+    if dataflow_method is None:
+      dataflow_method = module.__dict__.get('main', None)
+    if ((dataflow_method is None) or not callable(dataflow_method) or
+        (len(_inspect.getargspec(dataflow_method)[0]) != 3)):
+      raise Exception('The dataflow module defined does not contain a ' +
+                      '"dataflow(pipeline, catalog, args)" method.')
+
+    return DataflowExecutor(dataflow_method, ns)
+
   def _run(self, args):
     args = vars(args)
 
@@ -236,11 +238,74 @@ class Dataflow(object):
     return pipeline
 
 
-@_magic.register_line_cell_magic
-def dataflow(line, cell=None):
+class PTransformExecutor(object):
+
+  def __init__(self, cls, ns):
+    self._cls = cls
+    self._ns = ns
+
+  def execute(self, input_name, output_name):
+    catalog = DataflowLocalCatalog()
+    catalog.add_source(input_name, None, self._ns)
+    if output_name is not None:
+      catalog.add_sink(output_name, self._ns)
+
+    runner = df.runners.DirectPipelineRunner()
+    pipeline = df.Pipeline(runner)
+
+    input_collection = pipeline.read('read', catalog.sources[input_name])
+    output_collection = input_collection | self._cls(self._cls.__name__)
+    if output_name is not None:
+      output_collection.write('write', catalog.sinks[output_name])
+
+    pipeline.run()
+    return pipeline
+
+  @staticmethod
+  def from_namespace(ns, name):
+    module = ns.get('dataflow', None)
+    if module is None:
+      raise Exception('A module named "dataflow" was not found in this notebook.')
+
+    transform_class = module.__dict__.get(name, None)
+    if (transform_class is None) or type(transform_class) != type:
+      raise Exception('The dataflow module does not contain a class named "%s"' % name)
+    if not issubclass(transform_class, df.PTransform):
+      raise Exception('The class named "%s" does not inherit from PTransform.')
+
+    return PTransformExecutor(transform_class, ns)
+
+
+@_magic.register_line_magic
+def dataflow(line):
   try:
-    dataflow = Dataflow.from_namespace(_ipython.get_ipython().user_ns)
-    return dataflow.execute(line)
+    dataflow_executor = DataflowExecutor.from_namespace(_ipython.get_ipython().user_ns)
+    return dataflow_executor.execute(line)
+  except Exception as e:
+    _sys.stderr.write(e.message)
+    return None
+
+
+@_magic.register_line_magic
+def ptransform(line):
+  parser = _CommandParser.create('ptransform')
+
+  run_parser = parser.subcommand('run', None, 'runs the specified PTransform')
+  run_parser.add_argument('--name', required=True, metavar='class',
+                          help='the name of the PTransform class to run')
+  run_parser.add_argument('--input', required=True, metavar='variable',
+                          help='the name of the variable containing the input list')
+  run_parser.add_argument('--output', metavar='variable',
+                          help='the name of the variable to create for the output list')
+
+  args = parser.parse(line)
+  if args is None:
+    return
+
+  try:
+    transform_executor = PTransformExecutor.from_namespace(_ipython.get_ipython().user_ns,
+                                                           args.name)
+    return transform_executor.execute(args.input, args.output)
   except Exception as e:
     _sys.stderr.write(e.message)
     return None
@@ -270,4 +335,5 @@ def _pipeline_repr_str_(self):
   return ''
 
 df.Pipeline._repr_html_ = _pipeline_repr_html_
-df.Pipeline._repr_str_ = _pipeline_repr_str_
+df.Pipeline.__repr__ = _pipeline_repr_str_
+df.Pipeline.__str__ = _pipeline_repr_str_
