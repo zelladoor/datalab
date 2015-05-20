@@ -21,97 +21,81 @@ import IPython.core.magic as _magic
 from ._html import Html as _Html
 
 
-class Dataflow(object):
+class DataflowDataCollector(df.pipeline.PipelineVisitor):
 
-  def __init__(self, pipeline):
-    self._pipeline = pipeline
+  def __init__(self):
+    self._data = dict()
 
-  @property
-  def data(self):
-    data_collector = Dataflow.DataCollector()
-    return data_collector.visit(self._pipeline)
-
-  @property
-  def graph(self):
-    graph_builder = Dataflow.GraphBuilder()
-    return graph_builder.visit(self._pipeline)
-
-  class DataCollector(df.pipeline.PipelineVisitor):
-
-    def __init__(self):
-      self._data = dict()
-
-    def visit_value(self, value, producer_node):
-      if type(value) == df.pvalue.PCollection:
-        items = list(value.get())
-        collection = {
-          'count': len(items),
-          'data': items[:25]
-        }
-
-        self._data[producer_node.full_label] = collection
-
-    def visit(self, pipeline):
-      pipeline.visit(self)
-      return self._data
-
-
-  class GraphBuilder(df.pipeline.PipelineVisitor):
-
-    def __init__(self):
-      self._nodes = list()
-      self._node_stack = list()
-      self._node_map = dict()
-
-    def add_node(self, transform_node):
-      label = transform_node.full_label
-      name = label
-
-      slash_index = name.rfind('/')
-      if slash_index > 0:
-        name = name[slash_index + 1:]
-
-      graph_node = {
-        'id': label,
-        'name': name,
-        'nodes': [],
-        'edges': []
+  def visit_value(self, value, producer_node):
+    if type(value) == df.pvalue.PCollection:
+      items = list(value.get())
+      collection = {
+        'count': len(items),
+        'data': items[:25]
       }
 
-      self._node_map[label] = graph_node
+      self._data[producer_node.full_label] = collection
 
-      if len(self._node_stack) == 0:
-        self._nodes.append(graph_node)
-      else:
-        self._node_stack[-1].get('nodes').append(graph_node)
+  def visit(self, pipeline):
+    pipeline.visit(self)
+    return self._data
 
-      for input_value in transform_node.inputs:
-        parent_node = self._node_map[input_value.producer.full_label]
-        parent_node.get('edges').append(label)
+class DataflowGraphBuilder(df.pipeline.PipelineVisitor):
 
-      return graph_node
+  def __init__(self):
+    self._nodes = list()
+    self._node_stack = list()
+    self._node_map = dict()
 
-    def enter_composite_transform(self, transform_node):
-      if len(transform_node.full_label) == 0:
-        # Ignore the root node representing the pipeline itself
-        return
+  def add_node(self, transform_node):
+    label = transform_node.full_label
+    name = label
 
-      graph_node = self.add_node(transform_node)
-      self._node_stack.append(graph_node)
+    slash_index = name.rfind('/')
+    if slash_index > 0:
+      name = name[slash_index + 1:]
 
-    def leave_composite_transform(self, transform_node):
-      if len(transform_node.full_label) == 0:
-        # Ignore the root node representing the pipeline itself
-        return
+    graph_node = {
+      'id': label,
+      'name': name,
+      'nodes': [],
+      'edges': []
+    }
 
-      self._node_stack.pop()
+    self._node_map[label] = graph_node
 
-    def visit_transform(self, transform_node):
-      self.add_node(transform_node)
+    if len(self._node_stack) == 0:
+      self._nodes.append(graph_node)
+    else:
+      self._node_stack[-1].get('nodes').append(graph_node)
 
-    def visit(self, pipeline):
-      pipeline.visit(self)
-      return self._nodes
+    for input_value in transform_node.inputs:
+      parent_node = self._node_map[input_value.producer.full_label]
+      parent_node.get('edges').append(label)
+
+    return graph_node
+
+  def enter_composite_transform(self, transform_node):
+    if len(transform_node.full_label) == 0:
+      # Ignore the root node representing the pipeline itself
+      return
+
+    graph_node = self.add_node(transform_node)
+    self._node_stack.append(graph_node)
+
+  def leave_composite_transform(self, transform_node):
+    if len(transform_node.full_label) == 0:
+      # Ignore the root node representing the pipeline itself
+      return
+
+    self._node_stack.pop()
+
+  def visit_transform(self, transform_node):
+    self.add_node(transform_node)
+
+  def visit(self, pipeline):
+    pipeline.visit(self)
+    return self._nodes
 
 class DataflowJSONEncoder(_json.JSONEncoder):
 
@@ -123,9 +107,8 @@ class DataflowJSONEncoder(_json.JSONEncoder):
 
 
 def _repr_html_pipeline(pipeline):
-  dataflow = Dataflow(pipeline)
-  graph = _json.dumps(dataflow.graph)
-  data = _json.dumps(dataflow.data, cls=DataflowJSONEncoder)
+  graph = _json.dumps(DataflowGraphBuilder().visit(pipeline))
+  data = _json.dumps(DataflowDataCollector().visit(pipeline), cls=DataflowJSONEncoder)
 
   # Markup consists of an <svg> element for graph rendering, a <label> element
   # for describing the selected graph node, and a <div> to contain a table
