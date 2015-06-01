@@ -665,11 +665,11 @@ class TestCases(unittest.TestCase):
     return pandas.DataFrame(data)
 
   def _create_inferred_schema(self, extra_field=None):
-    schema= [
+    schema= gcp.bigquery._Schema([
       {'name': 'some', 'type': 'INTEGER'},
       {'name': 'column', 'type': 'STRING'},
       {'name': 'headers', 'type': 'FLOAT'},
-    ]
+    ])
     if extra_field:
       schema.append({'name': extra_field, 'type': 'INTEGER'})
     return schema

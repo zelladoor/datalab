@@ -23,6 +23,8 @@ import time
 import uuid
 
 from gcp._util import Iterator as _Iterator
+from ._constraint import BinaryConstraint as _BinaryConstraint
+from ._constraint import Constraint as _Constraint
 from ._job import Job as _Job
 from ._parser import Parser as _Parser
 from ._utils import parse_table_name as _parse_table_name
@@ -31,7 +33,7 @@ from ._utils import parse_table_name as _parse_table_name
 # Query.execute().results -> Table and Table.sample() -> Query
 
 
-class Schema(list):
+class Schema(object):
   """Represents the schema of a BigQuery table.
   """
 
@@ -79,6 +81,35 @@ class Schema(list):
         return self.mode
       if item == 'description':
         return self.description
+
+    def _bin_constraint(self, name, format, other):
+      if isinstance(other, basestring):
+        other = json.dumps(other)
+      return _BinaryConstraint(self, name, other, format % (self, other))
+
+    def __len__(self):
+      return _Constraint(self, 'len', 'LENGTH(%s)' % self.name)
+
+    def __and__(self, other):
+      return self._bin_constraint('and', '%s AND %s', other)
+
+    def __gt__(self, other):
+      return self._bin_constraint('gt', '%s > %s', other)
+
+    def __ge__(self, other):
+      return self._bin_constraint('ge', '%s >= %s', other)
+
+    def __lt__(self, other):
+      return self._bin_constraint('lt', '%s < %s', other)
+
+    def __le__(self, other):
+      return self._bin_constraint('le', '%s <= %s', other)
+
+    def __eq__(self, other):
+      return self._bin_constraint('eq', '%s = %s', other)
+
+    def __ne__(self, other):
+      return self._bin_constraint('ne', '%s != %s', other)
 
   @staticmethod
   def _from_dataframe(dataframe, default_type='STRING'):
@@ -160,7 +191,8 @@ class Schema(list):
           provided. 'mode' can be 'NULLABLE', 'REQUIRED' or 'REPEATED'. For the allowed types, see:
           https://cloud.google.com/bigquery/preparing-data-for-bigquery#datatypes
     """
-    list.__init__(self)
+    super(Schema, self).__init__()
+    self._fields = []
     self._map = {}
     if isinstance(data, pd.DataFrame):
       data = Schema._from_dataframe(data)
@@ -178,7 +210,10 @@ class Schema(list):
     """
     if isinstance(key, basestring):
       return self._map.get(key, None)
-    return list.__getitem__(self, key)
+    return self._fields[int(key)]
+
+  def append(self, field):
+    self._fields.append(field)
 
   def _add_field(self, name, data_type, mode='NULLABLE', description=''):
     field = Schema._Field(name, data_type, mode, description)
@@ -295,6 +330,9 @@ class Table(object):
     self._info = None
     self._cached_page = None
     self._cached_page_index = 0
+    self._schema = None
+    #if self.exists():
+    #  self.schema
 
   @property
   def full_name(self):
@@ -355,7 +393,7 @@ class Table(object):
     except Exception as e:
       # TODO(gram): May want to check the error reasons here and if it is not
       # because the file didn't exist, return an error.
-      pass
+      self._schema = None
 
   def create(self, schema, overwrite=False):
     """ Create the table with the specified schema.
@@ -377,6 +415,7 @@ class Table(object):
       schema = schema._bq_schema
     response = self._api.tables_insert(self._name_parts, schema=schema)
     if 'selfLink' in response:
+      self._schema = schema  # TODO(gram): Do we need to set the field attributes here?
       return self
     raise Exception("Table %s could not be created as it already exists" % self.full_name)
 
@@ -787,11 +826,15 @@ class Table(object):
     Raises
       Exception if the request could not be executed or the response was malformed.
     """
-    try:
-      self._load_info()
-      return Schema(definition=self._info['schema']['fields'])
-    except KeyError:
-      raise Exception('Unexpected table response.')
+    if not self._schema:
+      try:
+        self._load_info()
+        self._schema = Schema(definition=self._info['schema']['fields'])
+        for field in self._schema:
+          setattr(self, field.name, field)
+      except KeyError:
+        raise Exception('Unexpected table response.')
+    return self._schema
 
   def update(self, friendly_name=None, description=None, expiry=None, schema=None):
     """ Selectively updates Table information.
@@ -856,6 +899,18 @@ class Table(object):
     """
     return self.range(start_row=0)
 
+  def select(self, *columns):
+    sql = ''
+    if len(columns):
+      joiner = 'SELECT '
+      for column in columns:
+        sql += '%s %s' % (joiner, column)
+        joiner = ', '
+    else:
+      sql = 'SELECT *'
+    sql += ' FROM %s' % self._full_name
+    return _DataFrame(self._api, sql)
+
   def __getitem__(self, item):
     """ Get an item or a slice of items from the table. This uses a small cache
         to reduce the number of calls to tabledata.list.
@@ -863,6 +918,11 @@ class Table(object):
         Note: this is a useful function to have, and supports some current usage like
         query.results()[0], but should be used with care.
     """
+
+    if isinstance(item, basestring):
+      df = _DataFrame(self._api, 'SELECT * FROM %s' % self.full_name)
+      return df.__getitem__(item)
+
     if isinstance(item, slice):
       # Just treat this as a set of calls to __getitem__(int)
       result = []
