@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Implementation of various module magics"""
+"""Implementation of the code magic"""
 
 import sys as _sys
 import types as _types
@@ -20,29 +20,40 @@ import IPython as _ipython
 import IPython.core.magic as _magic
 from ._commands import CommandParser as _CommandParser
 
+ANONYMOUS_MODULE_NAME = '__anonymous'
+
 @_magic.register_line_cell_magic
-def pymodule(line, cell=None):
-  """Creates and subsequently auto-imports a python module.
+def code(line, cell=None):
+  """Creates and executes code modules.
   """
-  parser = _CommandParser.create('pymodule')
-  parser.add_argument('-n', '--name',
-                      help='the name of the python module to create and import')
+  parser = _CommandParser.create('code')
+  parser.add_argument('-m', '--module',
+                      metavar='name',
+                      help='optional name of the module to create and import')
 
   args = parser.parse(line)
   if args is not None:
     if cell is None:
-      print 'The code for the module must be included'
+      print 'The code for the module must be specified'
       return
 
-    name = str(args.name)
-    module = _create_python_module(name, cell)
+    if hasattr(args, 'module'):
+      module_name = str(args.module)
+      module = _create_module(cell, module_name)
+  
+      # Automatically import the newly created module by assigning it to a variable
+      # named the same name as the module name.
+      ipy = _ipython.get_ipython()
+      ipy.push({module_name: module})
+    else:
+      # Create a module and load the code, but don't name store it
+      _create_module(cell)
 
-    # Automatically import the newly created module by assigning it to a variable
-    # named the same name as the module name.
-    ipy = _ipython.get_ipython()
-    ipy.push({name: module})
+def _create_module(code, name=None):
+  anonymous = name is None
+  if anonymous:
+    name = ANONYMOUS_MODULE_NAME
 
-def _create_python_module(name, code):
   # By convention the module is associated with a file name matching the module name
   module = _types.ModuleType(name)
   module.__file__ = name
@@ -51,6 +62,8 @@ def _create_python_module(name, code):
   exec code in module.__dict__
 
   # Hold on to the module if the code executed successfully
-  _sys.modules[name] = module
-  return module
+  if not anonymous:
+    _sys.modules[name] = module
+    return module
 
+  return None
