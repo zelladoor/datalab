@@ -19,6 +19,7 @@ import types as _types
 import IPython as _ipython
 import IPython.core.magic as _magic
 from ._commands import CommandParser as _CommandParser
+from ._deployment import Deployable as _Deployable
 
 ANONYMOUS_MODULE_NAME = '__anonymous'
 
@@ -45,9 +46,12 @@ def code(line, cell=None):
       # named the same name as the module name.
       ipy = _ipython.get_ipython()
       ipy.push({module_name: module})
+
+      return _Deployable(cell, 'text/module-python')
     else:
       # Create a module and load the code, but don't name store it
       _create_module(cell)
+      return None
 
 def _create_module(code, name=None):
   anonymous = name is None
