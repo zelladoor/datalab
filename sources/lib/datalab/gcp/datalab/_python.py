@@ -12,35 +12,34 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Implementation of the code magic"""
+"""Implementation of the python magic"""
 
-import sys as _sys
-import types as _types
 import IPython as _ipython
 import IPython.core.magic as _magic
 from ._commands import CommandParser as _CommandParser
 from ._deployment import Deployable as _Deployable
-
-ANONYMOUS_MODULE_NAME = '__anonymous'
+from ._module import ModuleLoader as _ModuleLoader
 
 @_magic.register_line_cell_magic
-def code(line, cell=None):
-  """Creates and executes code modules.
+def python(line, cell=None):
+  """Creates and executes python modules.
   """
-  parser = _CommandParser.create('code')
+  parser = _CommandParser.create('python')
   parser.add_argument('-m', '--module',
                       metavar='name',
                       help='optional name of the module to create and import')
 
+  # TODO: Add validation to module name - must be a valid python identifier
+
   args = parser.parse(line)
   if args is not None:
     if cell is None:
-      print 'The code for the module must be specified'
+      print 'The python code for the module must be included'
       return
 
     if hasattr(args, 'module'):
       module_name = str(args.module)
-      module = _create_module(cell, module_name)
+      module = _ModuleLoader.load(cell, module_name)
   
       # Automatically import the newly created module by assigning it to a variable
       # named the same name as the module name.
@@ -50,24 +49,5 @@ def code(line, cell=None):
       return _Deployable(cell, 'text/module-python')
     else:
       # Create a module and load the code, but don't name store it
-      _create_module(cell)
+      _ModuleLoader.load(cell)
       return None
-
-def _create_module(code, name=None):
-  anonymous = name is None
-  if anonymous:
-    name = ANONYMOUS_MODULE_NAME
-
-  # By convention the module is associated with a file name matching the module name
-  module = _types.ModuleType(name)
-  module.__file__ = name
-  module.__name__ = name
-
-  exec code in module.__dict__
-
-  # Hold on to the module if the code executed successfully
-  if not anonymous:
-    _sys.modules[name] = module
-    return module
-
-  return None
