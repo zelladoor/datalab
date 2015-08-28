@@ -27,7 +27,7 @@ import gcp.datalab._bigquery
 import gcp.datalab._chart
 import gcp.datalab._modules
 import gcp.datalab._storage
-
+import gcp.datalab._dashboards
 
 # Inject our user agent on all requests by monkey-patching a wrapper around httplib2.Http.request.
 _orig_request = _httplib2.Http.request
