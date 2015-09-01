@@ -21,6 +21,8 @@ except ImportError:
 import json
 from ._commands import CommandParser as _CommandParser
 from ._utils import _handle_magic_line
+import gcp.bigquery as bq
+import gcp.storage as gcs
 
 
 # Argument parsers.
@@ -75,7 +77,7 @@ def _create_list_subparser(dashboard_parser):
   return list_parser
 
 
-# TODO Copied from bigquery, factor out into _util package.
+# TODO Copied from bigquery, factor out into _util.
 def _dispatch_handler(args, cell, parser, handler,
                       cell_required=False, cell_prohibited=False):
   """ Makes sure cell magics include cell and line magics don't, before dispatching to handler.
@@ -121,7 +123,7 @@ class Dashboards(_magic.Magics):
     if not args['data'] and not args['delete']:
       return 'Either -del/--delete or -d/--data DATA need to be specified.'
     elif 'delete' in args and args['delete']:
-      del self.sources[name]; # The semi-colon is required to suppress its output.
+      del self.sources[name]; # The semi-colon is required to suppress overloaded output.
       return 'Successfully deleted %s.' % name
     else:
       data = args['data']
@@ -136,6 +138,7 @@ class Dashboards(_magic.Magics):
       if field not in passed_fields:
         missing_fields.append(field)
 
+    return missing_fields
 
   def chart_dashboard(self, args, data):
     # Try parsing the data.
@@ -144,56 +147,72 @@ class Dashboards(_magic.Magics):
              'data': args['data'],
              'height': args['height'],
              'width': args['width']}
+    # Name of the chart.
     name = args['name']
+    # Data source of the chart. A BigQuery variable.
+    source = args['data']
 
-    # Parse the data
-    data = json.loads(data)
+    # Check if the BQ variable is defined.
+    ipy = _ipython.get_ipython()
+    query_obj = ipy.user_ns.get(source, None)
+    if not isinstance(query_obj, bq._query.Query):
+      return "Error: the passed data string is not a BigQuery query."
 
-    # Check whether all required fields are present.
-    error_string = 'A chart of type %s requires further fields: %s'
-    required_fields = None
-    optional_fields = None
-    if name == 'line':
-      required_fields = ['dimension', 'y_field']
-      optional_fields = ['labels']
-    else:
-      # TODO (rnabel) Fill in the other chart types.
-      pass
+    self.sources[source] = query_obj._sql.strip()
 
-    self._chart_helper(data, required_fields)
+    try:
+      data = json.loads(str(data), strict=False)
+    except ValueError as e:
+      return 'Could not parse the provided chart settings as it does not conform with the JSON specification. ' \
+             'Further information: \n' + e.message
 
+    # Create in-line dictionary, pass it the chart type, returns required and optional settings.
+    required_fields, optional_fields = {
+      'line': (['dimension', 'y_field'], ['labels']),
+      'multi-line': (['dimension', 'y_field'], ['labels']),
+      'pie-chart': (['dimension'], []),
+      'bar-chart': (['dimension', 'margins'], []),
+      'row-chart': (['dimension', 'margins'], []),
+      'bubble-chart': (
+        ['dimension', 'group', 'margins', 'key_accessor', 'value_accessor', 'rad_val_accessor'],
+        ['colors', 'color_domain', 'max_rel_bubble_size', 'elasticX', 'elasticY', 'y_axis_padding', 'x_axis_padding', 'label_function', 'title_function', 'yaxis_tick_format_function', 'xaxis_tick_format_function']
+      ),
+      "table": (["dimension"], [])
+    }[chart['type']]
 
+    # Check if any fields are missing.
+    missing_fields = self._chart_helper(data.keys(), required_fields)
+    if len(missing_fields):
+      return 'The following fields need to be specified in the cell body: %s' % '"' + '", "'.join(missing_fields) + '"'
 
-    self.charts[args['name']] = chart
-    return 'chart_dashboard called with args: "%s", and cell body: %s' % (args, data)
+    # Set the required and optional fields.
+    self.charts[name] = chart
+    fields = []
+    for field in optional_fields:
+      self.charts[name][field] = data[field]
+      fields.append(field)
+    return fields
+    return 'Created chart: %s' % json.dumps(self.charts[name])
 
   def publish_dashboards(self, args, data=None):
+    output = json.loads(self.json_template)
+    output["sources"] = self.sources
+    output["charts"] = self.charts
+    # Stringify the different settings.
+    output = json.dumps(output)
     sources = json.dumps(self.sources)
     charts = json.dumps(self.charts)
     # Go through each line to update required settings.
-    return 'publish_dashboard called, sources:%s, %s' % (sources, charts)
+    return 'publish_dashboard called, sources:%s, %s, Full dashbord JSON:\n%s' % (sources, charts, output)
 
   def delete_dashboard(self, args):
-    return 'delete_dashboard called with args: "%s", and cell body: %s' % (args, data)
+    return 'delete_dashboard called with args: "%s"' % (args)
 
   def list_dashboard(self, args):
-    return 'list_dashboard called with args: "%s", and cell body: %s' % (args, data)
-
-  # Dictionary with the handler methods.
-  # handlers = {'source': source_dashboard,
-  #             'chart': chart_dashboard,
-  #             'publish': publish_dashboards,
-  #             'delete': delete_dashboard,
-  #             'list': list_dashboard}
+    return 'list_dashboard called with args: "%s"' % (args)
 
   def _create_dashboard_parser(self):
     dashboard_parser = _CommandParser.create('dashboard')
-
-    # %dashboard source
-    source_parser = _create_source_subparser(dashboard_parser)
-    source_parser.set_defaults(
-      func=lambda args, cell: _dispatch_handler(args, cell, source_parser,
-                                                self.source_dashboard, cell_prohibited=True))
 
     # %%dashboard chart
     chart_parser = _create_chart_subparser(dashboard_parser)
@@ -226,7 +245,8 @@ class Dashboards(_magic.Magics):
   def __init__(self, shell):
     super(Dashboards, self).__init__(shell)
     self.parser = self._create_dashboard_parser()
-      # Fields used to keep the state of the current dashboard.
+
+    # Fields used to keep the state of the current dashboard.
     self.sources = {}
     self.charts = {}
 
