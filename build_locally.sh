@@ -6,7 +6,8 @@ if [ "$1" = "init" ]; then
 	source $REPO_DIR/testenv/bin/activate &&
 	
 	printf "Installing the python dependencies...\n"
-	pip install ipython==2.4.1 futures==3.0.3 httplib2==0.9.1 oauth2client==1.4.12 pandas==0.16.2 py-dateutil==2.2 requests==2.4.3 &> /dev/null &&
+	pip install ipython==2.4.1 futures==3.0.3 httplib2==0.9.1 oauth2client==1.4.12 \
+			pandas==0.16.2 py-dateutil==2.2 requests==2.4.3 jsonmerge==1.1.0 &> /dev/null &&
 
 
 	# # create testing profile

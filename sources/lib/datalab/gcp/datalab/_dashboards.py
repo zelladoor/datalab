@@ -19,6 +19,8 @@ except ImportError:
   raise Exception('This module can only be loaded in ipython.')
 
 import json
+from jsonmerge import merge
+import requests
 from ._commands import CommandParser as _CommandParser
 from ._utils import _handle_magic_line
 import gcp.bigquery as bq
@@ -26,15 +28,6 @@ import gcp.storage as gcs
 
 
 # Argument parsers.
-def _create_source_subparser(dashboard_parser):
-  source_parser = dashboard_parser.subcommand('source',
-                              'Define a datasource which can later be used by name in a chart.')
-  source_parser.add_argument('-n', '--name', help='The name to be used in the chart context.', required=True)
-  source_parser.add_argument('-d', '--data', help='The query to be used as data source.')
-  source_parser.add_argument('-del', '--delete', help='Delete an existing data source.', action='store_true')
-  return source_parser
-
-
 def _create_chart_subparser(dashboard_parser):
   chart_parser = dashboard_parser.subcommand('chart',
                               'Define the properties of a chart.')
@@ -55,26 +48,55 @@ def _create_chart_subparser(dashboard_parser):
 
 def _create_publish_subparser(dashboard_parser):
   publish_parser = dashboard_parser.subcommand('publish',
-                              'Publish the dashboard.')
-  publish_parser.add_argument('-n', '--name', help='The name of the dashboard.')
-  publish_parser.add_argument('-b', '--bucket', help='The bucket to save the dashboard in.')
+                                               'Publish the dashboard.')
+  publish_parser.add_argument('-n', '--name', help='The name of the dashboard.', required=True)
+  publish_parser.add_argument('-b', '--bucket', help='The bucket to save the dashboard in.', required=True)
+  publish_parser.add_argument('-t', '--title', help='The title to be shown at the top of the dashboard panel.')
   publish_parser.add_argument('--update',
-                                action='store_true',
-                                help='Update the named chart with settings in current workspace.')
+                              action='store_true',
+                              help='Update the named chart with settings in current workspace.',
+                              default=False)
+  publish_parser.add_argument('-bc', '--bcolor', help='The CSS colour value of the background of the dashboard')
   return publish_parser
 
+def _create_reset_subparser(dashboard_parser):
+  return dashboard_parser.subcommand('reset', 'Resets the internal state.')
 
 def _create_delete_subparser(dashboard_parser):
   delete_parser = dashboard_parser.subcommand('delete', 'Delete a specific dashboard.')
-  delete_parser.add_argument('-n', '--name', help='The name of the dashboard to be deleted.')
-  delete_parser.add_argument('-b', '--bucket', help='The Google Cloud Storage bucket which holds the dashboard.')
+  delete_parser.add_argument('-n', '--name', help='The name of the dashboard to be deleted.', required=True)
+  delete_parser.add_argument('-b', '--bucket', help='The Google Cloud Storage bucket which holds the dashboard.', required=True)
   return delete_parser
 
 
 def _create_list_subparser(dashboard_parser):
   list_parser = dashboard_parser.subcommand('list', 'List all dashboards in a specific bucket.')
-  list_parser.add_argument('-b', '--bucket')
+  list_parser.add_argument('-b', '--bucket', required=True)
   return list_parser
+
+
+# Helper functions.
+def _get_available_servers(bucket):
+  av_servers_item = gcs.item(bucket, 'available_servers.txt')
+  av_servers = []
+  if av_servers_item.exists():
+    av_servers = av_servers_item.read_from().split('\n')
+  return av_servers
+
+
+def _send_request_to_dash_servers(servers, dashboard_name):
+  successful = []
+
+  for server in servers:
+    url = 'http://' + server + '/dashboards/' + dashboard_name
+    try:
+      r = requests.get(url)
+      if r.status_code == 200:
+        successful.append(url)
+    except requests.ConnectionError as msg:
+      pass
+
+  return successful
 
 
 # TODO Copied from bigquery, factor out into _util.
@@ -117,20 +139,6 @@ class Dashboards(_magic.Magics):
   # The header used when creating a new dashboard.
   json_template = '{ "settings": { "first_run": true, "authoring_mode": true }}'
 
-  # Code for magics.
-  def source_dashboard(self, args):
-    name = args['name']
-    if not args['data'] and not args['delete']:
-      return 'Either -del/--delete or -d/--data DATA need to be specified.'
-    elif 'delete' in args and args['delete']:
-      del self.sources[name]; # The semi-colon is required to suppress overloaded output.
-      return 'Successfully deleted %s.' % name
-    else:
-      data = args['data']
-
-      self.sources[name] = {'query': data}
-      return 'Data source %s: set to "%s"' % (name, data)
-
   @staticmethod
   def _chart_helper(passed_fields, required_fields):
     missing_fields = []
@@ -158,7 +166,7 @@ class Dashboards(_magic.Magics):
     if not isinstance(query_obj, bq._query.Query):
       return "Error: the passed data string is not a BigQuery query."
 
-    self.sources[source] = query_obj._sql.strip()
+    self.sources[source] = {'query': query_obj._sql.strip()}
 
     try:
       data = json.loads(str(data), strict=False)
@@ -168,16 +176,23 @@ class Dashboards(_magic.Magics):
 
     # Create in-line dictionary, pass it the chart type, returns required and optional settings.
     required_fields, optional_fields = {
-      'line': (['dimension', 'y_field'], ['labels']),
-      'multi-line': (['dimension', 'y_field'], ['labels']),
-      'pie-chart': (['dimension'], []),
-      'bar-chart': (['dimension', 'margins'], []),
-      'row-chart': (['dimension', 'margins'], []),
+      'line': (
+        ['dimension', 'group'],
+        ['labels', 'colors', 'color_domain', 'elasticX', 'elasticY', 'y_axis_padding', 'x_axis_padding', 'label_function', 'title_function', 'yaxis_tick_format_function', 'xaxis_tick_format_function', 'value_accessor', 'margins']),
+
+      'multi-line': (['dimension', 'group'], ['labels']),
+
+      'pie-chart': (['dimension'], ['innerRadius']),
+
+      'bar-chart': (['dimension'], ['margins', 'elasticY', 'x_interval', 'round', 'centralBar']),
+
+      'row-chart': (['dimension', 'margins'], ['chart-label', 'chart-title', 'elasticX', 'ticks']),
+
       'bubble-chart': (
         ['dimension', 'group', 'margins', 'key_accessor', 'value_accessor', 'rad_val_accessor'],
-        ['colors', 'color_domain', 'max_rel_bubble_size', 'elasticX', 'elasticY', 'y_axis_padding', 'x_axis_padding', 'label_function', 'title_function', 'yaxis_tick_format_function', 'xaxis_tick_format_function']
-      ),
-      "table": (["dimension"], [])
+        ['labels', 'max_rel_bubble_size', 'colors', 'color_domain', 'elasticX', 'elasticY', 'y_axis_padding', 'x_axis_padding', 'label_function', 'title_function', 'yaxis_tick_format_function', 'xaxis_tick_format_function', 'y_interval', 'x_interval']),
+
+      "table": (["dimension", "group"], [])
     }[chart['type']]
 
     # Check if any fields are missing.
@@ -187,29 +202,86 @@ class Dashboards(_magic.Magics):
 
     # Set the required and optional fields.
     self.charts[name] = chart
-    fields = []
-    for field in optional_fields:
-      self.charts[name][field] = data[field]
-      fields.append(field)
-    return fields
-    return 'Created chart: %s' % json.dumps(self.charts[name])
+
+    for field in optional_fields + required_fields:
+      if field in data.keys():
+        self.charts[name][field] = data[field]
+
+    # return 'Created chart: %s' % json.dumps(self.charts[name])
+    return 'Successfully created chart of type %s.' % args['type']
 
   def publish_dashboards(self, args, data=None):
-    output = json.loads(self.json_template)
-    output["sources"] = self.sources
-    output["charts"] = self.charts
+    dash_name = args['name']
+    bucket_name = args['bucket']
+    title = args['title']
+
+    head = dict()
+    head['data_sources'] = self.sources
+    head['charts'] = self.charts
+
+    if title:
+      head['settings'] = dict()
+      head['settings']['title'] = title
+
+    # TODO (rnabel) Remove authoring mode.
+    gcs_item = gcs.item(bucket_name, dash_name)
+    do_update = args['update']
+
+    if do_update and gcs_item.exists():
+      existing_file = gcs_item.read_from()
+      base = json.loads(existing_file)
+
+    elif do_update:
+      return 'Error, can not update charts as the specified dashboard does not exist.'
+
+    else:
+      base = json.loads(self.json_template)
+
+    # Merge old and new settings.
+    output = merge(base, head)
     # Stringify the different settings.
     output = json.dumps(output)
-    sources = json.dumps(self.sources)
-    charts = json.dumps(self.charts)
-    # Go through each line to update required settings.
-    return 'publish_dashboard called, sources:%s, %s, Full dashbord JSON:\n%s' % (sources, charts, output)
 
-  def delete_dashboard(self, args):
-    return 'delete_dashboard called with args: "%s"' % (args)
+    # Upload to GCS.
+    gcs_item.write_to(output, "text/plain")
 
-  def list_dashboard(self, args):
-    return 'list_dashboard called with args: "%s"' % (args)
+    # Request the page and return link
+    servers = _get_available_servers(bucket_name)
+    servers = _send_request_to_dash_servers(servers, dash_name)
+    return "Available servers: " + str(servers)
+
+  @staticmethod
+  def delete_dashboard(args):
+    name = args['name']
+    bucket = args['bucket']
+
+    gcs_item = gcs.item(bucket, name)
+    if gcs_item.exists():
+      gcs_item.delete()
+      return 'Successfully deleted %s' % name
+    else:
+      return 'Could not delete %s, as dashboard does not exist' % name
+
+  @staticmethod
+  def list_dashboard(args):
+    bucket = args['bucket']
+    bucket_obj = gcs.bucket(bucket)
+
+    if bucket_obj.exists():
+      list = []
+      for element in bucket_obj.items():
+        list.append(element.key)
+
+      # list = '"' + '", \n"'.join(list) + '"'
+      return list
+
+    else:
+      return "Error: the bucket does not exist."
+
+  def reset_dashboard(self, args):
+    self.charts = {}
+    self.sources = {}
+    return 'Reset internal state.'
 
   def _create_dashboard_parser(self):
     dashboard_parser = _CommandParser.create('dashboard')
@@ -234,6 +306,13 @@ class Dashboards(_magic.Magics):
     list_parser.set_defaults(
       func=lambda args, cell: _dispatch_handler(args, cell, list_parser,
                                                 self.list_dashboard , cell_prohibited=True))
+
+    # %dashboard reset
+    reset_parser = _create_reset_subparser(dashboard_parser)
+    reset_parser.set_defaults(
+      func=lambda args, cell: _dispatch_handler(args, cell, list_parser,
+                                                self.reset_dashboard , cell_prohibited=True)
+    )
     return dashboard_parser
 
   # Called by IPython when dashboard magic is eecuted.
