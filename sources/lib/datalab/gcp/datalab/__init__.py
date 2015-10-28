@@ -29,7 +29,7 @@ import _extension
 import _modules
 import _sql
 import _storage
-
+import _magics
 
 # Inject our user agent on all requests by monkey-patching a wrapper around httplib2.Http.request.
 _orig_request = _httplib2.Http.request
@@ -85,4 +85,3 @@ def _run_cell_magic(self, magic_name, line, cell):
 
 _shell.InteractiveShell.run_cell_magic = _run_cell_magic
 _shell.InteractiveShell.run_line_magic = _run_line_magic
-
