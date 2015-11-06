@@ -31,6 +31,7 @@ setup(
               'gcp._util',
               'gcp.bigquery',
               'gcp.data',
+              'gcp.spark',
               'gcp.storage',
              ],
     description='Google Cloud APIs for data analysis scenarios.',

@@ -14,15 +14,15 @@
 
 import gcp
 import gcp._util
+import uuid
+import json
 
 
 class Api(object):
   """A helper class to issue BigQuery HTTP requests."""
 
-  # TODO(nikhilko): Use named placeholders in these string templates.
-  # TODO(gram): Remove default params from this class's methods.
   _ENDPOINT = 'https://dataproc.googleapis.com/v1beta1'
-  _JOBS_PATH = '/projects/%s/jobs'
+  _JOBS_PATH = '/projects/%s/jobs/%s'
 
   def __init__(self, context):
     """Initializes the BigQuery helper with context information.
@@ -41,7 +41,7 @@ class Api(object):
                 cluster_name=None):
     if project_id is None:
       project_id = self._project_id
-    url = Api._ENDPOINT + (Api._JOBS_PATH % (project_id))
+    url = Api._ENDPOINT + (Api._JOBS_PATH % (project_id, ''))
 
     args = {}
     if page_size != 0:
@@ -52,3 +52,38 @@ class Api(object):
       args['clusterName'] = cluster_name
 
     return gcp._util.Http.request(url, args=args, credentials=self._credentials)
+
+  def jobs_get(self, job_id, project_id=None):
+    """Issues a request to retrieve information about a job.
+    Args:
+      job_id: the id of the job
+      project_id: the project id to use to fetch the results; use None for the default project.
+    Returns:
+      A parsed result object.
+    Raises:
+      Exception if there is an error performing the operation.
+    """
+    if project_id is None:
+      project_id = self._project_id
+    url = Api._ENDPOINT + (Api._JOBS_PATH % (project_id, job_id))
+    return gcp._util.Http.request(url, credentials=self._credentials)
+
+
+  def jobs_submit(self, cluster_name, spark_job_data):
+    url = Api._ENDPOINT + (Api._JOBS_PATH % (self._project_id, ''))[:-1] + ":submit"
+    data = {
+        "projectId": self._project_id,
+        "job": {
+            "placement": {
+                "clusterName": cluster_name
+                },
+            "reference": {
+                "jobId": uuid.uuid4().hex
+                },
+            }
+        }
+
+    for k,v in spark_job_data.iteritems():
+      data['job'][k] = v
+
+    return gcp._util.Http.request(url, data=data, credentials=self._credentials)
