@@ -33,6 +33,7 @@ setup(
               'gcp.data',
               'gcp.spark',
               'gcp.storage',
+              'google.bytestream'
              ],
     description='Google Cloud APIs for data analysis scenarios.',
     requires=['dateutil',
@@ -41,6 +42,8 @@ setup(
               'IPython',
               'oauth2client',
               'pandas',
-              'requests'
+              'requests',
+              'protobuf',
+              'grpcio'
              ]
 )
