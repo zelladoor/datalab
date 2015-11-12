@@ -66,6 +66,7 @@ RUN pip install -U \
     pip install -U seaborn==0.6.0 && \
     pip install -U notebook==4.0.2 && \
     pip install -U PyYAML==3.11 && \
+    pip install -U protobuf==3.0.0a3 && \
     pip install -U grpcio==0.11.0b1 && \
     easy_install pip && \
     find /usr/local/lib/python2.7 -type d -name tests | xargs rm -rf
