@@ -19,7 +19,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   name='bytestream.proto',
   package='google.bytestream',
   syntax='proto3',
-  serialized_pb=_b('\n\x10\x62ytestream.proto\x12\x11google.bytestream\"M\n\x0bReadRequest\x12\x15\n\rresource_name\x18\x01 \x01(\t\x12\x13\n\x0bread_offset\x18\x02 \x01(\x03\x12\x12\n\nread_limit\x18\x03 \x01(\x03\" \n\x0cReadResponse\x12\x10\n\x04\x64\x61ta\x18\n \x01(\x0c\x42\x02\x08\x01\"c\n\x0cWriteRequest\x12\x15\n\rresource_name\x18\x01 \x01(\t\x12\x14\n\x0cwrite_offset\x18\x02 \x01(\x03\x12\x14\n\x0c\x66inish_write\x18\x03 \x01(\x08\x12\x10\n\x04\x64\x61ta\x18\n \x01(\x0c\x42\x02\x08\x01\"\'\n\rWriteResponse\x12\x16\n\x0e\x63ommitted_size\x18\x01 \x01(\x03\"0\n\x17QueryWriteStatusRequest\x12\x15\n\rresource_name\x18\x01 \x01(\t\"D\n\x18QueryWriteStatusResponse\x12\x16\n\x0e\x63ommitted_size\x18\x01 \x01(\x03\x12\x10\n\x08\x63omplete\x18\x02 \x01(\x08\x32\x98\x02\n\nByteStream\x12K\n\x04Read\x12\x1e.google.bytestream.ReadRequest\x1a\x1f.google.bytestream.ReadResponse\"\x00\x30\x01\x12N\n\x05Write\x12\x1f.google.bytestream.WriteRequest\x1a .google.bytestream.WriteResponse\"\x00(\x01\x12m\n\x10QueryWriteStatus\x12*.google.bytestream.QueryWriteStatusRequest\x1a+.google.bytestream.QueryWriteStatusResponse\"\x00\x62\x06proto3')
+  serialized_pb=_b('\n\x10\x62ytestream.proto\x12\x11google.bytestream\"M\n\x0bReadRequest\x12\x15\n\rresource_name\x18\x01 \x01(\t\x12\x13\n\x0bread_offset\x18\x02 \x01(\x03\x12\x12\n\nread_limit\x18\x03 \x01(\x03\"\x1b\n\nInt64Value\x12\r\n\x05value\x18\x01 \x01(\x03\"X\n\x0cReadResponse\x12\x0c\n\x04\x64\x61ta\x18\n \x01(\x0c\x12:\n\x13\x66inal_resource_size\x18\x14 \x01(\x0b\x32\x1d.google.bytestream.Int64Value\"_\n\x0cWriteRequest\x12\x15\n\rresource_name\x18\x01 \x01(\t\x12\x14\n\x0cwrite_offset\x18\x02 \x01(\x03\x12\x14\n\x0c\x66inish_write\x18\x03 \x01(\x08\x12\x0c\n\x04\x64\x61ta\x18\n \x01(\x0c\"\'\n\rWriteResponse\x12\x16\n\x0e\x63ommitted_size\x18\x01 \x01(\x03\"0\n\x17QueryWriteStatusRequest\x12\x15\n\rresource_name\x18\x01 \x01(\t\"D\n\x18QueryWriteStatusResponse\x12\x16\n\x0e\x63ommitted_size\x18\x01 \x01(\x03\x12\x10\n\x08\x63omplete\x18\x02 \x01(\x08\x32\x98\x02\n\nByteStream\x12K\n\x04Read\x12\x1e.google.bytestream.ReadRequest\x1a\x1f.google.bytestream.ReadResponse\"\x00\x30\x01\x12N\n\x05Write\x12\x1f.google.bytestream.WriteRequest\x1a .google.bytestream.WriteResponse\"\x00(\x01\x12m\n\x10QueryWriteStatus\x12*.google.bytestream.QueryWriteStatusRequest\x1a+.google.bytestream.QueryWriteStatusResponse\"\x00\x62\x06proto3')
 )
 _sym_db.RegisterFileDescriptor(DESCRIPTOR)
 
@@ -71,20 +71,20 @@ _READREQUEST = _descriptor.Descriptor(
 )
 
 
-_READRESPONSE = _descriptor.Descriptor(
-  name='ReadResponse',
-  full_name='google.bytestream.ReadResponse',
+_INT64VALUE = _descriptor.Descriptor(
+  name='Int64Value',
+  full_name='google.bytestream.Int64Value',
   filename=None,
   file=DESCRIPTOR,
   containing_type=None,
   fields=[
     _descriptor.FieldDescriptor(
-      name='data', full_name='google.bytestream.ReadResponse.data', index=0,
-      number=10, type=12, cpp_type=9, label=1,
-      has_default_value=False, default_value=_b(""),
+      name='value', full_name='google.bytestream.Int64Value.value', index=0,
+      number=1, type=3, cpp_type=2, label=1,
+      has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=_descriptor._ParseOptions(descriptor_pb2.FieldOptions(), _b('\010\001'))),
+      options=None),
   ],
   extensions=[
   ],
@@ -98,7 +98,45 @@ _READRESPONSE = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=118,
-  serialized_end=150,
+  serialized_end=145,
+)
+
+
+_READRESPONSE = _descriptor.Descriptor(
+  name='ReadResponse',
+  full_name='google.bytestream.ReadResponse',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='data', full_name='google.bytestream.ReadResponse.data', index=0,
+      number=10, type=12, cpp_type=9, label=1,
+      has_default_value=False, default_value=_b(""),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+    _descriptor.FieldDescriptor(
+      name='final_resource_size', full_name='google.bytestream.ReadResponse.final_resource_size', index=1,
+      number=20, type=11, cpp_type=10, label=1,
+      has_default_value=False, default_value=None,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=147,
+  serialized_end=235,
 )
 
 
@@ -136,7 +174,7 @@ _WRITEREQUEST = _descriptor.Descriptor(
       has_default_value=False, default_value=_b(""),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=_descriptor._ParseOptions(descriptor_pb2.FieldOptions(), _b('\010\001'))),
+      options=None),
   ],
   extensions=[
   ],
@@ -149,8 +187,8 @@ _WRITEREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=152,
-  serialized_end=251,
+  serialized_start=237,
+  serialized_end=332,
 )
 
 
@@ -180,8 +218,8 @@ _WRITERESPONSE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=253,
-  serialized_end=292,
+  serialized_start=334,
+  serialized_end=373,
 )
 
 
@@ -211,8 +249,8 @@ _QUERYWRITESTATUSREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=294,
-  serialized_end=342,
+  serialized_start=375,
+  serialized_end=423,
 )
 
 
@@ -249,11 +287,13 @@ _QUERYWRITESTATUSRESPONSE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=344,
-  serialized_end=412,
+  serialized_start=425,
+  serialized_end=493,
 )
 
+_READRESPONSE.fields_by_name['final_resource_size'].message_type = _INT64VALUE
 DESCRIPTOR.message_types_by_name['ReadRequest'] = _READREQUEST
+DESCRIPTOR.message_types_by_name['Int64Value'] = _INT64VALUE
 DESCRIPTOR.message_types_by_name['ReadResponse'] = _READRESPONSE
 DESCRIPTOR.message_types_by_name['WriteRequest'] = _WRITEREQUEST
 DESCRIPTOR.message_types_by_name['WriteResponse'] = _WRITERESPONSE
@@ -266,6 +306,13 @@ ReadRequest = _reflection.GeneratedProtocolMessageType('ReadRequest', (_message.
   # @@protoc_insertion_point(class_scope:google.bytestream.ReadRequest)
   ))
 _sym_db.RegisterMessage(ReadRequest)
+
+Int64Value = _reflection.GeneratedProtocolMessageType('Int64Value', (_message.Message,), dict(
+  DESCRIPTOR = _INT64VALUE,
+  __module__ = 'bytestream_pb2'
+  # @@protoc_insertion_point(class_scope:google.bytestream.Int64Value)
+  ))
+_sym_db.RegisterMessage(Int64Value)
 
 ReadResponse = _reflection.GeneratedProtocolMessageType('ReadResponse', (_message.Message,), dict(
   DESCRIPTOR = _READRESPONSE,
@@ -303,10 +350,6 @@ QueryWriteStatusResponse = _reflection.GeneratedProtocolMessageType('QueryWriteS
 _sym_db.RegisterMessage(QueryWriteStatusResponse)
 
 
-_READRESPONSE.fields_by_name['data'].has_options = True
-_READRESPONSE.fields_by_name['data']._options = _descriptor._ParseOptions(descriptor_pb2.FieldOptions(), _b('\010\001'))
-_WRITEREQUEST.fields_by_name['data'].has_options = True
-_WRITEREQUEST.fields_by_name['data']._options = _descriptor._ParseOptions(descriptor_pb2.FieldOptions(), _b('\010\001'))
 import abc
 from grpc.beta import implementations as beta_implementations
 from grpc.early_adopter import implementations as early_adopter_implementations
