@@ -31,9 +31,10 @@ setup(
               'gcp._util',
               'gcp.bigquery',
               'gcp.data',
+              'gcp.dataproc',
+              'gcp.dataproc.clusters',
               'gcp.spark',
-              'gcp.storage',
-              'google.bytestream'
+              'gcp.storage'
              ],
     description='Google Cloud APIs for data analysis scenarios.',
     requires=['dateutil',

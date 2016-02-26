@@ -87,6 +87,7 @@ class CommandParser(argparse.ArgumentParser):
       if namespace is None:
         ipy = IPython.get_ipython()
         namespace = ipy.user_ns
+        #print "parsing line: {0}, namespace: {1}".format(line, namespace)
       args = CommandParser.create_args(line, namespace)
       return self.parse_args(args)
     except Exception as e:
