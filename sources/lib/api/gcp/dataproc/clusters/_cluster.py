@@ -10,7 +10,7 @@
 # or implied. See the License for the specific language governing permissions and limitations under
 # the License.
 
-"""Google Cloud Platform library - Cloud Storage Functionality."""
+"""Google Cloud Platform library - Apache Spark/Hardoop clusters functionality."""
 
 import dateutil.parser
 import re
@@ -50,7 +50,7 @@ class ClusterMetadata(object):
   @property
   def state_start_time(self):
     """The state timestamp of as a datetime.datetime."""
-    s = self._info['status'].get('state', None)
+    s = self._info['status'].get('stateStartTime', None)
     return dateutil.parser.parse(s) if s else None
 
   @property
@@ -103,6 +103,7 @@ class Cluster(object):
     """
     return 'Cluster %s' % self._name
 
+  # TODO(alekseyv): I think that metadata properties should be moved into cluster class
   def metadata(self):
     """Retrieves metadata about the cluster.
     Returns:

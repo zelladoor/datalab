@@ -17,6 +17,7 @@ import re
 
 import gcp
 import gcp.dataproc.clusters
+import gcp.dataproc.jobs
 import _commands
 import _html
 import _utils
@@ -49,6 +50,13 @@ for help on a specific command.
   clusters_list_parser.add_argument('-p', '--project', help='The project associated with the objects')
   clusters_list_parser.set_defaults(func=_clusters_list)
 
+  jobs_parser = parser.subcommand('jobs',
+                                  'Jobs related operations.')
+  jobs_list_parser = jobs_parser.subcommand('list',
+                                            'List jobs in a project.')
+  jobs_list_parser.add_argument('-p', '--project', help='The project associated with the objects')
+  jobs_list_parser.set_defaults(func=_jobs_list)
+
 
   return _utils.handle_magic_line(line, None, parser)
 
@@ -65,3 +73,10 @@ def _clusters_list(args, _):
   print 'dataproc list clusters, project:{0}'.format(project)
   clusters = gcp.dataproc.clusters.Clusters()
   return clusters.list()
+
+def _jobs_list(args, _):
+  project = args['project']
+
+  print 'dataproc list jobs, project:{0}'.format(project)
+  jobs = gcp.dataproc.jobs.Jobs()
+  return list(jobs)

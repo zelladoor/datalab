@@ -33,6 +33,7 @@ setup(
               'gcp.data',
               'gcp.dataproc',
               'gcp.dataproc.clusters',
+              'gcp.dataproc.jobs',
               'gcp.spark',
               'gcp.storage'
              ],
