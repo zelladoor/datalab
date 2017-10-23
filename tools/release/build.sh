@@ -34,56 +34,51 @@ TIMESTAMP=$(date +%Y%m%d)
 LABEL="${LABEL_PREFIX:-}${TIMESTAMP}"
 GATEWAY_IMAGE="gcr.io/${PROJECT_ID}/datalab-gateway:${LABEL}"
 DATALAB_IMAGE="gcr.io/${PROJECT_ID}/datalab:local-${LABEL}"
+DATALAB_GPU_IMAGE="gcr.io/${PROJECT_ID}/datalab-gpu:local-${LABEL}"
+CLI_TARBALL="datalab-cli-${LABEL}.tgz"
 
-function install_node() {
-  echo "Installing NodeJS"
-
-  mkdir -p /tools/node
-  wget -nv https://nodejs.org/dist/v4.3.2/node-v4.3.2-linux-x64.tar.gz -O node.tar.gz
-  tar xzf node.tar.gz -C /tools/node --strip-components=1
-  rm node.tar.gz
-  export "PATH=${PATH}:/tools/node/bin"
-}
-
-function install_typescript() {
-  npm -h >/dev/null 2>&1 || install_node
-
-  echo "Installing Typescript"
-  /tools/node/bin/npm install -g typescript
-}
-
-function install_prereqs() {
-  tsc -h >/dev/null 2>&1  || install_typescript
-  rsync -h >/dev/null 2>&1  || apt-get install -y -qq rsync
-  source ./tools/initenv.sh
-}
-
-pushd ./
-cd $(dirname "${BASH_SOURCE[0]}")/../../
-install_prereqs
-
-echo "Building the Datalab server"
-./sources/build.sh
+pushd $(pwd) >> /dev/null
+BASE_DIR="$(cd $(dirname "${BASH_SOURCE[0]}")/../../ && pwd)"
 
 echo "Building the base image"
-cd containers/base
+cd "${BASE_DIR}/containers/base"
 
-# We do not use the base image's `build.sh` script because we
-# want to make sure that we are not using any cached layers.
-mkdir -p pydatalab
-docker build --no-cache -t datalab-base .
-rm -rf pydatalab
+DOCKER_BUILD_ARGS="--no-cache"
+./build.sh
+echo "Building the base GPU image"
+./build.gpu.sh
 
 echo "Building the gateway image ${GATEWAY_IMAGE}"
-cd ../../containers/gateway
+cd "${BASE_DIR}/containers/gateway"
 ./build.sh
-docker tag -f datalab-gateway ${GATEWAY_IMAGE}
+if ! $(docker tag -f datalab-gateway ${GATEWAY_IMAGE}); then
+  docker tag datalab-gateway ${GATEWAY_IMAGE}
+fi
 gcloud docker -- push ${GATEWAY_IMAGE}
 
+echo "Building the Datalab server"
+cd "${BASE_DIR}"
+./sources/build.sh
+
 echo "Building the Datalab image ${DATALAB_IMAGE}"
-cd ../../containers/datalab
+cd "${BASE_DIR}/containers/datalab"
 ./build.sh
-docker tag -f datalab ${DATALAB_IMAGE}
+if ! $(docker tag -f datalab ${DATALAB_IMAGE}); then
+  docker tag datalab ${DATALAB_IMAGE}
+fi
 gcloud docker -- push ${DATALAB_IMAGE}
 
-popd
+echo "Building the Datalab GPU image ${DATALAB_GPU_IMAGE}"
+cd "${BASE_DIR}/containers/datalab"
+./build.gpu.sh
+if ! $(docker tag -f datalab-gpu ${DATALAB_GPU_IMAGE}); then
+  docker tag datalab-gpu ${DATALAB_GPU_IMAGE}
+fi
+docker tag -f datalab-gpu ${DATALAB_GPU_IMAGE}
+gcloud docker -- push ${DATALAB_GPU_IMAGE}
+
+cd "${BASE_DIR}"
+tar -cvzf "/tmp/${CLI_TARBALL}" --transform 's,^tools/cli,datalab,' tools/cli
+gsutil cp "/tmp/${CLI_TARBALL}" "gs://${PROJECT_ID}/${CLI_TARBALL}"
+
+popd >> /dev/null

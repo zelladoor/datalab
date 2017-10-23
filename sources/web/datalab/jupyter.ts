@@ -12,9 +12,9 @@
  * the License.
  */
 
-/// <reference path="../../../externs/ts/node/node.d.ts" />
-/// <reference path="../../../externs/ts/node/node-http-proxy.d.ts" />
-/// <reference path="../../../externs/ts/node/tcp-port-used.d.ts" />
+/// <reference path="../../../third_party/externs/ts/node/node.d.ts" />
+/// <reference path="../../../third_party/externs/ts/node/node-http-proxy.d.ts" />
+/// <reference path="../../../third_party/externs/ts/node/tcp-port-used.d.ts" />
 /// <reference path="common.d.ts" />
 
 import auth = require('./auth')
@@ -24,6 +24,7 @@ import crypto = require('crypto');
 import fs = require('fs');
 import http = require('http');
 import httpProxy = require('http-proxy');
+import idleTimeout = require('./idleTimeout');
 import logging = require('./logging');
 import net = require('net');
 import path = require('path');
@@ -69,7 +70,7 @@ function getNextJupyterPort(attempts: number, resolved: (port: number)=>void, fa
    var port = nextJupyterPort;
    nextJupyterPort++;
 
-   tcp.check(port, null).then(
+   tcp.check(port, "localhost").then(
      function(inUse: boolean) {
        if (inUse) {
          getNextJupyterPort(attempts - 1, resolved, failed);
@@ -91,8 +92,10 @@ var callbackManager: callbacks.CallbackManager = new callbacks.CallbackManager()
 /**
  * Templates
  */
-var templates: common.Map<string> = {
+const templates: common.Map<string> = {
+  // These cached templates can be overridden in sendTemplate
   'tree': fs.readFileSync(path.join(__dirname, 'templates', 'tree.html'), { encoding: 'utf8' }),
+  'terminals': fs.readFileSync(path.join(__dirname, 'templates', 'terminals.html'), { encoding: 'utf8' }),
   'sessions': fs.readFileSync(path.join(__dirname, 'templates', 'sessions.html'), { encoding: 'utf8' }),
   'edit': fs.readFileSync(path.join(__dirname, 'templates', 'edit.html'), { encoding: 'utf8' }),
   'nb': fs.readFileSync(path.join(__dirname, 'templates', 'nb.html'), { encoding: 'utf8' })
@@ -101,7 +104,7 @@ var templates: common.Map<string> = {
 /**
  * The application settings instance.
  */
-var appSettings: common.Settings;
+var appSettings: common.AppSettings;
 
 function pipeOutput(stream: NodeJS.ReadableStream, port: number, error: boolean) {
   stream.setEncoding('utf8');
@@ -130,25 +133,17 @@ function createJupyterServerAtPort(port: number, userId: string, userDir: string
     delete jupyterServers[server.userId];
   }
 
+  var secretPath = path.join(appSettings.datalabRoot, '/content/datalab/.config/notary_secret');
   var processArgs = appSettings.jupyterArgs.slice().concat([
     '--port=' + server.port,
     '--port-retries=0',
-    '--notebook-dir="' + server.notebooks + '"'
+    '--notebook-dir="' + server.notebooks + '"',
+    '--NotebookNotary.algorithm=sha256',
+    '--NotebookNotary.secret_file=' + secretPath,
+    '--NotebookApp.base_url=' + appSettings.datalabBasePath,
   ]);
 
   var notebookEnv: any = process.env;
-  if ('KG_URL' in notebookEnv && notebookEnv['KG_URL']) {
-    logging.getLogger().info(
-      'Found a kernel gateway URL of %s... configuring the notebook to use it', notebookEnv['KG_URL']);
-    processArgs = processArgs.concat([
-      '--NotebookApp.session_manager_class=nb2kg.managers.SessionManager',
-      '--NotebookApp.kernel_manager_class=nb2kg.managers.RemoteKernelManager',
-      '--NotebookApp.kernel_spec_manager_class=nb2kg.managers.RemoteKernelSpecManager',
-      '--NotebookNotary.algorithm=sha256',
-      '--NotebookNotary.secret_file=/content/datalab/.config/notary_secret'
-    ]);
-  }
-
   var processOptions = {
     detached: false,
     env: notebookEnv
@@ -165,14 +160,14 @@ function createJupyterServerAtPort(port: number, userId: string, userDir: string
 
   // Create the proxy.
   var proxyOptions: httpProxy.ProxyServerOptions = {
-    target: 'http://127.0.0.1:' + port
+    target: 'http://localhost:' + port + appSettings.datalabBasePath
   };
 
   server.proxy = httpProxy.createProxyServer(proxyOptions);
   server.proxy.on('proxyRes', responseHandler);
   server.proxy.on('error', errorHandler);
 
-  tcp.waitUntilUsed(server.port, 100, 15000).then(
+  tcp.waitUntilUsedOnHost(server.port, "localhost", 100, 15000).then(
     function() {
       jupyterServers[userId] = server;
       logging.getLogger().info('Jupyter server started for %s.', userId);
@@ -191,11 +186,20 @@ function createJupyterServerAtPort(port: number, userId: string, userDir: string
 function createJupyterServer(userId: string, remainingAttempts: number) {
   logging.getLogger().info('Checking user dir for %s exists', userId);
   var userDir = userManager.getUserDir(userId);
+  logging.getLogger().info('Checking dir %s exists', userDir);
   if (!fs.existsSync(userDir)) {
     logging.getLogger().info('Creating user dir %s', userDir);
-    fs.mkdirSync(userDir, parseInt('0755', 8));
+    try {
+      fs.mkdirSync(userDir, parseInt('0755', 8));
+    } catch (e) {
+      // This likely means the disk is not yet ready.
+      // We'll fall back to /content for now.
+      logging.getLogger().info('User dir %s does not exist', userDir);
+      userDir = '/content'
+    }
   }
 
+  nextJupyterPort = appSettings.nextJupyterPort;
   logging.getLogger().info('Looking for a free port on which to start Jupyter for %s', userId);
   getNextJupyterPort(
     portRetryAttempts,
@@ -312,7 +316,7 @@ export function startForUser(userId: string, cb: common.Callback0) {
 /**
  * Initializes the Jupyter server manager.
  */
-export function init(settings: common.Settings): void {
+export function init(settings: common.AppSettings): void {
   appSettings = settings;
 
   killAllJupyterServers();
@@ -346,8 +350,8 @@ export function handleSocket(request: http.ServerRequest, socket: net.Socket, he
     return;
   }
   server.proxy.ws(request, socket, head);
+  idleTimeout.setupResetOnWebSocketRequests(socket);
 }
-
 
 export function handleRequest(request: http.ServerRequest, response: http.ServerResponse) {
   var userId = userManager.getUserId(request);
@@ -370,31 +374,25 @@ export function handleRequest(request: http.ServerRequest, response: http.Server
 }
 
 function getBaseTemplateData(request: http.ServerRequest): common.Map<string> {
-  var userId: string = userManager.getUserId(request);
-  var proxyWebSockets: string = process.env.PROXY_WEB_SOCKETS;
-  if (proxyWebSockets != 'true') {
-    proxyWebSockets = 'false';
-  }
-  var reportingEnabled: string = process.env.ENABLE_USAGE_REPORTING;
-  if (reportingEnabled) {
-    var userSettings: common.Map<string> = settings.loadUserSettings(userId);
-    if ('enableUsageReporting' in userSettings && userSettings['enableUsageReporting'] != 'true') {
-      reportingEnabled = 'false';
-    }
-  }
-  var templateData: common.Map<string> = {
+  const userId: string = userManager.getUserId(request);
+  const reportingEnabled: string = process.env.ENABLE_USAGE_REPORTING;
+  // TODO: Cache the gcloudAccount value so that we are not
+  // calling `gcloud` on every page load.
+  const gcloudAccount : string = auth.getGcloudAccount();
+  const signedIn = auth.isSignedIn(gcloudAccount);
+  let templateData: common.Map<string> = {
     feedbackId: appSettings.feedbackId,
     versionId: appSettings.versionId,
     userId: userId,
     configUrl: appSettings.configUrl,
-    baseUrl: '/',
+    knownTutorialsUrl: appSettings.knownTutorialsUrl,
+    baseUrl: appSettings.datalabBasePath,
     reportingEnabled: reportingEnabled,
-    proxyWebSockets: proxyWebSockets
+    proxyWebSockets: appSettings.proxyWebSockets,
+    isSignedIn:  signedIn.toString(),
   };
-  var signedIn = auth.isSignedIn();
-  templateData['isSignedIn'] = signedIn.toString();
   if (signedIn) {
-    templateData['account'] = auth.getGcloudAccount();
+    templateData['account'] = gcloudAccount;
     if (process.env.PROJECT_NUMBER) {
       var hash = crypto.createHash('sha256');
       hash.update(process.env.PROJECT_NUMBER);
@@ -405,16 +403,18 @@ function getBaseTemplateData(request: http.ServerRequest): common.Map<string> {
 }
 
 function sendTemplate(key: string, data: common.Map<string>, response: http.ServerResponse) {
-  var template = templates[key];
+  let template = templates[key];
 
-  // NOTE: Uncomment to use external templates mapped into the container.
-  //       This is only useful when actively developing the templates themselves.
-  // template = fs.readFileSync('/sources/datalab/templates/' + key + '.html', { encoding: 'utf8' });
+  // Set this env var to point to source directory for live updates without restart.
+  const liveTemplatesDir = process.env.DATALAB_LIVE_TEMPLATES_DIR
+  if (liveTemplatesDir) {
+    template = fs.readFileSync(path.join(liveTemplatesDir, key + '.html'), { encoding: 'utf8' });
+  }
 
   // Replace <%name%> placeholders with actual values.
   // TODO: Error handling if template placeholders are out-of-sync with
   //       keys in passed in data object.
-  var htmlContent = template.replace(/\<\%(\w+)\%\>/g, function(match, name) {
+  const htmlContent = template.replace(/\<\%(\w+)\%\>/g, function(match, name) {
     return data[name];
   });
 
@@ -424,7 +424,11 @@ function sendTemplate(key: string, data: common.Map<string>, response: http.Serv
 
 function responseHandler(proxyResponse: http.ClientResponse,
                          request: http.ServerRequest, response: http.ServerResponse) {
-  if (proxyResponse.headers['access-control-allow-origin'] !== undefined) {
+  if (appSettings.allowOriginOverrides.length &&
+      appSettings.allowOriginOverrides.indexOf(request.headers['origin']) != -1) {
+    proxyResponse.headers['access-control-allow-origin'] = request.headers['origin'];
+    proxyResponse.headers['access-control-allow-credentials'] = 'true';
+  } else if (proxyResponse.headers['access-control-allow-origin'] !== undefined) {
     // Delete the allow-origin = * header that is sent (likely as a result of a workaround
     // notebook configuration to allow server-side websocket connections that are
     // interpreted by Jupyter as cross-domain).
@@ -438,7 +442,8 @@ function responseHandler(proxyResponse: http.ClientResponse,
   // Set a cookie to provide information about the project and authenticated user to the client.
   // Ensure this happens only for page requests, rather than for API requests.
   var path = url.parse(request.url).pathname;
-  if ((path.indexOf('/tree') == 0) || (path.indexOf('/notebooks') == 0) || (path.indexOf('/edit') == 0)) {
+  if ((path.indexOf('/tree') == 0) || (path.indexOf('/notebooks') == 0) ||
+      (path.indexOf('/edit') == 0) || (path.indexOf('/terminals') == 0)) {
     var templateData: common.Map<string> = getBaseTemplateData(request);
     var page: string = null;
     if (path.indexOf('/tree') == 0) {
@@ -452,6 +457,9 @@ function responseHandler(proxyResponse: http.ClientResponse,
       templateData['fileName'] = path.substr(path.lastIndexOf('/') + 1);
 
       page = 'edit';
+    } else if (path.indexOf('/terminals') == 0) {
+      templateData['terminalId'] = 'terminals/websocket/' + path.substr(path.lastIndexOf('/') + 1);
+      page = 'terminals';
     } else {
       // stripping off the /notebooks/ from the path
       templateData['notebookPath'] = path.substr(11);

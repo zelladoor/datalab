@@ -12,8 +12,8 @@
  * the License.
  */
 
-/// <reference path="../../../externs/ts/node/node.d.ts" />
-/// <reference path="../../../externs/ts/request/request.d.ts" />
+/// <reference path="../../../third_party/externs/ts/node/node.d.ts" />
+/// <reference path="../../../third_party/externs/ts/request/request.d.ts" />
 /// <reference path="common.d.ts" />
 
 import auth = require('./auth')
@@ -23,32 +23,37 @@ import http = require('http');
 import info = require('./info');
 import jupyter = require('./jupyter');
 import logging = require('./logging');
+import idleTimeout = require('./idleTimeout');
+import fileSearch = require('./fileSearch');
+import metadata = require('./metadata');
 import net = require('net');
 import noCacheContent = require('./noCacheContent')
 import path = require('path');
 import request = require('request');
 import reverseProxy = require('./reverseProxy');
-import sockets = require('./sockets');
 import settings_ = require('./settings');
+import sockets = require('./sockets');
 import static_ = require('./static');
 import url = require('url');
 import userManager = require('./userManager');
+import wsHttpProxy = require('./wsHttpProxy');
+import backupUtility = require('./backupUtility');
+import childProcess = require('child_process');
 
 var server: http.Server;
+var metadataHandler: http.RequestHandler;
 var healthHandler: http.RequestHandler;
 var infoHandler: http.RequestHandler;
 var settingHandler: http.RequestHandler;
 var staticHandler: http.RequestHandler;
-
-// Datalab eula directory; if this doesn't exist the EULA hasn't been accepted.
-let eulaDir = '/content/datalab/.config/eula';
+var fileSearchHandler: http.RequestHandler;
+var timeoutHandler: http.RequestHandler;
 
 /**
  * The application settings instance.
  */
-var appSettings: common.Settings;
-var loadedSettings: common.Map<string> = null;
-var startup_path_setting = 'startuppath'
+var appSettings: common.AppSettings;
+var loadedSettings: common.UserSettings = null;
 
 /**
  * If it is the user's first request since the web server restarts,
@@ -99,70 +104,101 @@ function handleJupyterRequest(request: http.ServerRequest, response: http.Server
  */
 function handleRequest(request: http.ServerRequest,
                        response: http.ServerResponse,
-                       path: string) {
+                       requestPath: string) {
 
   var userId = userManager.getUserId(request);
   if (loadedSettings === null) {
-      loadedSettings = settings_.loadUserSettings(userId);
+    loadedSettings = settings_.loadUserSettings(userId);
   }
-  // All requests below are logged, while the ones above aren't, to avoid generating noise
-  // into the log.
-  logging.logRequest(request, response);
 
   // If Jupyter is not initialized, do it as early as possible after authentication.
   startInitializationForUser(request);
 
   // Landing page redirects to /tree to be able to use the Jupyter file list as
   // the initial page.
-  if (path == '/') {
+  if (requestPath == '/') {
     userManager.maybeSetUserIdCookie(request, response);
 
     response.statusCode = 302;
-    if (startup_path_setting in loadedSettings) {
-        response.setHeader('Location', loadedSettings[startup_path_setting])
+    var redirectUrl : string;
+    if (loadedSettings.startuppath) {
+      let startuppath = loadedSettings.startuppath;
+
+      // For backward compatibility with the old path format, prepend /tree prefix.
+      // This code path should only be hit by the old Jupyter-based UI, which expects
+      // a '/' prefix in the startup path, but we don't want to replicate it if it
+      // is already saved in the user setting.
+      if (startuppath.indexOf('/tree') !== 0) {
+        startuppath = '/tree' + startuppath;
+      }
+      redirectUrl = startuppath;
     } else {
-        response.setHeader('Location', '/tree/datalab');
+      redirectUrl = '/tree/datalab';
     }
+    if (redirectUrl.indexOf(appSettings.datalabBasePath) != 0) {
+      redirectUrl = path.join(appSettings.datalabBasePath, redirectUrl);
+    }
+    response.setHeader('Location', redirectUrl);
     response.end();
     return;
   }
 
-  var targetPort: string = reverseProxy.getRequestPort(request, path);
-  if (targetPort) {
-    reverseProxy.handleRequest(request, response, targetPort);
-    return;
-  }
-
-  if (path.indexOf('/_nocachecontent/') == 0) {
+  if (requestPath.indexOf('/_nocachecontent/') == 0) {
     if (process.env.KG_URL) {
       reverseProxy.handleRequest(request, response, null);
     }
     else {
-      noCacheContent.handleRequest(path, response);
+      noCacheContent.handleRequest(requestPath, response);
     }
     return;
   }
 
-  // Requests proxied to Jupyter
-  if ((path.indexOf('/api') == 0) ||
-      (path.indexOf('/tree') == 0) ||
-      (path.indexOf('/notebooks') == 0) ||
-      (path.indexOf('/nbconvert') == 0) ||
-      (path.indexOf('/nbextensions') == 0) ||
-      (path.indexOf('/files') == 0) ||
-      (path.indexOf('/edit') == 0) ||
-      (path.indexOf('/sessions') == 0)) {
+  if (requestPath == '/api/creds' || requestPath == '/api/metadata') {
+    metadataHandler(request, response);
+    return;
+  }
 
-    if (path.indexOf('/tree') == 0) {
-        loadedSettings[startup_path_setting] = path
-        settings_.updateUserSetting(userId, startup_path_setting, path, true);
+  if (requestPath.indexOf('/api/basepath') === 0) {
+    response.statusCode = 200;
+    response.end(appSettings.datalabBasePath);
+    return;
+  }
+  
+  if (requestPath.indexOf('/_appsettings') === 0) {
+    settingHandler(request, response);
+    return;
+  }
+
+  // Requests proxied to Jupyter
+  if ((requestPath.indexOf('/api') == 0) ||
+      (requestPath.indexOf('/tree') == 0) ||
+      (requestPath.indexOf('/notebooks') == 0) ||
+      (requestPath.indexOf('/nbconvert') == 0) ||
+      (requestPath.indexOf('/nbextensions') == 0) ||
+      (requestPath.indexOf('/files') == 0) ||
+      (requestPath.indexOf('/edit') == 0) ||
+      (requestPath.indexOf('/terminals') == 0) ||
+      (requestPath.indexOf('/sessions') == 0)) {
+
+    if (requestPath.indexOf('/api/contents') == 0) {
+      const subPath = decodeURIComponent(requestPath.substr('/api/contents'.length));
+      const filePath = path.join('/content', subPath);
+      try {
+        if (fs.existsSync(filePath) && fs.statSync(filePath).isDirectory()) {
+          loadedSettings.startuppath = subPath;
+          settings_.updateUserSettingAsync(userId, 'startuppath', subPath);
+        } else {
+        }
+      } catch (err) {
+        logging.getLogger().error(err, 'Failed check for file "%s": %s', filePath, err.code);
+      }
     }
     handleJupyterRequest(request, response);
     return;
   }
 
   // /_info displays information about the server for diagnostics.
-  if (path.indexOf('/_info') == 0) {
+  if (requestPath.indexOf('/_info') == 0) {
     infoHandler(request, response);
     return;
   }
@@ -171,22 +207,52 @@ function handleRequest(request: http.ServerRequest,
   // TODO: This is oh so hacky. If this becomes interesting longer term, turn
   //       this into a real feature, that involves a confirmation prompt, as
   //       well validation to require a POST request.
-  if (path.indexOf('/_restart') == 0) {
+  if (requestPath.indexOf('/_restart') == 0) {
+    if ('POST' != request.method) {
+      return;
+    }
     setTimeout(function() { process.exit(0); }, 0);
     response.statusCode = 200;
     response.end();
     return;
   }
 
-  // /setting updates a per-user setting.
-  if (path.indexOf('/_setting') == 0) {
+  if (requestPath.indexOf('/_stopvm') == 0) {
+    stopVmHandler(request, response);
+    return;
+  }
+
+  // /_usersettings updates a per-user setting.
+  if (requestPath.indexOf('/_usersettings') == 0) {
     settingHandler(request, response);
+    return;
+  }
+
+  // file search capability
+  if (requestPath.indexOf('/_filesearch') === 0) {
+    fileSearchHandler(request, response);
+    return;
+  }
+
+  // idle timeout management
+  if (requestPath.indexOf('/_timeout') === 0) {
+    timeoutHandler(request, response);
     return;
   }
 
   // Not Found
   response.statusCode = 404;
   response.end();
+}
+
+/**
+ * Returns true iff the supplied path should be handled by the static handler
+ */
+function isStaticResource(urlpath: string) {
+  // /static and /custom paths for returning static content
+  return urlpath.indexOf('/custom') == 0 ||
+         urlpath.indexOf('/static') == 0 ||
+         static_.isExperimentalResource(urlpath);
 }
 
 /**
@@ -201,47 +267,60 @@ function handleRequest(request: http.ServerRequest,
  */
 function uncheckedRequestHandler(request: http.ServerRequest, response: http.ServerResponse) {
   var parsed_url = url.parse(request.url, true);
-  var path = parsed_url.pathname;
+  var urlpath = parsed_url.pathname;
 
-  // Check if EULA has been accepted; if not go to EULA page.
-  if (path.indexOf('/accepted_eula') == 0) {
-    if (!fs.existsSync(eulaDir)) {
-      fs.mkdirSync(eulaDir);
-    }
-    var i = parsed_url.search.indexOf('referer=');
-    if (i < 0) {
-      logging.getLogger().info('Accepting EULA, but no referer; returning 500');
-      response.writeHead(500);
-    } else {
-      i += 8;
-      var referer = decodeURI(parsed_url.search.substring(i));
-      logging.getLogger().info('Accepting EULA; return to ' + referer);
-      response.writeHead (302, {'Location': referer})
-    }
-    response.end();
-  } else if (path.indexOf('/signin') == 0 || path.indexOf('/signout') == 0 ||
-      path.indexOf('/oauthcallback') == 0) {
+  logging.logRequest(request, response);
+
+  var reverseProxyPort: string = reverseProxy.getRequestPort(request, urlpath);
+
+  if (urlpath.indexOf('/signin') == 0 || urlpath.indexOf('/signout') == 0 ||
+      urlpath.indexOf('/oauthcallback') == 0) {
     // Start or return from auth flow.
     auth.handleAuthFlow(request, response, parsed_url, appSettings);
-  } else if ((path.indexOf('/static') == 0) || (path.indexOf('/custom') == 0)) {
-    // /static and /custom paths for returning static content
-    // We serve these even if the EULA has not been accepted, so that the
-    // EULA page can include static resources.
+  } else if (reverseProxyPort) {
+    reverseProxy.handleRequest(request, response, reverseProxyPort);
+  } else if (isStaticResource(urlpath)) {
     staticHandler(request, response);
-  } else if (!fs.existsSync(eulaDir)) {
-    logging.getLogger().info('No Datalab config; redirect to EULA page');
-    fs.readFile('/datalab/web/static/eula.html', function(error, content) {
-      response.writeHead(200);
-      response.end(content);
-    });
   } else {
-    handleRequest(request, response, path);
+    handleRequest(request, response, urlpath);
   }
 }
 
+// The path that is used for the optional websocket proxy for HTTP requests.
+const httpOverWebSocketPath: string = '/http_over_websocket';
+
+function stopVmHandler(request: http.ServerRequest, response: http.ServerResponse) {
+  if ('POST' != request.method) {
+    return;
+  }
+  try {
+    let vminfo = info.getVmInfo();
+    childProcess.execSync(
+      'gcloud compute instances stop ' + vminfo.vm_name +
+         ' --project ' + vminfo.vm_project + ' --zone ' + vminfo.vm_zone,
+      {env: process.env});
+  } catch (err) {
+    logging.getLogger().error(err, 'Failed to stop the VM. stderr: %s', err.stderr);
+    return "unknown";
+  }
+}
 
 function socketHandler(request: http.ServerRequest, socket: net.Socket, head: Buffer) {
-  jupyter.handleSocket(request, socket, head);
+  request.url = trimBasePath(request.url);
+  // Avoid proxying websocket requests on this path, as it's handled locally rather than by Jupyter.
+  if (request.url != httpOverWebSocketPath) {
+    jupyter.handleSocket(request, socket, head);
+  }
+}
+
+function trimBasePath(requestPath: string): string {
+  let pathPrefix = appSettings.datalabBasePath;
+  if (requestPath.indexOf(pathPrefix) == 0) {
+    let newPath = "/" + requestPath.substring(pathPrefix.length);
+    return newPath;
+  } else {
+    return requestPath;
+  }
 }
 
 /**
@@ -251,10 +330,12 @@ function socketHandler(request: http.ServerRequest, socket: net.Socket, head: Bu
  * @param response the out-going HTTP response.
  */
 function requestHandler(request: http.ServerRequest, response: http.ServerResponse) {
+  request.url = trimBasePath(request.url);
+  idleTimeout.resetBasedOnPath(request.url);
   try {
     uncheckedRequestHandler(request, response);
   } catch (e) {
-    logging.getLogger().error('Uncaught error handling a request: %s', e);
+    logging.getLogger().error('Uncaught error handling a request to "%s": %s', request.url, e);
   }
 }
 
@@ -262,28 +343,38 @@ function requestHandler(request: http.ServerRequest, response: http.ServerRespon
  * Runs the proxy web server.
  * @param settings the configuration settings to use.
  */
-export function run(settings: common.Settings): void {
+export function run(settings: common.AppSettings): void {
   appSettings = settings;
+  metadata.init(settings);
   userManager.init(settings);
   jupyter.init(settings);
-  auth.init();
-  reverseProxy.init();
+  auth.init(settings);
+  noCacheContent.init(settings);
+  reverseProxy.init(settings);
+  sockets.init(settings);
 
+  metadataHandler = metadata.createHandler(settings);
   healthHandler = health.createHandler(settings);
   infoHandler = info.createHandler(settings);
   settingHandler = settings_.createHandler();
   staticHandler = static_.createHandler(settings);
+  fileSearchHandler = fileSearch.createHandler(appSettings);
+  timeoutHandler = idleTimeout.createHandler();
 
   server = http.createServer(requestHandler);
-  var proxyWebSockets: string = process.env.PROXY_WEB_SOCKETS;
-  if (proxyWebSockets == 'true') {
-    sockets.wrapServer(server);
-  } else {
-    server.on('upgrade', socketHandler);
+  server.on('upgrade', socketHandler);
+
+  if (settings.allowHttpOverWebsocket) {
+    new wsHttpProxy.WsHttpProxy(server, httpOverWebSocketPath, settings.allowOriginOverrides);
   }
 
-  logging.getLogger().info('Starting DataLab server at http://localhost:%d',
-                           settings.serverPort);
+  logging.getLogger().info('Starting DataLab server at http://localhost:%d%s',
+                           settings.serverPort,
+                           settings.datalabBasePath);
+  backupUtility.startBackup(settings);
+  process.on('SIGINT', () => process.exit());
+
+  idleTimeout.initAndStart();
   server.listen(settings.serverPort);
 }
 

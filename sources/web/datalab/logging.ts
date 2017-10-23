@@ -12,10 +12,10 @@
  * the License.
  */
 
-/// <reference path="../../../externs/ts/node/node.d.ts" />
-/// <reference path="../../../externs/ts/node/node-uuid.d.ts" />
-/// <reference path="../../../externs/ts/node/bunyan.d.ts" />
-/// <reference path="../../../externs/ts/node/mkdirp.d.ts" />
+/// <reference path="../../../third_party/externs/ts/node/node.d.ts" />
+/// <reference path="../../../third_party/externs/ts/node/node-uuid.d.ts" />
+/// <reference path="../../../third_party/externs/ts/node/bunyan.d.ts" />
+/// <reference path="../../../third_party/externs/ts/node/mkdirp.d.ts" />
 /// <reference path="common.d.ts" />
 
 import bunyan = require('bunyan');
@@ -63,16 +63,17 @@ export function logJupyterOutput(text: string, error: boolean): void {
 /**
  * Initializes loggers used within the application.
  */
-export function initializeLoggers(settings: common.Settings): void {
+export function initializeLoggers(settings: common.AppSettings): void {
   // Ensure the directory containing logs exists (as bunyan doesn't create the directory itself).
-  mkdirp.sync(path.dirname(settings.logFilePath));
+  var logFilePath = path.join(settings.datalabRoot, settings.logFilePath);
+  mkdirp.sync(path.dirname(logFilePath));
 
   var streams: bunyan.LogStream[] = [
     { level: 'info', type: 'rotating-file',
-      path: settings.logFilePath, period: settings.logFilePeriod, count: settings.logFileCount }
+      path: logFilePath, period: settings.logFilePeriod, count: settings.logFileCount }
   ];
   if (settings.consoleLogging) {
-    streams.push({ level: 'info', type: 'stream', stream: process.stderr });
+    streams.push({ level: settings.consoleLogLevel, type: 'stream', stream: process.stderr });
   }
 
   logger = bunyan.createLogger({ name: 'app', streams: streams });

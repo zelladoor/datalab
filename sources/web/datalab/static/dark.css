@@ -20,6 +20,11 @@ body {
 #toolbarArea {
   background-color: #333;
   color: #ddd;
+  border-bottom: solid 1px #222;
+}
+#sidebarArea {
+  background-color: #333;
+  border-left: solid 1px #222;
 }
 #notebook-container {
   background: #000;
@@ -34,7 +39,7 @@ button:hover {
   background-color: #333;
   color: #ddd;
 }
-.btn-default:hover {
+.btn-default:hover, .btn-default:focus {
   background-color: #222;
   color: #ddd;
 }
@@ -56,13 +61,16 @@ span.autosave_status {
   color: #ddd;
 }
 a {
-  color: #ddd;
+  color: #ffe883;
 }
 a:visited {
-  color: #ddd;
+  color: #ffe883;
 }
 a:hover {
   color: #fff;
+}
+a.item_link {
+  color: #ddd;
 }
 input {
   background-color: #333;
@@ -90,8 +98,21 @@ input {
 .dropdown-menu li a {
   color: #ddd;
 }
+.dropdown-menu li a:hover {
+  color: #ddd;
+  background-color: #444;
+}
 #updateMessageArea a {
   color: #333;
+}
+
+/* Terminal Page */
+#running .panel {
+  background-color: #444;
+  border-color: #333;
+}
+#running .panel-group .panel .panel-heading {
+  background-color: #333;
 }
 
 /* Inside Notebooks */
@@ -101,26 +122,32 @@ input {
 div.text_cell_render {
   color: #ddd;
 }
-.rendered_html pre, .rendered_html code, .rendered_html {
-  background-color: none;
+.notebook_app .rendered_html table, .notebook_app .rendered_html th,
+.notebook_app .rendered_html tr, .notebook_app .rendered_html td,
+.notebook_app .rendered_html code, .notebook_app .rendered_html pre {
+  background-color: #444;
   color: #ddd;
+}
+.notebook_app .rendered_html .headerrow {
+    background-color: #333;
 }
 div.cell.selected {
   background: linear-gradient(to right, #42A5F5 -40px, #42A5F5 5px, transparent 5px, transparent 100%);
-  border: solid 1px #555;
+  border: solid 1px #999 !important;
+  box-shadow: 0px 0px 6px 0px rgba(255, 255, 255, 0.3);
 }
 div.code_cell.session.completed div.input {
   border-left: solid 4px #559ad7;
 }
 div.code_cell div.input {
   background-color: #333;
-  border-left: solid 4px #555;
+  border-left: solid 4px #666;
 }
-div.output, div.output_area pre {
+div.output, div.output_area pre, .notebook_app .rendered_html {
   color: #ddd;
 }
 div.output {
-  background-color: #555;
+  background-color: #444;
 }
 div.output_stderr {
   background-color: #a94442;
@@ -140,46 +167,13 @@ input.raw_input::-moz-selection {
   background: #333;
 }
 .CodeMirror-selected {
-  background-color: #555 !important;
-}
-.CodeMirror-gutters {
-  color: #ddd;
-  background: #333;
+  background-color: #444 !important;
 }
 .CodeMirror-cursor {
   border-left-color: #eee;
 }
-.cm-keyword {
-  color: #aaf !important;
-}
-.cm-number, .cm-string, .cm-string2 {
-  color: lightgreen !important;
-}
-.cm-def, .cm-variable, .cm-variable-2, .cm-variable-3, .cm-property,
-.cm-qualifier, .cm-operator, .cm-meta, .cm-builtin,
-.cm-tag, .cm-attribute, .cm-header, .cm-hr, .cm-atom {
-  color: #559edd !important;
-}
-.cm-link, .cm-url {
-  color: #559ad7 !important;
-}
 code {
   background-color: #666;
-}
-.ansicyan {
-  color: lightblue;
-}
-.ansigreen {
-  color: lightgreen;
-}
-.ansigray {
-  color: lightgray;
-}
-.ansiyellow {
-  color: #ff0;
-}
-.cm-magic, .ansired {
-  color: #559edd;
 }
 .item_icon {
   color: #adadad;
@@ -208,6 +202,113 @@ table.bqsv th, table.bqsv td {
   color: #ddd;
 }
 
+/* Monokai theme for code cells */
+.cm-s-ipython.CodeMirror {
+  background: #333;
+  color: #f8f8f2;
+}
+.cm-s-ipython div.CodeMirror-selected {
+  background: #49483E;
+}
+.cm-s-ipython .CodeMirror-line::selection, .cm-s-ipython .CodeMirror-line > span::selection, .cm-s-ipython .CodeMirror-line > span > span::selection {
+  background: rgba(73, 72, 62, .99);
+}
+.cm-s-ipython .CodeMirror-line::-moz-selection, .cm-s-ipython .CodeMirror-line > span::-moz-selection, .cm-s-ipython .CodeMirror-line > span > span::-moz-selection {
+  background: rgba(73, 72, 62, .99);
+}
+.cm-s-ipython .CodeMirror-gutters {
+  background: #272822;
+  border-right: 1px solid #666;
+  color: #444;
+}
+.cm-s-ipython .CodeMirror-guttermarker {
+  color: white;
+}
+.cm-s-ipython .CodeMirror-guttermarker-subtle {
+  color: #d0d0d0;
+}
+.cm-s-ipython .CodeMirror-linenumber {
+  color: #888;
+}
+.cm-s-ipython .CodeMirror-cursor {
+  border-left: 1px solid #f8f8f0;
+}
+.cm-s-ipython span.cm-comment {
+  color: #888;
+}
+.cm-s-ipython span.cm-atom {
+  color: #ae81ff;
+}
+.cm-s-ipython span.cm-number {
+  color: white;
+}
+.cm-s-ipython span.cm-property, .cm-s-ipython span.cm-attribute {
+  color: #a6e22e;
+}
+.cm-s-ipython span.cm-keyword, .cm-s-ipython span.cm-builtin {
+  color: #48c34e;
+}
+.cm-s-ipython span.cm-function {
+  color: #ff4056;
+}
+.cm-s-ipython span.cm-string {
+  color: #e6db74;
+}
+.cm-s-ipython span.cm-operator {
+  color: #fff;
+}
+.cm-s-ipython span.cm-type {
+  color: #d67135;
+}
+.cm-s-ipython span.cm-variable {
+  color: #f8f8f2;
+}
+.cm-s-ipython span.cm-variable-2 {
+  color: #9effff;
+}
+.cm-s-ipython span.cm-def {
+  color: #fd971f;
+}
+.cm-s-ipython span.cm-bracket {
+  color: #f8f8f2;
+}
+.cm-s-ipython span.cm-tag {
+  color: #f92672;
+}
+.cm-s-ipython span.cm-header {
+  color: #ae81ff;
+}
+.cm-s-ipython span.cm-link {
+  color: #ae81ff;
+}
+.cm-s-ipython span.cm-error {
+  color: red;
+}
+.cm-s-ipython .CodeMirror-activeline-background {
+  background: #373831;
+}
+.cm-s-ipython .CodeMirror-matchingbracket {
+  color: white !important;
+}
+
+/* File finder autocomplete */
+#tree-filter {
+  background-color: #2b2b2b;
+  color: white;
+  border: #666 1px solid;
+}
+.ui-autocomplete {
+  background-color: #444;
+  border: #333 1px solid;
+}
+.ui-menu-item > a {
+  color: white;
+  border-bottom: #666 1px solid;
+}
+.ui-menu .ui-menu-item a:hover, .ui-menu-item .ui-state-focus {
+  background-color: #555;
+}
+
 /* Modals */
 .modal-content {
   background-color: #444;
@@ -217,10 +318,10 @@ table.bqsv th, table.bqsv td {
   color: #ddd;
 }
 .modal-header {
-  border-bottom: 1px solid #555;
+  border-bottom: 1px solid #444;
 }
 .modal-footer {
-  border-top: 1px solid #555;
+  border-top: 1px solid #444;
 }
 .close {
   color: inherit;
@@ -238,3 +339,27 @@ svg>rect {
 svg text {
   fill: #ddd;
 }
+
+/* ANSI colors */
+span.ansiblack {
+  color: #323537;
+}
+span.ansiblue {
+  color: #6aa7ea;
+}
+span.ansigray {
+  color: #838184;
+}
+span.ansigreen {
+  color: #98ef8a;
+}
+span.ansipurple {
+  color: #9b859d;
+}
+span.ansired {
+  color: #ff1d1d;
+}
+span.ansiyellow {
+  color: #f9ee98;
+}
+

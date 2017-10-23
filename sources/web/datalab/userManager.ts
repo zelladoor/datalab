@@ -12,7 +12,7 @@
  * the License.
  */
 
-/// <reference path="../../../externs/ts/node/node.d.ts" />
+/// <reference path="../../../third_party/externs/ts/node/node.d.ts" />
 /// <reference path="common.d.ts" />
 
 import http = require('http');
@@ -25,9 +25,9 @@ import url = require('url');
 /**
  * The application settings instance.
  */
-var appSettings: common.Settings;
+var appSettings: common.AppSettings;
 
-export function init(settings: common.Settings): void {
+export function init(settings: common.AppSettings): void {
   appSettings = settings;
 }
 
@@ -56,14 +56,15 @@ export function getUserId(request: http.ServerRequest): string {
  * the directory is root_dir + emailaddress, such as '/content/user@domain.com'.
  */
 export function getUserDir(userId: string): string {
-  if (!appSettings.useWorkspace) {
+  var contentDir = path.join(appSettings.datalabRoot, appSettings.contentDir);
+  if (!appSettings.useWorkspace || !userId) {
     // If the workspace feature is not enabled, then just use the content directory specified
     // in configuration.
-    return appSettings.contentDir;
+    return contentDir;
   }
 
   // Forward slash '/' is allowed in email but not in file system so replace it.
-  return path.join(appSettings.contentDir, userId.replace('/', '_fsfs_'));
+  return path.join(contentDir, userId.replace('/', '_fsfs_'));
 }
 
 /**

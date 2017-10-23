@@ -12,16 +12,20 @@
  * the License.
  */
 
-/// <reference path="../../../externs/ts/node/node.d.ts" />
-/// <reference path="../../../externs/ts/node/node-http-proxy.d.ts" />
+/// <reference path="../../../third_party/externs/ts/node/node.d.ts" />
+/// <reference path="../../../third_party/externs/ts/node/node-http-proxy.d.ts" />
+/// <reference path="common.d.ts" />
 
 
 import http = require('http');
 import httpProxy = require('http-proxy');
 import logging = require('./logging');
+import url = require('url');
 
+var appSettings: common.AppSettings;
 var proxy: httpProxy.ProxyServer = httpProxy.createProxyServer(null);
 var regex: any = new RegExp('\/_proxy\/([0-9]+)($|\/)');
+var socketioPort: string = '';
 
 function errorHandler(error: Error, request: http.ServerRequest, response: http.ServerResponse) {
   response.writeHead(500, 'Reverse Proxy Error.');
@@ -39,11 +43,24 @@ function getPort(url: string) {
 }
 
 /**
+ * Returns true iff the request should be served by the reverse proxy.
+ */
+export function isReverseProxyRequest(request: http.ServerRequest) {
+  var urlpath = url.parse(request.url, true).pathname;
+  return !!getRequestPort(request, urlpath);
+}
+
+/**
  * Get port from request. If the request should be handled by reverse proxy, returns
  * the port as a string. Othewise, returns null.
  */
 export function getRequestPort(request: http.ServerRequest, path: string): string {
   var port: string = getPort(path) || getPort(request.headers.referer);
+  if (!port) {
+    if (path.indexOf('/socket.io/') == 0) {
+      port = socketioPort;
+    }
+  }
   return port;
 }
 
@@ -53,18 +70,24 @@ export function getRequestPort(request: http.ServerRequest, path: string): strin
 export function handleRequest(request: http.ServerRequest,
                               response: http.ServerResponse,
                               port: String) {
-  if (process.env.KG_URL) {
-    proxy.web(request, response, { target: process.env.KG_URL });
+  request.url = request.url.replace(regex, '');
+  let target = 'http://localhost:' + port;
+
+  // Only web socket requests (through socket.io) need the basepath appended
+  if (request.url.indexOf('/socket.io/') === 0) {
+    target += appSettings.datalabBasePath;
   }
-  else {
-    request.url = request.url.replace(regex, '/');
-    proxy.web(request, response, { target: 'http://127.0.0.1:' + port });
-  }
+  proxy.web(request, response, {
+    target
+  });
 }
 
 /**
  * Initialize the handler.
  */
-export function init() {
+export function init(settings: common.AppSettings) {
+  appSettings = settings;
+  socketioPort = String(settings.socketioPort);
   proxy.on('error', errorHandler);
 }
+

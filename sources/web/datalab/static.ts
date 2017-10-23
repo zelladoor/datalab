@@ -12,8 +12,8 @@
  * the License.
  */
 
-/// <reference path="../../../externs/ts/node/node.d.ts" />
-/// <reference path="../../../externs/ts/node/node-http-proxy.d.ts" />
+/// <reference path="../../../third_party/externs/ts/node/node.d.ts" />
+/// <reference path="../../../third_party/externs/ts/node/node-http-proxy.d.ts" />
 /// <reference path="common.d.ts" />
 
 import fs = require('fs');
@@ -24,11 +24,12 @@ import settings = require('./settings');
 import url = require('url');
 import userManager = require('./userManager');
 
-var JUPYTER_DIR = '/usr/local/lib/python2.7/dist-packages/notebook';
+var appSettings: common.AppSettings;
 var CONTENT_TYPES: common.Map<string> = {
   '.js': 'text/javascript',
   '.css': 'text/css',
   '.png': 'image/png',
+  '.svg': 'image/svg+xml',
   '.ico': 'image/x-icon',
   '.txt': 'text/plain',
   '.html': 'text/html'
@@ -38,6 +39,12 @@ var DEFAULT_THEME_FILE = 'light.css';
 
 var contentCache: common.Map<Buffer> = {};
 var watchedDynamicContent: common.Map<boolean> = {};
+
+// Path to use for fetching static resources provided by Jupyter.
+function jupyterDir(): string {
+  var prefix = appSettings.datalabRoot || '/usr/local/lib/python2.7';
+  return path.join(prefix, '/dist-packages/notebook')
+}
 
 function getContent(filePath: string, cb: common.Callback<Buffer>, isDynamic: boolean = false): void {
   var content = contentCache[filePath];
@@ -77,7 +84,8 @@ function getContent(filePath: string, cb: common.Callback<Buffer>, isDynamic: bo
  * @param isDynamic indication of whether or not the file contents might change.
  */
 function sendFile(filePath: string, response: http.ServerResponse,
-                  alternatePath: string = "", isDynamic: boolean = false) {
+                  alternatePath: string = "", isDynamic: boolean = false,
+                  replaceBasepath: boolean = false) {
   var extension = path.extname(filePath);
   var contentType = CONTENT_TYPES[extension.toLowerCase()] || 'application/octet-stream';
 
@@ -93,8 +101,18 @@ function sendFile(filePath: string, response: http.ServerResponse,
       }
     }
     else {
+      if (isDynamic) {
+        response.removeHeader('Cache-Control');
+        response.setHeader('Cache-Control', 'no-cache');
+      }
       response.writeHead(200, { 'Content-Type': contentType });
-      response.end(content);
+      if (replaceBasepath) {
+        const contentStr = content.toString().replace(
+            /\{base_url}/g, appSettings.datalabBasePath);
+        response.end(contentStr);
+      } else {
+        response.end(content);
+      }
     }
   }, isDynamic);
 }
@@ -103,9 +121,19 @@ function sendFile(filePath: string, response: http.ServerResponse,
  * Sends a static file located within the DataLab static directory.
  * @param filePath the relative file path of the static file to send.
  * @param response the out-going response associated with the current HTTP request.
+ * @param isDynamic indication of whether or not the file contents might change.
  */
-function sendDataLabFile(filePath: string, response: http.ServerResponse) {
-  sendFile(path.join(__dirname, 'static', filePath), response);
+function sendDataLabFile(filePath: string, response: http.ServerResponse,
+    isDynamic: boolean = false, replaceBasepath: boolean = false) {
+  let live = isDynamic;
+  let staticDir = path.join(__dirname, 'static')
+  // Set this env var to point to source directory for live updates without restart.
+  const liveStaticDir = process.env.DATALAB_LIVE_STATIC_DIR
+  if (liveStaticDir) {
+    live = true
+    staticDir = liveStaticDir
+  }
+  sendFile(path.join(staticDir, filePath), response, '', live, replaceBasepath);
 }
 
 /**
@@ -114,7 +142,7 @@ function sendDataLabFile(filePath: string, response: http.ServerResponse) {
  * @param response the out-going response associated with the current HTTP request.
  */
 function sendJupyterFile(relativePath: string, response: http.ServerResponse) {
-  var filePath = path.join(JUPYTER_DIR, relativePath);
+  var filePath = path.join(jupyterDir(), relativePath);
   fs.stat(filePath, function(e, stats) {
     if (e || !stats.isFile()) {
       response.writeHead(404);
@@ -129,8 +157,8 @@ function sendJupyterFile(relativePath: string, response: http.ServerResponse) {
  * Checks whether a requested static file exists in DataLab.
  * @param filePath the relative path of the file.
  */
-function datalabFileExists(filePath: string) {
-    return fs.existsSync(path.join(__dirname, 'static', filePath));
+export function datalabFileExists(filePath: string) {
+  return fs.existsSync(path.join(__dirname, 'static', filePath));
 }
 
 /**
@@ -140,8 +168,43 @@ function datalabFileExists(filePath: string) {
  * @param response the out-going response associated with the current HTTP request.
  */
 function sendUserCustomTheme(userId: string, response: http.ServerResponse): void {
-    var customThemePath = path.join(settings.getUserConfigDir(userId), CUSTOM_THEME_FILE);
-    sendFile(customThemePath, response, DEFAULT_THEME_FILE, true);
+  var customThemePath = path.join(settings.getUserConfigDir(userId), CUSTOM_THEME_FILE);
+  sendFile(customThemePath, response, DEFAULT_THEME_FILE, true);
+}
+
+/**
+ * Returns true if this path should return an experimental UI resource
+ * @param path the incoming request path
+ */
+export function isExperimentalResource(pathname: string) {
+  if (pathname.indexOf('/exp/') === 0) {
+    return true;
+  }
+  const experimentalUiEnabled = process.env.DATALAB_EXPERIMENTAL_UI;
+  return experimentalUiEnabled === 'true' && (
+      pathname.indexOf('/data') === 0 ||
+      pathname.indexOf('/files') === 0 ||
+      // /files/path?download=true is used to download files from Jupyter
+      // TODO: use a different API to download files when we have a content service.
+      pathname.indexOf('/sessions') === 0 ||
+      pathname.indexOf('/terminal') === 0 ||
+      pathname.indexOf('/docs') === 0 ||
+      pathname.indexOf('/editor') === 0 ||
+      pathname.indexOf('/bower_components') === 0 ||
+      pathname.indexOf('/components') === 0 ||
+      pathname.indexOf('/images') === 0 ||
+      pathname.indexOf('/index.css') === 0 ||
+      pathname.indexOf('/modules') === 0 ||
+      pathname.indexOf('/templates') === 0 ||
+      pathname === '/'
+  );
+}
+
+/**
+ * Parses the given url path and returns the first component.
+ */
+function firstComponent(pathname: string) {
+  return pathname.split('/')[1];
 }
 
 /**
@@ -150,36 +213,85 @@ function sendUserCustomTheme(userId: string, response: http.ServerResponse): voi
  * @param response the outgoing file response.
  */
 function requestHandler(request: http.ServerRequest, response: http.ServerResponse): void {
-  var path = url.parse(request.url).pathname;
+  var pathname = url.parse(request.url).pathname;
 
-  if (path.lastIndexOf('/favicon.ico') > 0) {
-    sendDataLabFile('datalab.ico', response);
+  // -------------------------------- start of experimental UI resources
+  let replaceBasepath = false;
+  // List of page names that resolve to index.html
+  const indexPageNames = ['data', 'files', 'docs', 'sessions', 'terminal'];
+  if (isExperimentalResource(pathname)) {
+    logging.getLogger().debug('Serving experimental UI resource: ' + pathname);
+    let rootRedirect = 'files';
+    if (pathname.indexOf('/exp/') === 0) {
+      pathname = pathname.substr('/exp'.length);
+      rootRedirect = 'exp/files';
+    }
+    if (pathname === '/') {
+      response.statusCode = 302;
+      response.setHeader('Location', path.join(appSettings.datalabBasePath, rootRedirect));
+      response.end();
+      return;
+    } else if (indexPageNames.indexOf(firstComponent(pathname)) > -1) {
+      pathname = '/index.html';
+      replaceBasepath = true;
+    } else if (firstComponent(pathname) === 'editor') {
+      pathname = '/editor.html';
+      replaceBasepath = true;
+    } else if (pathname === '/index.css') {
+      var userSettings: common.UserSettings = settings.loadUserSettings(userId);
+      pathname = '/index.' + (userSettings.theme || 'light') + '.css';
+    }
+    pathname = 'experimental' + pathname;
+    logging.getLogger().debug('sending experimental file: ' + pathname);
+    sendDataLabFile(pathname, response, undefined, replaceBasepath);
+    return;
   }
-  else if (path.lastIndexOf('/logo.png') > 0) {
-    sendDataLabFile('datalab.png', response);
+  // -------------------------------- end of experimental resources
+
+  console.log('static request: ' + pathname);
+  // List of resources that are passed through with the same name.
+  const staticResourcesList: [string] = [
+    'appbar.html',
+    'appbar.js',
+    'util.js',
+    'edit-app.js',
+    'datalab.css',
+    'idle-timeout.js',
+    'minitoolbar.js',
+    'notebook-app.js',
+    'notebook-list.js',
+    'reporting.html',
+    'settings.html',
+    'settings.js',
+    'websocket.js',
+  ];
+  // Map of resources where we change the name.
+  const staticResourcesMap: {[key:string]: string} = {
+    'about.txt': 'datalab.txt',
+    'favicon.ico': 'datalab.ico',
+    'logo.png': 'datalab.png',
+  };
+
+  response.setHeader('Cache-Control', 'public, max-age=3600');
+  var subpath = pathname.substr(pathname.lastIndexOf('/') + 1);
+  if (staticResourcesList.indexOf(subpath) >= 0) {
+    sendDataLabFile(subpath, response);
   }
-  else if (path.lastIndexOf('/about.txt') > 0) {
-    sendDataLabFile('datalab.txt', response);
+  else if (subpath in staticResourcesMap) {
+    sendDataLabFile(staticResourcesMap[subpath], response);
   }
-  else if (path.lastIndexOf('/reporting.html') > 0) {
-    sendDataLabFile('reporting.html', response);
-  }
-  else if (path.lastIndexOf('/datalab.css') > 0) {
-    sendDataLabFile('datalab.css', response);
-  }
-  else if (path.lastIndexOf('/appbar.html') > 0) {
-    sendDataLabFile('appbar.html', response);
-  }
-  else if (path.indexOf('/codemirror/mode/') > 0) {
-    var split = path.lastIndexOf('/');
-    var newPath = 'codemirror/mode/' + path.substring(split + 1);
+  else if (pathname.indexOf('/codemirror/mode/') > 0) {
+    var split = pathname.lastIndexOf('/');
+    var newPath = 'codemirror/mode/' + pathname.substring(split + 1);
     if (datalabFileExists(newPath)) {
       sendDataLabFile(newPath, response);
     } else {
-      sendJupyterFile(path.substr(1), response);
+      // load codemirror modes from proper path
+      pathname = pathname.substr(1).replace('static/codemirror', 'static/components/codemirror');
+      sendJupyterFile(pathname, response);
     }
   }
-  else if (path.lastIndexOf('/custom.js') >= 0) {
+  else if (pathname.lastIndexOf('/custom.js') >= 0) {
     // NOTE: Uncomment to use external content mapped into the container.
     //       This is only useful when actively developing the content itself.
     // var text = fs.readFileSync('/sources/datalab/static/datalab.js', { encoding: 'utf8' });
@@ -188,30 +300,31 @@ function requestHandler(request: http.ServerRequest, response: http.ServerRespon
 
     sendDataLabFile('datalab.js', response);
   }
-  else if (path.lastIndexOf('/custom.css') > 0) {
+  else if (pathname.lastIndexOf('/custom.css') > 0) {
     var userId: string = userManager.getUserId(request);
-    var userSettings: common.Map<string> = settings.loadUserSettings(userId);
+    var userSettings: common.UserSettings = settings.loadUserSettings(userId);
     if ('theme' in userSettings) {
       var theme: string = userSettings['theme'];
       if (theme == 'custom') {
         sendUserCustomTheme(userId, response);
       } else if (theme == 'dark') {
-        sendDataLabFile('dark.css', response);
+        sendDataLabFile('dark.css', response, true);
       } else {
-        sendDataLabFile('light.css', response);
+        sendDataLabFile('light.css', response, true);
       }
     } else {
-      sendDataLabFile(DEFAULT_THEME_FILE, response);
+      sendDataLabFile(DEFAULT_THEME_FILE, response, true);
     }
   }
-  else if ((path.indexOf('/static/extensions/') == 0) ||
-           (path.indexOf('/static/require/') == 0)) {
-    // Strip off the leading '/static/' to turn path into a relative path within the
+  else if ((pathname.indexOf('/static/extensions/') == 0) ||
+           (pathname.indexOf('/static/require/') == 0) ||
+           (pathname.indexOf('/static/fonts/') == 0)) {
+    // Strip off the leading '/static/' to turn pathname into a relative path within the
     // static directory.
-    sendDataLabFile(path.substr(8), response);
+    sendDataLabFile(pathname.substr('/static/'.length), response);
   } else {
-    // Strip off the leading slash to turn path into a relative file path
-    sendJupyterFile(path.substr(1), response);
+    // Strip off the leading slash to turn pathname into a relative file path
+    sendJupyterFile(pathname.substr(1), response);
   }
 }
 
@@ -220,6 +333,7 @@ function requestHandler(request: http.ServerRequest, response: http.ServerRespon
  * @param settings configuration settings for the application.
  * @returns the request handler to handle static requests.
  */
-export function createHandler(settings: common.Settings): http.RequestHandler {
+export function createHandler(settings: common.AppSettings): http.RequestHandler {
+  appSettings = settings;
   return requestHandler;
 }

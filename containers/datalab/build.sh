@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash -e
 # Copyright 2015 Google Inc. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,33 +18,30 @@
 # If [path_of_pydatalab_dir] is provided, it will copy the content of that dir into image.
 # Otherwise, it will get the pydatalab by "git clone" from pydatalab repo.
 
-# Create a versioned Dockerfile based on current date and git commit hash
-VERSION=`date +%Y%m%d`
-VERSION_SUBSTITUTION="s/_version_/0.5.$VERSION/"
+pushd $(pwd) >> /dev/null
+HERE=$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)
 
-COMMIT=`git log --pretty=format:'%H' -n 1`
-COMMIT_SUBSTITUTION="s/_commit_/$COMMIT/"
-
-cat Dockerfile.in | sed $VERSION_SUBSTITUTION | sed $COMMIT_SUBSTITUTION > Dockerfile
-
-# Build the datalab frontend
-source ../../tools/initenv.sh
-cd ../../sources/web/
-./build.sh
-cd ../../containers/datalab
-
-# Copy build outputs as a dependency of the Dockerfile
-rsync -avp ../../build/ build
+if [ -z "$1" ]; then
+  pydatalabPath=''
+else
+  pydatalabPath=$(realpath "$1")
+fi
 
 # Build the base docker image
-cd ../base
-./build.sh "$1"
-cd ../datalab
+cd "${HERE}/../base"
+./build.sh "$pydatalabPath"
+cd "${HERE}/"
+
+# Clean the build directory before building the image, so that the
+# prepare.sh script rebuilds web sources
+BUILD_DIR=../../build
+rm -rf $BUILD_DIR
+${HERE}/prepare.sh "datalab-base"
 
 # Build the docker image
-docker build -t datalab .
+docker build ${DOCKER_BUILD_ARGS} -t datalab .
 
 # Finally cleanup
-rm -rf build
-rm Dockerfile
+${HERE}/cleanup.sh
 
+popd >> /dev/null

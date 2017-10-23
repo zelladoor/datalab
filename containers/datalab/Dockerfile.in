@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM datalab-base
+FROM _base_image_
 MAINTAINER Google Cloud DataLab
 
 # Add build artifacts
@@ -22,23 +22,19 @@ ADD content/ /datalab
 # Install the build artifacts
 RUN ln -s /datalab/web/static/datalab.css /datalab/nbconvert/datalab.css && \
     cd /datalab/web && /tools/node/bin/npm install && \
+    mv /datalab/.bashrc /root/.bashrc && \
     cd / && \
 
-# Install the support for connecting to a kernel gateway
-    wget https://github.com/jupyter/kernel_gateway_demos/archive/e653b2bd3ca91ef1af2a13c397766484dcb7b76d.zip && \
-    unzip -qq e653b2bd3ca91ef1af2a13c397766484dcb7b76d.zip -d kernel_gateway_demos && \
-    rm e653b2bd3ca91ef1af2a13c397766484dcb7b76d.zip && \
-    cd ./kernel_gateway_demos/kernel_gateway_demos-e653b2bd3ca91ef1af2a13c397766484dcb7b76d && \
-    pip install ./nb2kg/
-
-ENV EXPERIMENTAL_KERNEL_GATEWAY_URL=""
+# Install ungit
+    /tools/node/bin/npm install -g ungit@1.1.0 && \
+    /tools/node/bin/npm install -s chokidar@1.6.1
 
 # Startup
+ENV ENV /root/.bashrc
+ENV SHELL /bin/bash
 ENV DATALAB_VERSION _version_
 ENV DATALAB_COMMIT _commit_
-ENV DEPLOY_VM "false"
 ENV ENABLE_USAGE_REPORTING true
-ENV CLI_LOGIN false
 
 # Startup
 ENTRYPOINT [ "/datalab/run.sh" ]

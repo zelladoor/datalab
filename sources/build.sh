@@ -15,10 +15,47 @@
 
 # Builds all components.
 
-if [ -z "$REPO_DIR" ];
-  then echo "REPO_DIR is not set. Please run source \`../tools/initenv.sh\` first";
-  exit 1;
-fi
+function install_wget() {
+  echo "Installing wget"
+  apt-get install -y -qq wget
+}
+
+function install_node() {
+  wget --version || install_wget
+
+  echo "Installing NodeJS"
+  mkdir -p /tools/node
+  wget -nv https://nodejs.org/dist/v6.10.0/node-v6.10.0-linux-x64.tar.gz -O node.tar.gz
+  tar xzf node.tar.gz -C /tools/node --strip-components=1
+  rm node.tar.gz
+  export "PATH=${PATH}:/tools/node/bin"
+}
+
+function install_git() {
+  echo "Updating apt repository"
+  apt-get update -y -qq
+
+  echo "Installing git"
+  apt-get install -y -qq git
+}
+
+function install_rsync() {
+  echo "Installing rsync"
+  apt-get install -y -qq rsync
+}
+
+function install_prereqs() {
+  git version || install_git
+  rsync -h >/dev/null 2>&1 || install_rsync
+
+  # Use -v instead of -h to test npm installation, since -h returns non-zero
+  npm -v >/dev/null 2>&1 || install_node
+  source ./tools/initenv.sh
+}
+
+pushd $(pwd) >> /dev/null
+cd $(dirname "${BASH_SOURCE[0]}")/../
+install_prereqs
 
 SRC_PATHS=(
   "web"
@@ -35,9 +72,8 @@ do
   echo "Building $SRC ... " | tee -a $LOG_FILE
 
   SRC_DIR=$REPO_DIR/sources/$SRC
-  pushd $SRC_DIR >> /dev/null
-
-  ./build.sh >> $LOG_FILE 2>&1
+  cd $SRC_DIR
+  ./build.sh
 
   if [ "$?" -ne "0" ]; then
     echo "failed" | tee -a $LOG_FILE
@@ -46,9 +82,9 @@ do
   else
     echo "succeeded" | tee -a $LOG_FILE
   fi
-
-  popd >> /dev/null
   echo | tee -a $LOG_FILE
 done
 
 echo "Build completed." | tee -a $LOG_FILE
+
+popd >> /dev/null

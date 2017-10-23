@@ -14,154 +14,78 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-USAGE='USAGE: One of...
+# This script supports a live mode in which a datalab git-clone directory is
+# mapped to /devroot in this container. When /devroot exists, this script
+# sets things up so that changes are immediately picked up by the noteboook
+# server. For files in the static and templates directories, this means the
+# developer can just modify the files in their datalab source tree and
+# reload the web page to pick up the changes. For typescript
+# files that get compiled into javascript, the developer needs to run the
+# build script for those files, after which the changes will get noticed by
+# the notebook server and it will automatically restart.
 
-To run locally:
+[ -n "${EXTERNAL_PORT}" ] || EXTERNAL_PORT=8081
+USAGE='USAGE:
 
-    docker run -it -p "8081:8080" -v "${HOME}:/content" gcr.io/cloud-datalab/datalab:local
+    docker run -it -p "EXTERNAL_PORT:8080" -v "${HOME}:/content" gcr.io/cloud-datalab/datalab:local
 
-Or, to connect to a kernel gateway in a GCE VM;
-
-    docker run -it -p "8081:8080" -v "${HOME}:/content" \
-      -e "GATEWAY_VM=${PROJECT_ID}/${ZONE}/${INSTANCE}"
-      gcr.io/cloud-datalab/datalab:local
+where EXTERNAL_PORT can be 8080, 8081 etc.
 '
 
-ERR_MALFORMED_GATEWAY=1
-ERR_LOGIN=2
-ERR_PROJECT_NOT_FOUND=3
-ERR_ZONE_NOT_FOUND=4
-ERR_INSTANCE_NOT_FOUND=5
-ERR_DEPLOY=6
-ERR_TUNNEL_FAILED=7
-ERR_GATEWAY_FAILED=7
+GATEWAY_DEPRECATED_MSG='Running Datalab against a kernel gateway is no longer supported.
 
-run_login() {
-  local login_cmd=${1:-"gcloud auth login"}
+Please either switch to running all of Datalab in a VM via the `datalab` command line tool,
+or continue to use the unsupported image gcr.io/cloud-datalab/datalab:local-20170224
+'
 
-  USER_EMAIL=`gcloud auth list --format="value(account)"`
-  if [[ -z "${USER_EMAIL}" ]]; then
-    local failed_login=""
-    ${login_cmd} || failed_login="true"
-    if [[ -n "${failed_login}" ]]; then
-      echo "Failed to log in to gcloud"
-      exit "${ERR_LOGIN}"
+ERR_UNSUPPORTED_GATEWAY_OPTION=1
+ERR_TMP_NOT_WRITABLE=2
+
+if [ -n "${GATEWAY_VM}" ] || [ -n "${EXPERIMENTAL_KERNEL_GATEWAY_URL}" ] || [ -n "${KG_URL}" ]; then
+  echo "${GATEWAY_DEPRECATED_MSG}"
+  exit "${ERR_UNSUPPORTED_GATEWAY_OPTION}"
+fi
+
+check_tmp_directory() {
+    echo "Verifying that the /tmp directory is writable"
+    test_temp_file=$(mktemp --tmpdir=/tmp)
+    if [ ! -e "${test_temp_file}" ]; then
+	echo "Unable to write to the /tmp directory"
+	exit "${ERR_TMP_NOT_WRITABLE}"
     fi
-  fi
-  USER_EMAIL=`gcloud auth list --format="value(account)"`
+    rm "${test_temp_file}"
+    echo "The /tmp directory is writable"
 }
 
-source /datalab/setup-env.sh
+# Reinstall the parts of pydatalab from /content/pydatalab, which is where it gets live-mounted.
+function reinstall_pydatalab() {
+  PYDATALAB=/content/pydatalab
+  echo "Reinstalling pydatalab from ${PYDATALAB}"
+  pip install --upgrade --no-deps --force-reinstall --no-cache-dir ${PYDATALAB}
+  pip install --upgrade --no-deps --force-reinstall ${PYDATALAB}/solutionbox/image_classification/.
+  pip install --upgrade --no-deps --force-reinstall ${PYDATALAB}/solutionbox/structured_data/.
+  pip3 install --upgrade --no-deps --force-reinstall --no-cache-dir ${PYDATALAB}
+  pip3 install --upgrade --no-deps --force-reinstall ${PYDATALAB}/solutionbox/image_classification/.
+  pip3 install --upgrade --no-deps --force-reinstall ${PYDATALAB}/solutionbox/structured_data/.
+  echo "Done reinstalling pydatalab"
+}
 
-if [[ -n "${GATEWAY_VM}" ]]; then
-  GATEWAY_PART_1=`echo "${GATEWAY_VM}" | cut -d '/' -f 1`
-  GATEWAY_PART_2=`echo "${GATEWAY_VM}" | cut -d '/' -f 2`
-  GATEWAY_PART_3=`echo "${GATEWAY_VM}" | cut -d '/' -f 3`
-
-  if [[ -z "${GATEWAY_PART_3}" &&  -z "${GATEWAY_PART_2}" ]]; then
-    export INSTANCE="${GATEWAY_PART_1}"
-  elif [[ -z "${GATEWAY_PART_1}" || -z "${GATEWAY_PART_2}" || -z "${GATEWAY_PART_3}" ]]; then
-    echo "Malformed gateway VM name"
-    echo "${USAGE}"
-    exit "${ERR_MALFORMED_GATEWAY}"
-  else
-    export PROJECT_ID="${GATEWAY_PART_1}"
-    export ZONE="${GATEWAY_PART_2}"
-    export INSTANCE="${GATEWAY_PART_3}"
-  fi
-fi
-
-if [[ "${CLI_LOGIN}" == "true" ]]; then
-  run_login
-fi
-
-if [[ -n "${INSTANCE}" ]]; then
-  run_login "node /datalab/web/login.js 2>/dev/null"
-
-  PROJECT_NOT_FOUND=""
-  ZONE_NOT_FOUND=""
-  INSTANCE_NOT_FOUND=""
-
-  if [[ -z "${PROJECT_ID}" ]]; then
-    read -p "Please enter the Google Cloud Platform project to use: " PROJECT_ID
-  fi
-  # Verify that the specified project exists...
-  gcloud -q projects describe "${PROJECT_ID}" >/dev/null 2>&1 || PROJECT_NOT_FOUND="true"
-  if [[ -n "${PROJECT_NOT_FOUND}" ]]; then
-    echo "Project ${PROJECT_ID} not found"
-    echo "${USAGE}"
-    exit "${ERR_PROJECT_NOT_FOUND}"
-  fi
-  # Persist the project for future runs.
-  gcloud config set project "${PROJECT_ID}"
-
-  if [[ -z "${ZONE}" ]]; then
-    read -p "Please enter the zone where the VM should be located: " ZONE
-  fi
-  # Verify that the specified zone exists...
-  gcloud -q compute zones describe "${ZONE}" >/dev/null 2>&1 || ZONE_NOT_FOUND="true"
-  if [[ -n "${ZONE_NOT_FOUND}" ]]; then
-    echo "Zone ${ZONE} not found"
-    echo "${USAGE}"
-    exit "${ERR_ZONE_NOT_FOUND}"
-  fi
-  # Persist the project and zone for future runs.
-  gcloud config set compute/zone "${ZONE}"
-
-  # Verify that the specified instance exists...
-  gcloud -q compute instances describe "${INSTANCE}" >/dev/null 2>&1 || INSTANCE_NOT_FOUND="true"
-  if [[ -n "${INSTANCE_NOT_FOUND}" ]]; then
-    echo "Instance ${INSTANCE} not found"
-    if [[ "${DEPLOY_VM}" == "true" ]]; then
-      /datalab/deploy.sh "${PROJECT_ID}" "${ZONE}" "${INSTANCE}" || exit ${ERR_DEPLOY}
-    else
-      echo "${USAGE}"
-      exit "${ERR_INSTANCE_NOT_FOUND}"
-    fi
-  fi
-
-  SSH_USER=`echo ${USER_EMAIL} | cut -d '@' -f 1`
-  echo "Will connect to the kernel gateway running on the GCE VM ${INSTANCE} as ${SSH_USER}"
-  gcloud compute ssh --quiet \
-    --project "${PROJECT_ID}" \
-    --zone "${ZONE}" \
-    --ssh-flag="-fNL" \
-    --ssh-flag="localhost:8082:localhost:8080" \
-    --ssh-key-file="/content/datalab/.config/.ssh/google_compute_engine" \
-    "${SSH_USER}@${INSTANCE}"
-
-  # Test that we can actually call the gateway API via the SSH tunnel
-  TUNNEL_FAILED=""
-  curl -o /tmp/kernel_specs http://localhost:8082/api/kernelspecs 2>/dev/null || TUNNEL_FAILED="true"
-  if [[ "${TUNNEL_FAILED}" == true ]]; then
-    echo "Failed to set up the SSH tunnel to the VM ${INSTANCE}"
-    echo "If the VM was recently created, then it may still be starting up, and retrying the command may work."
-    exit "${ERR_TUNNEL_FAILED}"
-  fi
-
-  DEFAULT_KERNEL_SPEC=`cat /tmp/kernel_specs | python -c $'import json\nprint json.loads(raw_input())["default"]'`
-  if [[ -z "${DEFAULT_KERNEL_SPEC}" ]]; then
-    echo "Failed to verify that the kernel gateway is running"
-    echo "If the VM was recently created, then it may still be starting up, and retrying the command may work."
-    exit "${ERR_GATEWAY_FAILED}"
-  fi
-
-  export EXPERIMENTAL_KERNEL_GATEWAY_URL="http://localhost:8082"
-fi
-
-if [ -n "${EXPERIMENTAL_KERNEL_GATEWAY_URL}" ]
-then
-  export KG_URL="${EXPERIMENTAL_KERNEL_GATEWAY_URL}"
+if [ -d "$HOME" ]; then
+  source /datalab/setup-env.sh
 fi
 
 if [ "${ENABLE_USAGE_REPORTING}" = "true" ]
 then
   if [ -n "${PROJECT_ID}" ]
   then
-    export PROJECT_NUMBER=`gcloud projects describe "${PROJECT_ID}" --format 'value(projectNumber)' 2>/dev/null || true`
+    export PROJECT_NUMBER=${PROJECT_NUMBER:-`gcloud projects describe "${PROJECT_ID}" --format 'value(projectNumber)' 2>/dev/null || true`}
   fi
 fi
 
+# Verify that we can write to the /tmp directory
+check_tmp_directory
+
+# Make sure the notebooks directory exists
 mkdir -p /content/datalab/notebooks
 
 # Fetch docs and tutorials. This should not abort startup if it fails
@@ -191,10 +115,14 @@ then
   . ~/startup.sh
 fi
 
-# Install the kernel gateway server extension, if a kernel gateway URL has been specified
-if [ -n "${KG_URL}" ]
-then
-    jupyter serverextension enable --py nb2kg --sys-prefix
+# Get VM information if running on google cloud
+compute_metadata_url="http://metadata.google.internal/computeMetadata/v1"
+vm_project=$(curl -s "${compute_metadata_url}/project/project-id" -H "Metadata-Flavor: Google" || true)
+if [ -n "${vm_project}" ] && [ "${vm_project}" != "no-project-id" ]; then
+   export VM_PROJECT="${vm_project}"
+   export VM_NAME=$(curl -s "${compute_metadata_url}/instance/hostname" -H "Metadata-Flavor: Google" | cut -d '.' -f 1)
+   export VM_ZONE=$(curl -s "${compute_metadata_url}/instance/zone" -H "Metadata-Flavor: Google" | sed 's/.*zones\///')
+   export DATALAB_SHUTDOWN_COMMAND="gcloud compute instances stop ${VM_NAME} --project ${VM_PROJECT} --zone ${VM_ZONE}"
 fi
 
 # Create the notebook notary secret if one does not already exist
@@ -204,6 +132,14 @@ then
   openssl rand -base64 128 > /content/datalab/.config/notary_secret
 fi
 
+# Parse the settings overrides to get the (potentially overridden) value
+# of the `datalabBasePath` setting.
+EMPTY_BRACES="{}"
+DATALAB_BASE_PATH=$(echo ${DATALAB_SETTINGS_OVERRIDES:-$EMPTY_BRACES} | python -c "import sys,json; print(json.load(sys.stdin).get('datalabBasePath',''))")
+
+# Start the ungit server
+ungit --port=8083 --no-launchBrowser --forcedLaunchPath=/content/datalab --ungitVersionCheckOverride 1 --rootPath="${DATALAB_BASE_PATH}" > /dev/null &
+
 # Start the DataLab server
 FOREVER_CMD="forever --minUptime 1000 --spinSleepTime 1000"
 if [ -z "${DATALAB_DEBUG}" ]
@@ -212,5 +148,23 @@ then
   FOREVER_CMD="${FOREVER_CMD} -s"
 fi
 
-echo "Open your browser to http://localhost:8081/ to connect to Datalab."
-${FOREVER_CMD} /datalab/web/app.js
+if [ -d /devroot ]; then
+  # For development purposes, if the user has mapped a /devroot dir, use it.
+  echo "Running notebook server in live mode"
+  export DATALAB_LIVE_STATIC_DIR=/devroot/sources/web/datalab/static
+  export DATALAB_LIVE_TEMPLATES_DIR=/devroot/sources/web/datalab/templates
+  # Use our internal node_modules dir
+  export NODE_PATH="${NODE_PATH}:/datalab/web/node_modules"
+  if [ -d /content/pydatalab ]; then
+    reinstall_pydatalab
+  fi
+  # Prevent (harmless) error message about missing .foreverignore
+  IGNOREFILE=/devroot/build/web/nb/.foreverignore
+  [ -f ${IGNOREFILE} ] || touch ${IGNOREFILE}
+  # Auto-restart when the developer builds from the typescript files.
+  echo ${FOREVER_CMD} --watch --watchDirectory /devroot/build/web/nb /devroot/build/web/nb/app.js
+  ${FOREVER_CMD} --watch --watchDirectory /devroot/build/web/nb /devroot/build/web/nb/app.js
+else
+  echo "Open your browser to http://localhost:${EXTERNAL_PORT}/ to connect to Datalab."
+  ${FOREVER_CMD} /datalab/web/app.js
+fi

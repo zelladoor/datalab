@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash -e
 # Copyright 2015 Google Inc. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -63,7 +63,7 @@ then
     fi
 
     # Build the customized docker image derived from the standard datalab image
-    docker build -t $DOCKERIMAGE -f $DOCKERFILE .
+    docker build ${DOCKER_BUILD_ARGS} -t $DOCKERIMAGE -f $DOCKERFILE .
 fi
 
 # On linux docker runs directly on host machine, so bind to 127.0.0.1 only
@@ -81,7 +81,7 @@ fi
 #  -v $REPO_DIR/sources/web:/sources \
 docker run -it --entrypoint=$ENTRYPOINT \
   -p $PORTMAP \
-  -v "$CONTENT:/content" \
+  -v "$CONTENT/datalab:/content/datalab" \
   -e "PROJECT_ID=$PROJECT_ID" \
   -e "DATALAB_ENV=local" \
   -e "EXPERIMENTAL_KERNEL_GATEWAY_URL=${EXPERIMENTAL_KERNEL_GATEWAY_URL}" \

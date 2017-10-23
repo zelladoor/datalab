@@ -14,9 +14,34 @@
 
 declare module common {
 
-  interface Settings {
+  interface UserSettings {
+    startuppath: string,
+    theme: string,
+    idleTimeoutShutdownCommand: string,
+    idleTimeoutInterval: string,
+    oauth2ClientId: string,
+    [index: string]: string,
+  }
 
+  interface AppSettings {
+
+    /**
+     * Whether or not to write log statements to stderr
+     */
     consoleLogging: boolean;
+
+    /**
+     * The minimum threshold for log statements to be written to stderr.
+     * Values should be one of 'trace', 'debug', 'info',
+     * 'warn', 'error', or 'fatal'.
+     */
+    consoleLogLevel: string;
+
+    /**
+     * The default file manager type to use if none is specified.
+     */
+    defaultFileManager: string;
+
     logFilePath: string;
     logFilePeriod: string;
     logFileCount: number;
@@ -25,6 +50,7 @@ declare module common {
     versionId: string;
     instanceId: string;
     configUrl: string;
+    knownTutorialsUrl: string;
     feedbackId: string;
     logEndpoint: string;
 
@@ -42,6 +68,37 @@ declare module common {
      * The list of static arguments to be used when launching jupyter.
      */
     jupyterArgs: string[];
+
+    /**
+     * If provided, use this as a prefix to all file paths opened on the
+     * server side. Useful for testing outside a Docker container.
+     */
+    datalabRoot: string;
+
+    /**
+     * If provided, use this as a prefix to all URL paths. This is useful
+     * for running a Datalab instance behind a shared proxy with other
+     * servers (including, for running multiple Datalab instances together).
+     *
+     * The specified value does not need to include leading or trailing
+     * slashes. Those will automatically be added if ommitted.
+     */
+    datalabBasePath: string;
+
+    /**
+     * If true, use proxy-able web sockets.
+     */
+    proxyWebSockets: string;
+
+    /**
+     * Initial port to use when searching for a free Jupyter port.
+     */
+    nextJupyterPort: number;
+
+    /**
+     * The port to use for socketio proxying.
+     */
+    socketioPort: number;
 
     /**
      * Local directory which stores notebooks in the container
@@ -66,6 +123,74 @@ declare module common {
      */
     metadataHost: string;
 
+    /**
+     * The value for the access-control-allow-origin header. This
+     * allows another frontend to connect to Datalab.
+     */
+    allowOriginOverrides: Array<string>;
+
+    /**
+     * If true, allow HTTP requests via websockets.
+     */
+    allowHttpOverWebsocket: boolean;
+
+    /**
+     * Whether to automatically back up user's contents dir to GCS
+     */
+    enableAutoGCSBackups: boolean;
+
+    /**
+     * Whether to index the file system for finding files
+     */
+    enableFilesystemIndex: boolean;
+
+    /**
+     * Number of hourly GCS backups of the user's content dir to keep
+     */
+    numHourlyBackups: number;
+
+    /**
+     * Number of daily GCS backups of the user's content dir to keep
+     */
+    numDailyBackups: number;
+
+    /**
+     * Number of weekly GCS backups of the user's content dir to keep
+     */
+    numWeeklyBackups: number;
+
+    /**
+     * The idle timeout interval, such as "2h 30m".
+     */
+    idleTimeoutInterval: string;
+
+    /**
+     * The shutdown command to use after an idle timeout.
+     */
+    idleTimeoutShutdownCommand: string;
+
+    /**
+     * List of supported sources for the file browser.
+     * Possible options are: jupyter, drive, sharedDrive, docs, and bigquery
+     */
+    supportedFileBrowserSources: string[];
+
+    /**
+     * The host/port on which to serve the fake metadata service, if active.
+     */
+    fakeMetadataAddress: {host: "metadata.google.internal"|"metadata"|null, port: number};
+
+    /**
+     * List of features that can be optinally enabled.
+     */
+    gatedFeatures: string[];
+  }
+
+  interface TimeoutInfo {
+    enabled: boolean;
+    expirationTime: number;
+    secondsRemaining: number;
+    idleTimeoutSeconds: number;
   }
 
   interface Map<T> {
@@ -79,4 +204,8 @@ declare module common {
   interface Callback0 {
     (e: Error): void;
   }
+}
+
+interface Window {
+  datalab: { [key: string]: string }
 }

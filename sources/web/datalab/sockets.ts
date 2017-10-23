@@ -12,14 +12,15 @@
  * the License.
  */
 
-/// <reference path="../../../externs/ts/node/node.d.ts" />
-/// <reference path="../../../externs/ts/node/socket.io.d.ts" />
-/// <reference path="../../../externs/ts/node/node-ws.d.ts" />
+/// <reference path="../../../third_party/externs/ts/node/node.d.ts" />
+/// <reference path="../../../third_party/externs/ts/node/socket.io.d.ts" />
+/// <reference path="../../../third_party/externs/ts/node/node-ws.d.ts" />
 /// <reference path="common.d.ts" />
 
 import http = require('http');
 import jupyter = require('./jupyter');
 import logging = require('./logging');
+import path_ = require('path');
 import socketio = require('socket.io');
 import url = require('url');
 import util = require('util');
@@ -47,7 +48,7 @@ var sessionCounter = 0;
  * Creates a WebSocket connected to the Jupyter server for the URL in the specified session.
  */
 function createWebSocket(port: number, session: Session): WebSocket {
-  var socketUrl = 'ws://127.0.0.1:' + port + url.parse(session.url).path;
+  var socketUrl = 'ws://localhost:' + port + url.parse(session.url).path;
   logging.getLogger().debug('Creating WebSocket to %s for session %d', socketUrl, session.id);
 
   var ws = new WebSocket(socketUrl);
@@ -163,8 +164,9 @@ function socketHandler(socket: SocketIO.Socket) {
   });
 }
 
-export function wrapServer(server: http.Server): void {
-  var io = socketio.listen(server, {
+export function init(settings: common.AppSettings): void {
+  var io = socketio(String(settings.socketioPort), {
+    path: path_.join(settings.datalabBasePath, 'socket.io'),
     transports: [ 'polling' ],
     allowUpgrades: false
   });

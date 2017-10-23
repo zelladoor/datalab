@@ -57,6 +57,7 @@ cat /datalab/license.txt
 ## Js Libraries
 - Sylvester [https://github.com/jcoglan/sylvester]
 - Parallel Coordinates [https://github.com/syntagmatic/parallel-coordinates]
+- marked [https://github.com/chjj/marked]
 
 ## Node.js Modules
 - bunyan [https://www.npmjs.com/package/bunyan]
@@ -67,6 +68,8 @@ cat /datalab/license.txt
 - socket.io [https://www.npmjs.com/package/socket.io]
 - tcp-port-used [https://www.npmjs.com/package/tcp-port-used]
 - ws [https://www.npmjs.com/package/ws]
+- ungit [https://github.com/FredrikNoren/ungit]
+- chokidar [https://github.com/paulmillr/chokidar]
 
 ## Other Packages:
 - curl

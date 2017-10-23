@@ -3,20 +3,22 @@
 <head>
   <meta http-equiv="X-UA-Compatible" content="IE=edge" />
   <title>Google Cloud DataLab Notebook</title>
-  <link rel="shortcut icon" type="image/x-icon" href="/static/favicon.ico">
+  <link rel="shortcut icon" type="image/x-icon" href="<%baseUrl%>static/favicon.ico">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <link rel="stylesheet" href="/static/components/codemirror/lib/codemirror.css" />
-  <link rel="stylesheet" href="/static/style/style.min.css" type="text/css" />
-  <link rel="stylesheet" href="/static/style/datalab.css" type="text/css" />
-  <link rel="stylesheet" id="themeStylesheet" href="/static/style/custom.css" type="text/css" id="stylesheet" />
-  <link rel="stylesheet" href="/static/components/jquery-ui/themes/smoothness/jquery-ui.min.css" />
+  <link rel="stylesheet" href="<%baseUrl%>static/components/codemirror/lib/codemirror.css" />
+  <link rel="stylesheet" href="<%baseUrl%>static/style/style.min.css" type="text/css" />
+  <link rel="stylesheet" href="<%baseUrl%>static/fonts/fonts.css" type="text/css" />
+  <link rel="stylesheet" href="<%baseUrl%>static/style/datalab.css" type="text/css" />
+  <link rel="stylesheet" id="themeStylesheet" href="<%baseUrl%>static/style/custom.css" type="text/css" id="stylesheet" />
+  <link rel="stylesheet" href="<%baseUrl%>static/components/jquery-ui/themes/smoothness/jquery-ui.min.css" />
 
-  <script src="/static/components/jquery/jquery.min.js"></script>
+  <script src="<%baseUrl%>static/components/jquery/jquery.min.js"></script>
+  <script type="text/javascript" src="<%baseUrl%>static/components/MathJax/MathJax.js?config=TeX-AMS_HTML-full,Safe&delayStartupUntil=configured" charset="utf-8"></script>
 </head>
 <body class="notebook_app"
   data-project=""
-  data-base-url="/"
+  data-base-url="<%baseUrl%>"
   data-ws-url=""
   data-notebook-name="<%notebookName%>"
   data-notebook-path="<%notebookPath%>"
@@ -33,6 +35,7 @@
      window.datalab = {};
   </script>
   <script src="<%configUrl%>"></script>
+  <script src="<%knownTutorialsUrl%>"></script>
   <script>
     var reportingEnabled = (document.body.getAttribute('data-reporting-enabled') == 'true');
     if (reportingEnabled) {
@@ -46,43 +49,16 @@
 
       var signedIn = (document.body.getAttribute('data-signed-in') == 'true');
       var projectHash = document.body.getAttribute('data-project-hash');
-      var notebookName = document.body.getAttribute('data-notebook-name');
-
-      var knownTutorials = [
-        'Interactive%20Charts%20with%20Google%20Charting%20APIs.ipynb',
-        'UDFs%20in%20BigQuery.ipynb',
-        'SQL%20and%20Pandas%20DataFrames.ipynb',
-        'SQL%20Query%20Composition.ipynb',
-        'SQL%20Parameters.ipynb',
-        'UDFs%20using%20Code%20in%20Cloud%20Storage.ipynb',
-        'Hello%20BigQuery.ipynb',
-        'Importing%20and%20Exporting%20Data.ipynb',
-        'Using%20External%20Tables%20from%20BigQuery.ipynb',
-        'UDF%20Testing%20in%20the%20Notebook.ipynb',
-        'BigQuery%20APIs.ipynb',
-        'BigQuery%20Commands.ipynb',
-        'Storage%20Commands.ipynb',
-        'Storage%20APIs.ipynb',
-        'Programming%20Language%20Correlation.ipynb',
-        'Conversion%20Analysis%20with%20Google%20Analytics%20Data.ipynb',
-        'Anomaly%20Detection%20in%20HTTP%20Logs.ipynb',
-        'Exploring%20Genomics%20Data.ipynb',
-        'TensorFlow%20Machine%20Learning%20with%20Financial%20Data%20on%20Google%20Cloud%20Platform.ipynb',
-        'Hello%20World.ipynb',
-        'Readme.ipynb',
-        'Introduction%20to%20Python.ipynb',
-        'Using%20Datalab%20-%20Accessing%20Cloud%20Data.ipynb',
-        'Introduction%20to%20Notebooks.ipynb'
-      ];
+      var notebookPath = document.body.getAttribute('data-notebook-path');
 
       var tutorialName = '';
-      if (knownTutorials.indexOf(notebookName) >= 0) {
-         tutorialName = notebookName;
+      if (window.datalab.knownTutorials.indexOf(notebookPath) >= 0) {
+         tutorialName = notebookPath;
       }
 
       var event = {
         'event': 'concordEvent',
-        'pagePath': '/virtual/datalab/openNotebook',
+        'pagePath': '<%baseUrl%>virtual/datalab/openNotebook',
         'eventType': 'datalab',
         'eventName': 'openNotebook',
         'projectNumber': projectHash,
@@ -103,7 +79,8 @@
           <div class="btn-toolbar pull-left">
             <div class="btn-group">
               <button type="button" class="toolbar-btn" data-toggle="dropdown" title="Notebook commands">
-                <span class="fa fa-book"></span> Notebook <span class="caret"></span>
+                <i class="material-icons">book</i> Notebook
+                <span class="caret"></span>
               </button>
               <ul class="dropdown-menu">
                 <li id="saveButton"><a href="#">Save and Checkpoint</a></li>
@@ -126,28 +103,33 @@
                 <li id="convertPythonButton"><a href="#">Convert to Python</a></li>
               </ul>
             </div>
-          </div>
-          <div class="btn-toolbar pull-left">
             <div class="btn-group">
               <button id="addCodeCellButton" type="button" class="toolbar-btn" title="Append a new code cell">
-                <span class="fa fa-plus-square"></span> Add Code
+                <i class="material-icons">add_box</i>
+                <i class="material-icons">code</i>
+                <span class="toolbar-text">Add Code</span>
               </button>
               <button id="addMarkdownCellButton" type="button" class="toolbar-btn" title="Append a new markdown cell">
-                <span class="fa fa-plus-square"></span> Add Markdown
+                <i class="material-icons">add_box</i>
+                <i class="material-icons">text_fields</i>
+                <span class="toolbar-text">Add Markdown</span>
               </button>
               <button id="deleteCellButton" type="button" class="toolbar-btn" title="Delete the selected cell">
-                <span class="fa fa-minus-square"></span> Delete
+                <i class="material-icons">clear</i>
+                <span class="toolbar-text">Delete</span>
               </button>
               <button id="moveCellUpButton" type="button" class="toolbar-btn" title="Move the selected cell up">
-                <span class="fa fa-chevron-up"></span> Move Up
+                <i class="material-icons">arrow_upward</i>
+                <span class="toolbar-text">Move Up</span>
               </button>
               <button id="moveCellDownButton" type="button" class="toolbar-btn" title="Move the selected cell down">
-                <span class="fa fa-chevron-down"></span> Move Down
+                <i class="material-icons">arrow_downward</i>
+                <span class="toolbar-text">Move Down</span>
               </button>
             </div>
             <div class="btn-group">
               <button id="runButton" type="button" class="toolbar-btn" title="Run the selected cell">
-                <span class="fa fa-play"></span> Run
+                <i class="material-icons">play_arrow</i> Run
               </button>
               <button type="button" class="toolbar-btn dropdown-toggle" data-toggle="dropdown">
                 <span class="caret"></span>
@@ -160,7 +142,7 @@
             </div>
             <div class="btn-group">
               <button id="clearButton" type="button" class="toolbar-btn" title="Clear outputs of the selected cell">
-                <span class="fa fa-minus-square-o"></span> Clear
+                <i class="material-icons">check_box_outline_blank</i> Clear
               </button>
               <button type="button" class="toolbar-btn dropdown-toggle" data-toggle="dropdown">
                 <span class="caret"></span>
@@ -171,30 +153,41 @@
             </div>
             <div class="btn-group">
               <button id="resetSessionButton" type="button" class="toolbar-btn" title="Restart the current notebook session">
-                <i id="kernel_indicator_icon"></i> Reset Session
+                <i id="kernel_indicator_icon"></i> Reset
+                <span class="toolbar-text">Session</span>
               </button>
+              <button type="button" class="toolbar-btn dropdown-toggle" data-toggle="dropdown">
+                <span class="caret"></span>
+              </button>
+              <ul class="dropdown-menu">
+                <li id="interruptKernelButton"><a href="#">Interrupt Execution</a></li>
+              </ul>
+            </div>
+            <div class="btn-group" id="kernel_picker_menu">
+              <button id="kernelSelectorButton" type="button" data-toggle="dropdown" class="toolbar-btn" title="Select kernel">
+                <i class="material-icons">track_changes</i>
+                <span class="toolbar-text">Kernel: </span>
+                <span id="currentKernelName"></span>
+                <span class="caret"></span>
+              </button>
+              <ul class="dropdown-menu" id="kernelSelectorDropdown">
+              </ul>
             </div>
             <!-- The next div and its contents are for ipywidgets. They insert their own menu before #help_menu -->
-            <div class="btn-group">
+            <div class="btn-group" id="help_menu_container">
               <div>
                 <div id="help_menu">
                 </div>
               </div>
             </div>
           </div>
-        </div>
-        <div id="sidebarToolbar">
           <div class="btn-toolbar pull-right">
-            <div class="btn-group">
-              <button id="navigationButton" type="button" class="toolbar-btn">Navigation</button>
-              <button id="helpButton" type="button" class="toolbar-btn active">Help</button>
-            </div>
-            <div class="btn-group">
-              <button id="hideSidebarButton" type="button" class="toolbar-btn" title="Toggle sidebar on/off">
-                <span class="fa fa-chevron-down"></span>
-              </button>
-            </div>
-          </div>
+             <div id="sidebarToolbar" class="btn-group" style="">
+               <button id="hideSidebarButton" type="button" class="toolbar-btn" title="Toggle sidebar on/off">
+                 <i class="material-icons">keyboard_arrow_down</i>
+               </button>
+             </div>
+           </div>
         </div>
       </div>
       <div id="contentArea">
@@ -210,37 +203,16 @@
         </div>
         <div id="sidebarArea" style="display:none">
           <div id="sidebarContent">
-            <div class="btn-group">
-              <button id="toggleSidebarButton" type="button" class="toolbar-btn" title="Toggle the size of the sidebar">
-                <span class="fa fa-chevron-right fa-flip-horizontal"></span>
-              </button>
+            <div style="overflow: auto">
+              <div class="btn-group">
+               <button id="toggleSidebarButton" type="button" class="toolbar-btn" title="Toggle the size of the sidebar">
+                 <i class="material-icons">chevron_left</i>
+               </button>
+  </div>
             </div>
             <div>
               <div id="navigation" style="display: none"></div>
-              <div id="help">
-                <p><b>Help for Python APIs</b></p>
-                <p>
-                  You can enter <code>class?</code> or <code>member?</code> within a code cell in the
-                  notebook to get help on a Python API.
-                </p>
-                <br />
-                <p>
-                  For example, try <code>str?</code> to get help information on the built-in Python
-                  method to convert a value to its string representation.
-                </p>
-                <br />
-                <p>
-                  Additional help topics and links are also available from the menu off the Help
-                  icon on the top of the page.
-                </p>
-                <br />
-                <p><b>Docs and Samples</b></p>
-                <p>
-                  The <a href="/notebooks/datalab/docs/notebooks/Readme.ipynb"
-                    target="_blank">Cloud Datalab Guide</a> featuring
-                  documentation and sample notebooks is also a great way to check out how you can use Cloud Datalab.
-                </p>
-              </div>
+              <div id="help"></div>
             </div>
           </div>
         </div>
@@ -248,20 +220,19 @@
     </div>
     </div>
   </div>
-  <script src="/static/components/es6-promise/promise.min.js"></script>
-  <script src="/socket.io/socket.io.js"></script>
-  <script src="/static/components/requirejs/require.js"></script>
+  <script src="<%baseUrl%>static/components/es6-promise/promise.min.js"></script>
+  <script src="<%baseUrl%>socket.io/socket.io.js"></script>
+  <script src="<%baseUrl%>static/components/requirejs/require.js"></script>
   <script>
-    window.mathjax_url = '';
     window.sys_info = {};
     require.config({
-      baseUrl: '/static/',
+      baseUrl: '<%baseUrl%>static/',
       paths: {
         'auth/js/main': 'auth/js/main.min',
-        custom : '/custom',
-        nbextensions : '/nbextensions',
-        widgets : '/deprecatedwidgets',
-        kernelspecs : '/kernelspecs',
+        custom : '<%baseUrl%>custom',
+        nbextensions : '<%baseUrl%>nbextensions',
+        widgets : '<%baseUrl%>deprecatedwidgets',
+        kernelspecs : '<%baseUrl%>kernelspecs',
         underscore : 'components/underscore/underscore-min',
         backbone : 'components/backbone/backbone-min',
         jquery: 'components/jquery/jquery.min',
@@ -303,7 +274,7 @@
     });
     window.datalab = {};
 
-    $("#appBar").load("/static/appbar.html", function() {
+    $("#appBar").load("<%baseUrl%>static/appbar.html", function() {
       require(['notebook/js/main.min']);
     });
   </script>
@@ -315,6 +286,29 @@
         <div class="progress-bar" style="width: 100%"></div>
       </div>
     </div>
+  </script>
+  <script type="text/fragment" id="datalabHelp">
+    <p><b>Help for Python APIs</b></p>
+    <p>
+      You can enter <code>class?</code> or <code>member?</code> within a code cell in the
+      notebook to get help on a Python API.
+    </p>
+    <br />
+    <p>
+      For example, try <code>str?</code> to get help information on the built-in Python
+      method to convert a value to its string representation.
+    </p>
+    <br />
+    <p>
+      Additional help topics and links are also available from the menu off the Help
+      icon on the top of the page.
+    </p>
+    <br />
+    <p><b>Docs and Samples</b></p>
+    <p>
+      The <a href="<%baseUrl%>notebooks/datalab/docs/Readme.ipynb" target="_blank">Cloud Datalab Guide</a> featuring
+      documentation and sample notebooks is also a great way to check out how you can use Cloud Datalab.
+    </p>
   </script>
   <script type="text/fragment" id="shortcutsHelp">
     <p>The notebook has two keyboard modes: Edit mode allows you to type code/text into a cell indicated by a raised cell with a shadow. Command mode allows notebook level actions.</p>

@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash -e
 # Copyright 2015 Google Inc. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,12 +18,26 @@
 # If [path_of_pydatalab_dir] is provided, it will copy the content of that dir into image.
 # Otherwise, it will get the pydatalab by "git clone" from pydatalab repo.
 
+pushd $(pwd) >> /dev/null
+HERE=$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)
+
 # Build the docker image
 if [ -n "$1" ]; then
-  rsync -avp "$1" pydatalab;
+  src_pydatalab=$(realpath "$1")
+  rsync -avp "$src_pydatalab"/ pydatalab
 else
   # Create empty dir to make docker build happy.
-  mkdir -p pydatalab;
+  mkdir -p pydatalab
 fi
-docker build -t datalab-base .
-rm -rf pydatalab
+
+trap 'rm -rf pydatalab' exit
+
+docker pull ubuntu:16.04
+# Docker tag flags changed in an incompatible way between versions.
+# The Datalab Jenkins build still uses the old one, so try it both ways.
+if ! $(docker tag -f ubuntu:16.04 datalab-external-base-image); then
+  docker tag ubuntu:16.04 datalab-external-base-image
+fi
+docker build ${DOCKER_BUILD_ARGS} -t datalab-base .
+
+popd >> /dev/null
